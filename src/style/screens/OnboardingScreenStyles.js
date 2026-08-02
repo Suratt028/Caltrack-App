@@ -1,0 +1,41 @@
+import { StyleSheet } from 'react-native';
+import { colors, spacing, typography, radius } from '../../theme/colors';
+
+export default StyleSheet.create({
+  safe: { flex: 1, backgroundColor: colors.bg },
+  progressTrack: { flexDirection: 'row', gap: 6, paddingHorizontal: spacing.lg, paddingTop: spacing.sm },
+  progressDot: { flex: 1, height: 4, borderRadius: 2, backgroundColor: colors.surfaceMuted },
+  progressDotActive: { backgroundColor: colors.primary },
+  content: { padding: spacing.lg, paddingBottom: spacing.xl },
+  eyebrow: { ...typography.caption, color: colors.inkFaint, textTransform: 'uppercase', marginBottom: spacing.sm },
+  title: { ...typography.display, color: colors.ink, marginBottom: 6 },
+  subtitle: { ...typography.body, color: colors.inkMuted, marginBottom: spacing.lg },
+  fieldLabel: { ...typography.bodyBold, color: colors.ink, marginBottom: 8, marginTop: spacing.sm },
+  input: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: colors.ink,
+  },
+  option: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginBottom: 10,
+  },
+  optionSelected: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
+  optionLabel: { fontSize: 15, fontWeight: '700', color: colors.ink },
+  optionLabelSelected: { color: colors.primaryDark },
+  optionSub: { fontSize: 12, color: colors.inkMuted, marginTop: 2 },
+  radio: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: colors.border },
+  radioSelected: { borderColor: colors.primary, backgroundColor: colors.primary },
+  footer: { flexDirection: 'row', padding: spacing.lg, paddingTop: spacing.sm },
+});

@@ -1,0 +1,40 @@
+{
+  "expo": {
+    "name": "CalTrack",
+    "slug": "CalTrackApp",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "caltrack",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.example.caltrack",
+      "infoPlist": {
+        "NSCameraUsageDescription": "CalTrack ใช้กล้องเพื่อถ่ายรูปอาหารสำหรับให้ AI ช่วยประเมินแคลอรี่",
+        "NSPhotoLibraryUsageDescription": "CalTrack ใช้คลังภาพเพื่อเลือกรูปอาหารสำหรับให้ AI ช่วยประเมินแคลอรี่"
+      }
+    },
+    "android": {
+      "package": "com.example.caltrack",
+      "permissions": ["CAMERA", "READ_EXTERNAL_STORAGE"],
+      "adaptiveIcon": {
+        "backgroundColor": "#0F5C56",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "CalTrack ใช้กล้องเพื่อถ่ายรูปอาหารสำหรับให้ AI ช่วยประเมินแคลอรี่"
+        }
+      ]
+    ]
+  }
+}
