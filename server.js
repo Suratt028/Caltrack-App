@@ -4,15 +4,26 @@ const cors = require('cors');
 const crypto = require('crypto');
 const mongoose = require('mongoose');
 
+const multer = require('multer');
+const { processAndSaveFood } = require('./controllers/foodController');
+const { processFoodUpload } = require('./services/foodUploadService');
+
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
 const dbName = process.env.MONGODB_DB_NAME || 'caltrack';
 const mongoUser = process.env.MONGODB_USERNAME;
 const mongoPassword = process.env.MONGODB_PASSWORD;
 const mongoHost = process.env.MONGODB_HOST || 'cluster0.eef27bu.mongodb.net';
 const authSecret = process.env.AUTH_SECRET || 'dev-secret-change-me';
+const fatSecretClientId = process.env.FATSECRET_CLIENT_ID;
+const fatSecretClientSecret = process.env.FATSECRET_CLIENT_SECRET;
+const fatSecretCustomerKey = process.env.FATSECRET_CUSTOMER_KEY;
+const fatSecretOAuthUrl = process.env.FATSECRET_OAUTH_URL || 'https://oauth.fatsecret.com/connect/token';
+const geminiApiKey = process.env.GEMINI_API_KEY || process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
 
 const uri =
   process.env.MONGODB_URI ||
@@ -156,6 +167,91 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', mongo: isMongoReady });
 });
 
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    message: 'Backend server is running correctly!',
+  });
+});
+
+app.get('/api/food/analyze', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'This endpoint is for browsing. To analyze food, send a POST request to /api/food/scan or /api/food/upload.',
+    supportedMethods: {
+      scan: 'POST /api/food/scan',
+      upload: 'POST /api/food/upload',
+      aiScan: 'POST /api/ai/scan',
+    },
+    note: 'GET does not accept an image body, so use POST for actual analysis.',
+  });
+});
+
+app.get('/api/diagnostics', (req, res) => {
+  res.json({
+    geminiApiKeyLoaded: !!geminiApiKey,
+    geminiApiKey: geminiApiKey ? 'SET' : 'NOT_SET',
+  });
+});
+
+app.post('/api/food/scan', upload.single('image'), processAndSaveFood);
+
+app.post('/api/food/upload', upload.single('image'), async (req, res) => {
+  if (!req.file || !req.file.buffer) {
+    return res.status(400).json({ success: false, message: 'Image file is required' });
+  }
+
+  try {
+    const savedLog = await processFoodUpload(req.file.buffer, req.file.mimetype, {
+      userId: req.body.userId,
+      imageUrl: req.body.imageUrl,
+    });
+
+    return res.status(201).json({ success: true, data: savedLog });
+  } catch (error) {
+    console.error('Food upload error:', error);
+    return res.status(500).json({ success: false, message: error.message || 'Failed to process food upload' });
+  }
+});
+
+app.post('/api/fatsecret/token', async (req, res) => {
+  if (!fatSecretClientId || !fatSecretClientSecret) {
+    return res.status(500).json({ error: 'FatSecret credentials are not configured' });
+  }
+
+  try {
+    const basicAuth = Buffer.from(`${fatSecretClientId}:${fatSecretClientSecret}`).toString('base64');
+    const body = new URLSearchParams({ grant_type: 'client_credentials', scope: 'basic' }).toString();
+
+    const tokenResponse = await fetch(fatSecretOAuthUrl, {
+      method: 'POST',
+      headers: {
+        Authorization: `Basic ${basicAuth}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body,
+    });
+
+    const tokenData = await tokenResponse.json();
+    if (!tokenResponse.ok) {
+      return res.status(tokenResponse.status).json({ error: tokenData.error || tokenData });
+    }
+
+    return res.json(tokenData);
+  } catch (error) {
+    return res.status(500).json({ error: error.message || 'Failed to fetch FatSecret token' });
+  }
+});
+
+app.get('/api/seed-demo', async (req, res) => {
+  try {
+    const data = await seedDemoData();
+    res.json({ message: 'Demo data created successfully', data });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.post('/api/seed-demo', async (req, res) => {
   try {
     const data = await seedDemoData();
@@ -259,7 +355,7 @@ app.post('/api/ai/scan', async (req, res) => {
       return res.status(400).json({ error: 'imageBase64 is required' });
     }
 
-    const apiKey = process.env.GEMINI_API_KEY || process.env.EXPO_PUBLIC_GEMINI_API_KEY;
+    const apiKey = geminiApiKey;
 
     if (apiKey) {
       const cleanBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, '');
@@ -308,6 +404,7 @@ app.post('/api/ai/scan', async (req, res) => {
         return res.json({
           success: true,
           source: 'gemini_vision',
+          usedApiKey: !!apiKey,
           result: {
             name: parsed.name || 'อาหารไม่ทราบชื่อ',
             kcal: Number(parsed.kcal) || 350,
