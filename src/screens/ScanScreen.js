@@ -7,6 +7,7 @@ import PrimaryButton from '../components/PrimaryButton';
 import Card from '../components/Card';
 import { useApp } from '../context/AppContext';
 import { getAllFoods } from '../services/foodService';
+import { analyzeFoodImage } from '../services/aiVisionService';
 import styles from '../style/screens/ScanScreenStyles';
 
 const MEALS = [
@@ -15,20 +16,6 @@ const MEALS = [
   { key: 'dinner', label: 'มื้อเย็น' },
   { key: 'snack', label: 'ของว่าง' },
 ];
-
-// ---------------------------------------------------------------------------
-// MOCK AI RECOGNITION
-// ---------------------------------------------------------------------------
-// This is a placeholder that stands in for a real food-recognition model.
-// Replace with a real vision API / ML model before production use.
-// Pass foodData (loaded from MongoDB) so mockRecognize can pick from live data.
-function mockRecognize(foodData) {
-  const thaiFoods = (foodData || []).filter((f) => f.category === 'thai');
-  if (thaiFoods.length === 0) return null;
-  const pick = thaiFoods[Math.floor(Math.random() * thaiFoods.length)];
-  return { ...pick, confidence: 0.7 + Math.random() * 0.25 };
-}
-// ---------------------------------------------------------------------------
 
 export default function ScanScreen() {
   const { addFoodLog } = useApp();
@@ -46,14 +33,30 @@ export default function ScanScreen() {
     })();
   }, []);
 
-  const runMockAnalysis = () => {
+  const runAiAnalysis = async (asset) => {
     setAnalyzing(true);
     setResult(null);
     setSaved(false);
-    setTimeout(() => {
-      setResult(mockRecognize(foodData));
+
+    try {
+      const aiResult = await analyzeFoodImage(asset.base64, asset.mimeType || 'image/jpeg');
+      setResult(aiResult);
+    } catch (err) {
+      console.error('Analysis error:', err);
+      // Fallback if exception occurs
+      const sample = foodData[Math.floor(Math.random() * foodData.length)];
+      setResult({
+        name: sample?.name || 'ผัดไทยกุ้งสด',
+        kcal: sample?.kcal || 540,
+        protein: sample?.protein || 22,
+        carbs: sample?.carbs || 65,
+        fat: sample?.fat || 20,
+        confidence: 0.85,
+        source: 'mock_fallback',
+      });
+    } finally {
       setAnalyzing(false);
-    }, 1400);
+    }
   };
 
   const pickFrom = async (source) => {
@@ -64,10 +67,10 @@ export default function ScanScreen() {
     if (!perm.granted) return;
 
     const picker = source === 'camera' ? ImagePicker.launchCameraAsync : ImagePicker.launchImageLibraryAsync;
-    const res = await picker({ quality: 0.6, allowsEditing: true, aspect: [1, 1] });
+    const res = await picker({ quality: 0.7, base64: true, allowsEditing: true, aspect: [1, 1] });
     if (!res.canceled && res.assets?.[0]?.uri) {
       setImageUri(res.assets[0].uri);
-      runMockAnalysis();
+      runAiAnalysis(res.assets[0]);
     }
   };
 
@@ -82,7 +85,7 @@ export default function ScanScreen() {
       carbs: Number(result.carbs) || 0,
       fat: Number(result.fat) || 0,
       servings: 1,
-      source: 'ai_scan',
+      source: result?.source || 'ai_scan',
     });
     setSaved(true);
   };
@@ -92,6 +95,8 @@ export default function ScanScreen() {
     setResult(null);
     setSaved(false);
   };
+
+  const isRealAi = result?.source?.includes('gemini_vision');
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -121,11 +126,13 @@ export default function ScanScreen() {
 
         {result && !analyzing && (
           <Card style={{ marginTop: spacing.md }}>
-            <View style={styles.demoTag}>
-              <Text style={styles.demoTagText}>ตัวอย่างผลลัพธ์จำลอง (Demo)</Text>
+            <View style={[styles.demoTag, isRealAi && { backgroundColor: '#E8F5E9' }]}>
+              <Text style={[styles.demoTagText, isRealAi && { color: '#2E7D32' }]}>
+                {isRealAi ? '✨ วิเคราะห์โดย Vision AI' : '⚠️ ผลลัพธ์จำลอง (Demo Mode)'}
+              </Text>
             </View>
             <Text style={styles.resultConfidence}>
-              ความมั่นใจของโมเดล ~{Math.round(result.confidence * 100)}% — กรุณาตรวจสอบและแก้ไขก่อนบันทึก
+              ความมั่นใจของโมเดล ~{Math.round((result.confidence || 0.85) * 100)}% — กรุณาตรวจสอบและแก้ไขก่อนบันทึก
             </Text>
 
             <Text style={styles.fieldLabel}>ชื่อเมนู</Text>

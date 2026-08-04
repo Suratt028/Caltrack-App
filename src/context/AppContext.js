@@ -12,12 +12,47 @@ const STORAGE_KEYS = {
 
 const AppContext = createContext(null);
 
+function groupLogsByDate(logs = []) {
+  return logs.reduce((acc, log) => {
+    const dateKey = log.dateKey || todayKey();
+    const entries = acc[dateKey] || [];
+    return {
+      ...acc,
+      [dateKey]: [...entries, log.entry],
+    };
+  }, {});
+}
+
 export function AppProvider({ children }) {
   const [profile, setProfile] = useState(null); // null until onboarding completes
   const [user, setUser] = useState(null);
   const [logsByDay, setLogsByDay] = useState({});
   const [weightsByDay, setWeightsByDay] = useState({});
   const [isLoading, setIsLoading] = useState(true);
+
+  const loadRemoteData = useCallback(async (userId) => {
+    if (!userId) return;
+
+    try {
+      const [serverProfile, serverLogs] = await Promise.all([
+        fetchProfile(userId).catch(() => null),
+        fetchLogs(userId).catch(() => []),
+      ]);
+
+      if (serverProfile) {
+        setProfile(serverProfile);
+        await AsyncStorage.setItem(STORAGE_KEYS.profile, JSON.stringify(serverProfile));
+      }
+
+      if (Array.isArray(serverLogs) && serverLogs.length > 0) {
+        const groupedLogs = groupLogsByDate(serverLogs);
+        setLogsByDay(groupedLogs);
+        await AsyncStorage.setItem(STORAGE_KEYS.logs, JSON.stringify(groupedLogs));
+      }
+    } catch (error) {
+      console.warn('Failed to load server data', error);
+    }
+  }, []);
 
   // Load persisted state once on app start.
   useEffect(() => {
@@ -40,6 +75,12 @@ export function AppProvider({ children }) {
       }
     })();
   }, []);
+
+  useEffect(() => {
+    if (user?.id) {
+      loadRemoteData(user.id);
+    }
+  }, [user, loadRemoteData]);
 
   const persistProfile = useCallback(async (next) => {
     setProfile(next);
@@ -78,8 +119,9 @@ export function AppProvider({ children }) {
     };
 
     await persistUser(nextUser);
+    await loadRemoteData(nextUser.id);
     return nextUser;
-  }, [persistUser]);
+  }, [persistUser, loadRemoteData]);
 
   const register = useCallback(async (email, password, displayName) => {
     if (!email?.trim() || !password) {
