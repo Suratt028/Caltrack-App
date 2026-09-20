@@ -6,141 +6,120 @@ export default StyleSheet.create({
     flex: 1,
     backgroundColor: colors.bg,
   },
-
   content: {
-    padding: spacing.lg,
-    paddingBottom: spacing.xxl,
+    padding: 20,
+    paddingBottom: 36,
   },
-
   title: {
     ...typography.h1,
     color: colors.ink,
     marginBottom: 6,
   },
-
   subtitle: {
     ...typography.body,
     color: colors.inkMuted,
-    marginBottom: spacing.lg,
+    marginBottom: 16,
   },
-
   periodRow: {
     flexDirection: 'row',
-    gap: spacing.sm,
-    marginBottom: spacing.lg,
-  },
-
-  periodChip: {
-    paddingVertical: 8,
-    paddingHorizontal: 14,
+    backgroundColor: colors.surfaceMuted,
     borderRadius: radius.pill,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: colors.bg,
+    padding: 4,
+    marginBottom: 16,
   },
-
+  periodChip: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: radius.pill,
+    alignItems: 'center',
+  },
   periodChipActive: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.primary,
   },
-
   periodChipText: {
-    fontSize: 13,
+    fontSize: 12.5,
     fontWeight: '600',
     color: colors.inkMuted,
   },
-
   periodChipTextActive: {
-    color: colors.primaryDark,
+    color: colors.white,
   },
-
   summaryRow: {
     flexDirection: 'row',
-    gap: spacing.sm,
-    marginBottom: spacing.lg,
+    gap: 10,
+    marginBottom: 14,
   },
-
   summaryCard: {
     flex: 1,
-    padding: spacing.md,
+    padding: 14,
     backgroundColor: colors.surface,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
   },
-
   summaryLabel: {
     ...typography.caption,
     color: colors.inkMuted,
     marginBottom: 6,
   },
-
   summaryValue: {
     ...typography.h2,
     color: colors.ink,
   },
-
   summaryUnit: {
-    fontSize: 12,
+    fontSize: 11,
     color: colors.inkMuted,
-    marginTop: 2,
+    marginTop: 4,
   },
-
   card: {
     backgroundColor: colors.surface,
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.border,
-    padding: spacing.lg,
-    marginBottom: spacing.lg,
+    padding: 16,
+    marginBottom: 14,
   },
-
   cardTitle: {
     ...typography.h2,
     color: colors.ink,
-    marginBottom: spacing.xs,
+    marginBottom: 8,
+    fontSize: 15,
   },
-
   cardSubtitle: {
     ...typography.body,
     color: colors.inkMuted,
-    marginBottom: spacing.lg,
+    marginBottom: 12,
+    fontSize: 12,
   },
-
   chartContainer: {
     width: '100%',
-    minHeight: 220,
+    minHeight: 180,
     justifyContent: 'center',
   },
-
   chartPlaceholder: {
-    height: 180,
+    height: 170,
     borderRadius: radius.sm,
-    backgroundColor: colors.bg,
+    backgroundColor: colors.surfaceMuted,
     borderWidth: 1,
     borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
-
   chartPlaceholderText: {
     fontSize: 14,
     color: colors.inkMuted,
     textAlign: 'center',
   },
-
   legendRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.md,
-    marginTop: spacing.md,
+    gap: 12,
+    marginTop: 12,
   },
-
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-
   legendDot: {
     width: 10,
     height: 10,
@@ -148,44 +127,39 @@ export default StyleSheet.create({
     backgroundColor: colors.primary,
     marginRight: 6,
   },
-
   legendText: {
     fontSize: 12,
     color: colors.inkMuted,
   },
-
   insightBox: {
     backgroundColor: colors.primarySoft,
     borderRadius: radius.md,
     padding: spacing.md,
     marginBottom: spacing.lg,
+    borderWidth: 1,
+    borderColor: '#D7E9E1',
   },
-
   insightTitle: {
     ...typography.bodyBold,
     color: colors.primaryDark,
-    marginBottom: 4,
+    marginBottom: spacing.xs,
   },
-
   insightText: {
     ...typography.body,
     color: colors.ink,
     lineHeight: 21,
   },
-
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: spacing.xxl,
   },
-
   emptyStateTitle: {
     ...typography.h2,
     color: colors.ink,
-    marginBottom: spacing.xs,
     textAlign: 'center',
+    marginBottom: spacing.xs,
   },
-
   emptyStateText: {
     ...typography.body,
     color: colors.inkMuted,

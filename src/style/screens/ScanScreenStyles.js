@@ -6,125 +6,260 @@ export default StyleSheet.create({
     flex: 1,
     backgroundColor: colors.bg,
   },
-
   content: {
-    padding: spacing.lg,
-    paddingBottom: spacing.xxl,
+    padding: 20,
+    paddingBottom: 32,
   },
-
   title: {
     ...typography.h1,
     color: colors.ink,
-    marginBottom: 6,
+    marginBottom: 8,
   },
-
   subtitle: {
     ...typography.body,
     color: colors.inkMuted,
+    marginBottom: 14,
+  },
+  databaseSearchCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+  },
+  databaseSearchHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  databaseSearchIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: colors.primarySoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.sm,
+  },
+  databaseSearchTitle: {
+    color: colors.ink,
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  databaseSearchSubtitle: {
+    color: colors.inkMuted,
+    fontSize: 12,
+    marginTop: 2,
+  },
+  databaseSearchInputWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surfaceMuted,
+    borderRadius: radius.sm,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.sm,
+  },
+  databaseSearchInput: {
+    flex: 1,
+    color: colors.ink,
+    fontSize: 14,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 11,
+  },
+  noSearchResults: {
+    color: colors.inkMuted,
+    fontSize: 12,
+    paddingTop: spacing.sm,
+  },
+  searchResults: {
+    marginTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  searchResultItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  searchResultIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: colors.primarySoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.sm,
+  },
+  searchResultName: {
+    color: colors.ink,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  searchResultMeta: {
+    color: colors.inkMuted,
+    fontSize: 11,
+    marginTop: 2,
+  },
+  scanHero: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    borderStyle: 'dashed',
+    padding: 22,
+    alignItems: 'center',
+    marginBottom: 18,
+  },
+  scanHeroIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: colors.surfaceMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.sm,
+  },
+  categoryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 18,
+  },
+  categoryItem: {
+    width: '31%',
+    alignItems: 'center',
+    paddingVertical: 16,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  categoryText: {
+    color: colors.inkMuted,
+    fontSize: 11,
+    lineHeight: 16,
+    marginTop: 6,
+    textAlign: 'center',
+  },
+  successState: {
+    alignItems: 'center',
+    paddingVertical: spacing.lg,
+  },
+  successIcon: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    backgroundColor: colors.primarySoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.md,
+  },
+  successTitle: {
+    ...typography.h1,
+    color: colors.ink,
+    marginBottom: spacing.sm,
+  },
+  successText: {
+    color: colors.inkMuted,
+    textAlign: 'center',
+    lineHeight: 21,
     marginBottom: spacing.lg,
   },
-
+  successActions: {
+    flexDirection: 'row',
+    width: '100%',
+  },
   actionsRow: {
     flexDirection: 'row',
-    marginTop: spacing.md,
+    marginTop: 0,
   },
-
   imageCard: {
     padding: 0,
     overflow: 'hidden',
   },
-
   image: {
     width: '100%',
     height: 220,
     borderRadius: radius.md,
   },
-
   analyzingBox: {
     alignItems: 'center',
     paddingVertical: spacing.xl,
   },
-
   analyzingText: {
     marginTop: spacing.md,
     color: colors.inkMuted,
     fontWeight: '600',
   },
-
   demoTag: {
     alignSelf: 'flex-start',
     backgroundColor: colors.turmericSoft,
     borderRadius: radius.pill,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
     marginBottom: spacing.sm,
   },
-
   demoTagText: {
     fontSize: 11,
     fontWeight: '700',
     color: colors.primaryDark,
   },
-
   resultConfidence: {
     fontSize: 12,
     color: colors.inkMuted,
     marginBottom: spacing.md,
   },
-
   fieldLabel: {
     ...typography.bodyBold,
     color: colors.ink,
-    marginBottom: 6,
     marginTop: spacing.xs,
+    marginBottom: spacing.xs,
+    fontSize: 13,
   },
-
   input: {
-    backgroundColor: colors.bg,
-    borderWidth: 1,
-    borderColor: colors.border,
+    backgroundColor: colors.surfaceMuted,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
     borderRadius: radius.sm,
     paddingHorizontal: spacing.md,
-    paddingVertical: 10,
+    paddingVertical: spacing.sm,
     fontSize: 15,
+    color: colors.ink,
     marginBottom: spacing.sm,
   },
-
   macroInputRow: {
     flexDirection: 'row',
     gap: spacing.sm,
   },
-
   macroInputCol: {
     flex: 1,
   },
-
   mealRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: spacing.xs,
     marginBottom: spacing.md,
   },
-
   mealChip: {
-    paddingVertical: 8,
-    paddingHorizontal: 14,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
     borderRadius: radius.pill,
     borderWidth: 1.5,
     borderColor: colors.border,
   },
-
   mealChipActive: {
     borderColor: colors.primary,
     backgroundColor: colors.primarySoft,
   },
-
   mealChipText: {
     fontSize: 13,
     fontWeight: '600',
     color: colors.inkMuted,
   },
-
   mealChipTextActive: {
     color: colors.primaryDark,
   },

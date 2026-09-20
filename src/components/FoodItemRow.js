@@ -4,7 +4,10 @@ import styles from '../style/components/FoodItemRowStyles';
 
 export default function FoodItemRow({ name, subtitle, kcal, onPress, onRemove }) {
   return (
-    <Pressable onPress={onPress} style={styles.row}>
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [styles.row, pressed && { opacity: 0.9, transform: [{ scale: 0.99 }] }]}
+    >
       <View style={{ flex: 1 }}>
         <Text style={styles.name} numberOfLines={1}>{name}</Text>
         {!!subtitle && <Text style={styles.subtitle} numberOfLines={1}>{subtitle}</Text>}

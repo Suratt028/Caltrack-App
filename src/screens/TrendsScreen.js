@@ -115,55 +115,71 @@ export default function TrendsScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>เทรนด์สุขภาพ</Text>
+        <Text style={styles.title}>สถิติ</Text>
         <Text style={styles.subtitle}>ภาพรวม 7 วันล่าสุด</Text>
 
-        <Card>
-          <Text style={styles.sectionTitle}>แคลอรี่รายวัน</Text>
-          <CalorieTrendChart days={days} totalsByDay={totalsByDay} goal={profile.calorieGoal} />
-          <View style={styles.statsRow}>
-            <View style={styles.legendDot} />
-            <Text style={styles.legendText}>ในเป้าหมาย</Text>
-            <View style={[styles.legendDot, { backgroundColor: colors.chili, marginLeft: spacing.md }]} />
-            <Text style={styles.legendText}>เกินเป้าหมาย</Text>
+        <View style={styles.periodRow}>
+          <View style={[styles.periodChip, styles.periodChipActive]}>
+            <Text style={[styles.periodChipText, styles.periodChipTextActive]}>รายสัปดาห์</Text>
           </View>
-          <Text style={styles.avgText}>เฉลี่ย {avgKcal} kcal/วัน จากเป้าหมาย {profile.calorieGoal} kcal</Text>
-        </Card>
+          <View style={styles.periodChip}>
+            <Text style={styles.periodChipText}>รายเดือน</Text>
+          </View>
+        </View>
 
-        <Card style={{ marginTop: spacing.lg }}>
-          <Text style={styles.sectionTitle}>แนวโน้มน้ำหนัก</Text>
+        <View style={styles.summaryRow}>
+          <View style={styles.summaryCard}>
+            <Text style={styles.summaryLabel}>แคลอรี่เฉลี่ย</Text>
+            <Text style={styles.summaryValue}>{avgKcal}</Text>
+            <Text style={styles.summaryUnit}>kcal/วัน</Text>
+          </View>
+          <View style={styles.summaryCard}>
+            <Text style={styles.summaryLabel}>เป้าหมาย</Text>
+            <Text style={styles.summaryValue}>{profile.calorieGoal}</Text>
+            <Text style={styles.summaryUnit}>kcal/วัน</Text>
+          </View>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>แคลอรี่ที่ได้รับ</Text>
+          <View style={styles.chartContainer}>
+            <CalorieTrendChart days={days} totalsByDay={totalsByDay} goal={profile.calorieGoal} />
+          </View>
+          <View style={styles.legendRow}>
+            <View style={styles.legendItem}>
+              <View style={styles.legendDot} />
+              <Text style={styles.legendText}>ในเป้าหมาย</Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: colors.chili }]} />
+              <Text style={styles.legendText}>เกินเป้าหมาย</Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>แนวโน้มน้ำหนัก</Text>
           {weightPoints.length >= 2 ? (
-            <WeightTrendChart points={weightPoints} />
+            <View style={styles.chartContainer}><WeightTrendChart points={weightPoints} /></View>
           ) : (
-            <Text style={styles.emptyText}>บันทึกน้ำหนักอย่างน้อย 2 ครั้งเพื่อดูกราฟแนวโน้ม</Text>
+            <Text style={styles.cardSubtitle}>บันทึกน้ำหนักอย่างน้อย 2 ครั้งเพื่อดูกราฟแนวโน้ม</Text>
           )}
-          <View style={styles.weightInputRow}>
+          <View style={{ flexDirection: 'row', marginTop: 10 }}>
             <TextInput
-              style={styles.weightInput}
+              style={{ flex: 1, backgroundColor: colors.surfaceMuted, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: colors.ink, marginRight: 8 }}
               placeholder={`น้ำหนักวันนี้ (กก.) เช่น ${profile.weightKg}`}
               keyboardType="decimal-pad"
               value={weightInput}
               onChangeText={setWeightInput}
             />
-            <PrimaryButton title={savedWeight ? 'บันทึกแล้ว ✓' : 'บันทึก'} onPress={saveWeight} style={{ marginLeft: spacing.sm }} />
+            <PrimaryButton title={savedWeight ? '✓' : 'บันทึก'} onPress={saveWeight} style={{ minWidth: 96 }} />
           </View>
-        </Card>
+        </View>
 
-        <Card style={{ marginTop: spacing.lg }}>
-          <Text style={styles.sectionTitle}>สรุปโปรไฟล์</Text>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>BMR</Text>
-            <Text style={styles.summaryValue}>{profile.bmr} kcal/วัน</Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>TDEE</Text>
-            <Text style={styles.summaryValue}>{profile.tdee} kcal/วัน</Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>เป้าหมายแคลอรี่</Text>
-            <Text style={styles.summaryValue}>{profile.calorieGoal} kcal/วัน</Text>
-          </View>
-        </Card>
+        <View style={styles.insightBox}>
+          <Text style={styles.insightTitle}>สรุปประจำสัปดาห์</Text>
+          <Text style={styles.insightText}>คุณกำลังคงที่และยังอยู่ในช่วงควบคุมแคลอรี่ได้ดี โดยมีค่าเฉลี่ย {avgKcal} kcal ต่อวัน</Text>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );

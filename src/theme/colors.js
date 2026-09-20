@@ -1,44 +1,45 @@
 // Design tokens for CalTrack
-// Theme concept: "Thai market kitchen" — petrol green (fresh herbs/bai toey),
-// turmeric yellow (kha min, appetite/energy) and chili coral (prik) instead of
-// the generic mint-green fitness-app palette.
+// Warm cream + green palette inspired by the interactive mockup.
 
 export const colors = {
   // Base
-  bg: '#F7F8F6', // soft warm-white, slightly cool (not cream)
+  bg: '#FBF1E6',
   surface: '#FFFFFF',
-  surfaceMuted: '#EEF2EF',
-  border: '#E1E6E2',
+  surfaceMuted: '#F6EFE4',
+  border: '#ECE1D2',
 
   // Ink
-  ink: '#16221F', // near-black charcoal-green
-  inkMuted: '#5B6A65',
-  inkFaint: '#93A19C',
+  ink: '#2B2420',
+  inkMuted: '#7A7169',
+  inkFaint: '#B0A79C',
 
   // Brand
-  primary: '#0F5C56', // deep petrol/pandan green
-  primaryDark: '#0A413D',
-  primarySoft: '#D8E9E6',
+  primary: '#2F8F6B',
+  primaryDark: '#216B4F',
+  primarySoft: '#DDF1E6',
 
   // Accents
-  turmeric: '#F2A93B', // energy / calories / CTA
-  turmericSoft: '#FCEACB',
-  chili: '#E85C4A', // over-budget / alerts
-  chiliSoft: '#FBDCD6',
-  sage: '#6B9E78', // success / under-budget
+  turmeric: '#C08A3E',
+  turmericSoft: '#F5E8D3',
+  chili: '#F08A73',
+  chiliSoft: '#FBE2DA',
+  sky: '#4C8FC0',
+  skySoft: '#DCEAF7',
+  peach: '#F7D9B9',
+  peachSoft: '#FCEEDD',
 
   // Macro colors
-  protein: '#0F5C56',
-  carbs: '#F2A93B',
-  fat: '#E85C4A',
+  protein: '#2F8F6B',
+  carbs: '#C08A3E',
+  fat: '#4C8FC0',
 
   white: '#FFFFFF',
 };
 
 export const radius = {
-  sm: 10,
-  md: 16,
-  lg: 24,
+  sm: 12,
+  md: 18,
+  lg: 26,
   pill: 999,
 };
 
@@ -52,13 +53,13 @@ export const spacing = {
 };
 
 export const typography = {
-  display: { fontSize: 34, fontWeight: '800', letterSpacing: -0.5 },
-  h1: { fontSize: 24, fontWeight: '700', letterSpacing: -0.3 },
-  h2: { fontSize: 18, fontWeight: '700' },
+  display: { fontSize: 34, fontWeight: '800', letterSpacing: -0.4 },
+  h1: { fontSize: 28, fontWeight: '700', letterSpacing: -0.2 },
+  h2: { fontSize: 20, fontWeight: '700', letterSpacing: -0.1 },
   body: { fontSize: 15, fontWeight: '400' },
   bodyBold: { fontSize: 15, fontWeight: '600' },
-  caption: { fontSize: 12, fontWeight: '600', letterSpacing: 0.8 },
-  stat: { fontSize: 42, fontWeight: '800', letterSpacing: -1 },
+  caption: { fontSize: 12, fontWeight: '600', letterSpacing: 0.6 },
+  stat: { fontSize: 42, fontWeight: '800', letterSpacing: -0.8 },
 };
 
 export default { colors, radius, spacing, typography };

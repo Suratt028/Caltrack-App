@@ -23,6 +23,10 @@ function groupLogsByDate(logs = []) {
   }, {});
 }
 
+function isRemoteUser(user) {
+  return Boolean(user?.id && !String(user.id).startsWith('local_'));
+}
+
 export function AppProvider({ children }) {
   const [profile, setProfile] = useState(null); // null until onboarding completes
   const [user, setUser] = useState(null);
@@ -77,7 +81,7 @@ export function AppProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    if (user?.id) {
+    if (isRemoteUser(user)) {
       loadRemoteData(user.id);
     }
   }, [user, loadRemoteData]);
@@ -119,7 +123,9 @@ export function AppProvider({ children }) {
     };
 
     await persistUser(nextUser);
-    await loadRemoteData(nextUser.id);
+    if (isRemoteUser(nextUser)) {
+      await loadRemoteData(nextUser.id);
+    }
     return nextUser;
   }, [persistUser, loadRemoteData]);
 
@@ -155,7 +161,7 @@ export function AppProvider({ children }) {
       const merged = { ...rawProfile, ...goals };
       await persistProfile(merged);
 
-      if (user?.id) {
+      if (isRemoteUser(user)) {
         try {
           await saveProfile(user.id, merged);
         } catch (error) {
@@ -173,7 +179,7 @@ export function AppProvider({ children }) {
       const nextProfile = { ...merged, ...goals };
       await persistProfile(nextProfile);
 
-      if (user?.id) {
+      if (isRemoteUser(user)) {
         try {
           await saveProfile(user.id, nextProfile);
         } catch (error) {

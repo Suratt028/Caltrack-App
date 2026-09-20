@@ -6,5 +6,4 @@ export const MONGODB_DATA_API_KEY = process.env.EXPO_PUBLIC_MONGODB_DATA_API_KEY
 export const MONGODB_DATA_API_DATABASE = process.env.EXPO_PUBLIC_MONGODB_DATA_API_DATABASE || 'caltrack';
 export const MONGODB_DATA_API_COLLECTION = process.env.EXPO_PUBLIC_MONGODB_DATA_API_COLLECTION || 'foods';
 export const MONGODB_DATA_SOURCE = process.env.EXPO_PUBLIC_MONGODB_DATA_SOURCE || 'Cluster0';
-export const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY || '';
 

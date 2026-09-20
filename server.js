@@ -10,7 +10,7 @@ const { processFoodUpload } = require('./services/foodUploadService');
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
@@ -37,6 +37,42 @@ if (!uri) {
 
 let isMongoReady = false;
 
+function parseGeminiJson(text) {
+  const cleaned = String(text || '')
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim();
+  const start = cleaned.indexOf('{');
+  const end = cleaned.lastIndexOf('}');
+  if (start < 0 || end <= start) throw new Error('Gemini returned invalid JSON');
+  return JSON.parse(cleaned.slice(start, end + 1));
+}
+
+async function requestGemini(url, body) {
+  let lastError;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 25000);
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+      const data = await response.json();
+      if (response.ok) return data;
+      lastError = new Error(data?.error?.message || `Gemini HTTP ${response.status}`);
+      if (![408, 429, 500, 502, 503, 504].includes(response.status)) break;
+    } catch (error) {
+      lastError = error;
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+  throw lastError || new Error('Gemini request failed');
+}
+
 async function connectMongo() {
   if (!uri) return;
   try {
@@ -51,8 +87,6 @@ async function connectMongo() {
     isMongoReady = false;
   }
 }
-
-connectMongo();
 
 // Schema Definitions
 const userSchema = new mongoose.Schema({
@@ -85,9 +119,34 @@ const logSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
+const scanImageSchema = new mongoose.Schema({
+  userId: { type: String, required: false },
+  imageBase64: { type: String, required: true },
+  mimeType: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now },
+});
+
 const User = mongoose.model('User', userSchema, 'users');
 const Profile = mongoose.model('Profile', profileSchema, 'profiles');
 const Log = mongoose.model('Log', logSchema, 'logs');
+const ScanImage = mongoose.model('ScanImage', scanImageSchema, 'scanImages');
+
+// Flexible schema: the "foods" collection holds ~1,167 Thai food-composition
+// records with many optional micronutrient fields, so we don't lock it down.
+const foodSchema = new mongoose.Schema({}, { strict: false });
+const Food = mongoose.model('Food', foodSchema, 'foods');
+
+// Nutrient fields stored per 100g edible portion (see thaiFoods_full.json / seed-foods.js)
+const NUTRIENT_FIELDS = [
+  'kcal', 'water_g', 'protein_g', 'fat_g', 'carbAvailable_g', 'carbTotal_g', 'fiber_g', 'ash_g',
+  'calcium_mg', 'phosphorus_mg', 'magnesium_mg', 'sodium_mg', 'potassium_mg', 'iron_mg', 'copper_mg',
+  'zinc_mg', 'iodine_ug', 'betacarotene_ug', 'retinol_ug', 'vitaminA_RAE_ug', 'thiamin_mg',
+  'riboflavin_mg', 'niacin_mg', 'vitaminC_mg', 'vitaminE_mg', 'sugar_g', 'cholesterol_mg', 'folate_ug',
+];
+
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
 // Helper Functions
 function hashPassword(password) {
@@ -346,20 +405,125 @@ app.patch('/api/logs/:userId/:logId', async (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
+// FOOD DATABASE — SEARCH, LOOKUP, NUTRITION CALCULATION
+// ---------------------------------------------------------------------------
+
+// GET /api/foods/search?q=ข้าว&limit=20
+// Searches nameTh, nameEn and scientificName with a case-insensitive partial match.
+// Works for food names, fruits, and dish/ingredient descriptions alike, since the
+// dataset's "name" fields already include ingredient wording (e.g. "ข้าวผัดกระเพราหมูสับ").
+app.get('/api/foods/search', async (req, res) => {
+  try {
+    const q = (req.query.q || '').trim();
+    const limit = Math.min(parseInt(req.query.limit, 10) || 20, 100);
+
+    if (!q) {
+      return res.json({ results: [], count: 0 });
+    }
+
+    const regex = new RegExp(escapeRegex(q), 'i');
+    const results = await Food.find({
+      $or: [{ nameTh: regex }, { nameEn: regex }, { scientificName: regex }],
+    })
+      .limit(limit)
+      .lean();
+
+    // Rank names that start with the query above names that merely contain it
+    const qLower = q.toLowerCase();
+    const startsWith = (s) => (s || '').toLowerCase().startsWith(qLower);
+    results.sort((a, b) => (startsWith(b.nameTh) || startsWith(b.nameEn)) - (startsWith(a.nameTh) || startsWith(a.nameEn)));
+
+    res.json({ results, count: results.length });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/foods/:foodId  — full detail for one item (all nutrient fields, per 100g)
+app.get('/api/foods/:foodId', async (req, res) => {
+  try {
+    const food = await Food.findOne({ foodId: req.params.foodId }).lean();
+    if (!food) return res.status(404).json({ error: 'food not found' });
+    res.json({ food });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/nutrition/calculate
+// Body: { items: [{ foodId: "1001", grams: 150 }, { foodId: "4012", grams: 80 }] }
+// Scales each food's per-100g values by grams/100 and returns per-item + total nutrition.
+app.post('/api/nutrition/calculate', async (req, res) => {
+  try {
+    const { items } = req.body;
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: 'items array is required, e.g. [{ foodId, grams }]' });
+    }
+
+    const foodIds = items.map((i) => String(i.foodId));
+    const foods = await Food.find({ foodId: { $in: foodIds } }).lean();
+    const foodMap = new Map(foods.map((f) => [String(f.foodId), f]));
+
+    const totals = Object.fromEntries(NUTRIENT_FIELDS.map((k) => [k, 0]));
+    const breakdown = [];
+    const notFound = [];
+
+    for (const item of items) {
+      const food = foodMap.get(String(item.foodId));
+      const grams = Number(item.grams) || 0;
+
+      if (!food) {
+        notFound.push(item.foodId);
+        continue;
+      }
+
+      const factor = grams / 100; // stored values are per 100g
+      const nutrition = {};
+      for (const field of NUTRIENT_FIELDS) {
+        const per100 = food[field];
+        const value = per100 == null ? null : Math.round(per100 * factor * 100) / 100;
+        nutrition[field] = value;
+        if (value != null) totals[field] = Math.round((totals[field] + value) * 100) / 100;
+      }
+
+      breakdown.push({
+        foodId: food.foodId,
+        nameTh: food.nameTh,
+        nameEn: food.nameEn,
+        grams,
+        nutrition,
+      });
+    }
+
+    res.json({ totals, breakdown, notFound });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ---------------------------------------------------------------------------
 // AI VISION FOOD SCAN ENDPOINT
 // ---------------------------------------------------------------------------
 app.post('/api/ai/scan', async (req, res) => {
   try {
-    const { imageBase64, mimeType = 'image/jpeg' } = req.body;
+    const { imageBase64, mimeType = 'image/jpeg', userId = null } = req.body;
     if (!imageBase64) {
       return res.status(400).json({ error: 'imageBase64 is required' });
     }
 
     const apiKey = geminiApiKey;
+    const cleanBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+    let scanId = null;
+
+    try {
+      const savedScan = await ScanImage.create({ userId, imageBase64: cleanBase64, mimeType });
+      scanId = savedScan._id.toString();
+    } catch (storageError) {
+      console.warn('Scan image could not be saved:', storageError.message);
+    }
 
     if (apiKey) {
-      const cleanBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, '');
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`;
 
       const promptText = `
 คุณเป็นผู้เชี่ยวชาญด้านโภชนาการ วิเคราะห์ภาพอาหารนี้และตอบเป็น JSON เท่านั้นในรูปแบบต่อไปนี้:
@@ -369,15 +533,22 @@ app.post('/api/ai/scan', async (req, res) => {
   "protein": โปรตีนกี่กรัม (ตัวเลข integer/float),
   "carbs": คาร์โบไฮเดรตกี่กรัม (ตัวเลข integer/float),
   "fat": ไขมันกี่กรัม (ตัวเลข integer/float),
+  "fiber": ใยอาหารกี่กรัม (ตัวเลข integer/float),
+  "sugar": น้ำตาลกี่กรัม (ตัวเลข integer/float),
+  "sodium": โซเดียมกี่มิลลิกรัม (ตัวเลข integer/float),
+  "calcium": แคลเซียมกี่มิลลิกรัม (ตัวเลข integer/float),
+  "iron": ธาตุเหล็กกี่มิลลิกรัม (ตัวเลข integer/float),
+  "vitaminC": วิตามินซีกี่มิลลิกรัม (ตัวเลข integer/float),
+  "foodGroups": ["ข้าว-แป้ง", "ผัก", "ผลไม้", "เนื้อสัตว์-ไข่-ถั่ว", "นม"] เฉพาะกลุ่มที่เห็นในภาพ,
   "confidence": ค่าความมั่นใจในการระบุอาหาร (0.5 - 0.99)
 }
 ห้ามใส่ข้อความอื่น ห้ามใส่ markdown block เพิ่มเติม ให้ตอบเพียง JSON string เท่านั้น
 `;
 
-      const response = await fetch(geminiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      let data;
+      try {
+        data = await requestGemini(geminiUrl, {
+          generationConfig: { responseMimeType: 'application/json' },
           contents: [
             {
               parts: [
@@ -391,19 +562,53 @@ app.post('/api/ai/scan', async (req, res) => {
               ],
             },
           ],
-        }),
-      });
+        });
+      } catch (geminiError) {
+        console.warn('Gemini scan unavailable; using fallback:', geminiError.message);
+      }
 
-      const data = await response.json();
-      if (response.ok && data?.candidates?.[0]?.content?.parts?.[0]?.text) {
-        let textResult = data.candidates[0].content.parts[0].text.trim();
-        // Clean markdown backticks if returned
-        textResult = textResult.replace(/^```(json)?\s*/i, '').replace(/\s*```$/i, '').trim();
-        const parsed = JSON.parse(textResult);
+      if (data?.candidates?.[0]?.content?.parts?.[0]?.text) {
+        const parsed = parseGeminiJson(data.candidates[0].content.parts[0].text);
+
+        // Cross-reference the AI-identified name against our own food database.
+        // Gemini's kcal/protein/etc. are a rough visual estimate for the whole
+        // portion in the photo; a dbMatch gives real per-100g lab values the
+        // client can scale by an actual gram amount for a more accurate figure.
+        let dbMatch = null;
+        try {
+          const rawName = (parsed.name || '').trim();
+          const keyword = rawName.split(/[,\s]+/)[0]; // first word/keyword tends to match FCT naming style
+          if (keyword) {
+            const regex = new RegExp(escapeRegex(keyword), 'i');
+            const match = await Food.findOne({ $or: [{ nameTh: regex }, { nameEn: regex }] }).lean();
+            if (match) {
+              dbMatch = {
+                foodId: match.foodId,
+                nameTh: match.nameTh,
+                nameEn: match.nameEn,
+                per100g: {
+                  kcal: match.kcal,
+                  protein_g: match.protein_g,
+                  fat_g: match.fat_g,
+                  carbAvailable_g: match.carbAvailable_g,
+                  fiber_g: match.fiber_g,
+                  sugar_g: match.sugar_g,
+                  sodium_mg: match.sodium_mg,
+                  calcium_mg: match.calcium_mg,
+                  iron_mg: match.iron_mg,
+                  vitaminC_mg: match.vitaminC_mg,
+                },
+              };
+            }
+          }
+        } catch (matchErr) {
+          console.warn('Food DB match lookup failed:', matchErr.message);
+        }
 
         return res.json({
           success: true,
           source: 'gemini_vision',
+          scanId,
           usedApiKey: !!apiKey,
           result: {
             name: parsed.name || 'อาหารไม่ทราบชื่อ',
@@ -411,8 +616,16 @@ app.post('/api/ai/scan', async (req, res) => {
             protein: Number(parsed.protein) || 15,
             carbs: Number(parsed.carbs) || 45,
             fat: Number(parsed.fat) || 12,
+            fiber: Number(parsed.fiber) || 0,
+            sugar: Number(parsed.sugar) || 0,
+            sodium: Number(parsed.sodium) || 0,
+            calcium: Number(parsed.calcium) || 0,
+            iron: Number(parsed.iron) || 0,
+            vitaminC: Number(parsed.vitaminC) || 0,
+            foodGroups: Array.isArray(parsed.foodGroups) ? parsed.foodGroups : [],
             confidence: Number(parsed.confidence) || 0.9,
           },
+          dbMatch, // null if no confident match found in our own database
         });
       }
     }
@@ -429,6 +642,7 @@ app.post('/api/ai/scan', async (req, res) => {
     return res.json({
       success: true,
       source: apiKey ? 'fallback_error' : 'fallback_no_key',
+      scanId,
       result: picked,
     });
   } catch (err) {
@@ -437,18 +651,43 @@ app.post('/api/ai/scan', async (req, res) => {
   }
 });
 
-// Server Listen Configuration with Error Handling
-const port = process.env.PORT || 3001;
-
-const server = app.listen(port, () => {
-  console.log(`🚀 Server listening on port ${port}`);
-});
-
-server.on('error', (err) => {
-  if (err.code === 'EADDRINUSE') {
-    console.error(`⚠️ Port ${port} is currently in use.`);
-    console.error('👉 Please run "taskkill /f /im node.exe" in CMD or change PORT in .env file.');
-  } else {
-    console.error('❌ Server error:', err);
+app.get('/api/scan-images/:scanId', async (req, res) => {
+  try {
+    const scan = await ScanImage.findById(req.params.scanId).lean();
+    if (!scan) return res.status(404).json({ error: 'scan image not found' });
+    res.json({ scan });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
+
+// ---------------------------------------------------------------------------
+// SERVER STARTUP
+// ---------------------------------------------------------------------------
+// FIX: previously connectMongo() was fired-and-forgotten while app.listen()
+// ran immediately after, so the server could accept requests (e.g. register)
+// before Mongoose had actually finished connecting to Atlas. Any query that
+// arrived in that window would sit in Mongoose's command buffer and, if the
+// connection wasn't ready within 10s, fail with:
+//   "Operation `logs.insertOne()` buffering timed out after 10000ms"
+// Waiting for connectMongo() to finish before app.listen() removes that race.
+const port = process.env.PORT || 3001;
+
+async function startServer() {
+  await connectMongo();
+
+  const server = app.listen(port, () => {
+    console.log(`🚀 Server listening on port ${port}`);
+  });
+
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`⚠️ Port ${port} is currently in use.`);
+      console.error('👉 Please run "taskkill /f /im node.exe" in CMD or change PORT in .env file.');
+    } else {
+      console.error('❌ Server error:', err);
+    }
+  });
+}
+
+startServer();

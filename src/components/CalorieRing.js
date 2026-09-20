@@ -33,14 +33,13 @@ export default function CalorieRing({ consumed, goal, size = 220, strokeWidth = 
           stroke={ringColor}
           strokeWidth={strokeWidth}
           strokeLinecap="round"
-          strokeDasharray={`${circumference}, ${circumference}`}
+          strokeDasharray={[circumference, circumference]}
           strokeDashoffset={circumference * (1 - pct)}
           fill="none"
-          rotation="-90"
-          origin={`${size / 2}, ${size / 2}`}
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
         />
       </Svg>
-      <View style={styles.centerLabel} pointerEvents="none">
+      <View style={styles.centerLabel}>
         <Text style={[typography.stat, { color: colors.ink }]}>{Math.round(Math.abs(remaining))}</Text>
         <Text style={styles.caption}>{isOver ? 'kcal เกินเป้า' : 'kcal เหลือวันนี้'}</Text>
       </View>

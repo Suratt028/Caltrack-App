@@ -1,10 +1,44 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL } from '../config';
+import { registerLocalUser, loginLocalUser } from './localAuth';
+
+function shouldUseLocalAuth() {
+  const mode = typeof process !== 'undefined' && process.env ? (process.env.EXPO_PUBLIC_AUTH_MODE || process.env.AUTH_MODE || '').toLowerCase() : '';
+  return mode === 'local' || mode === 'mock' || mode === 'offline';
+}
+
+function isAtlasUnavailableError(error) {
+  const message = String(error?.message || error || '');
+  return (
+    message.includes('fetch failed') ||
+    message.includes('timed out') ||
+    message.includes('ECONNREFUSED') ||
+    message.includes('ENOTFOUND') ||
+    message.includes('Failed to connect') ||
+    message.includes('Network request failed') ||
+    message.includes('Request failed')
+  );
+}
 
 async function requestJson(path, options = {}) {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
-    ...options,
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+  let response;
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      headers: { 'Content-Type': 'application/json' },
+      ...options,
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error?.name === 'AbortError') {
+      throw new Error('เชื่อมต่อเซิร์ฟเวอร์นานเกินไป กรุณาตรวจสอบว่าเปิด Backend และอยู่เครือข่ายเดียวกัน');
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
@@ -15,19 +49,35 @@ async function requestJson(path, options = {}) {
 }
 
 export async function registerUser(email, password, displayName) {
-  const payload = await requestJson('/auth/register', {
-    method: 'POST',
-    body: JSON.stringify({ email, password, displayName }),
-  });
-  return payload.user;
+  try {
+    const payload = await requestJson('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ email, password, displayName }),
+    });
+    return payload.user;
+  } catch (error) {
+    if (!shouldUseLocalAuth() && !isAtlasUnavailableError(error)) {
+      throw error;
+    }
+
+    return registerLocalUser({ email, password, displayName, storage: AsyncStorage });
+  }
 }
 
 export async function loginUser(email, password) {
-  const payload = await requestJson('/auth/login', {
-    method: 'POST',
-    body: JSON.stringify({ email, password }),
-  });
-  return payload.user;
+  try {
+    const payload = await requestJson('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    });
+    return payload.user;
+  } catch (error) {
+    if (!shouldUseLocalAuth() && !isAtlasUnavailableError(error)) {
+      throw error;
+    }
+
+    return loginLocalUser({ email, password, storage: AsyncStorage });
+  }
 }
 
 export async function saveProfile(userId, profile) {

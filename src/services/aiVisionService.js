@@ -1,25 +1,29 @@
 // src/services/aiVisionService.js
-import { API_BASE_URL, GEMINI_API_KEY } from '../config';
+import { API_BASE_URL } from '../config';
 
 /**
  * Analyzes an image of food using AI Vision (Gemini 1.5 Flash Vision / Server API).
  * @param {string} base64 - Base64 encoded string of the image
  * @param {string} mimeType - Image mime type (default: 'image/jpeg')
- * @returns {Promise<{ name: string, kcal: number, protein: number, carbs: number, fat: number, confidence: number, source: string }>}
+ * @returns {Promise<{
+ *   name: string, kcal: number, protein: number, carbs: number, fat: number,
+ *   confidence: number, source: string,
+ *   dbMatch: { foodId: string, nameTh: string, nameEn: string, per100g: object } | null
+ * }>}
  */
-export async function analyzeFoodImage(base64, mimeType = 'image/jpeg') {
+export async function analyzeFoodImage(base64, mimeType = 'image/jpeg', userId = null) {
   if (!base64) {
     throw new Error('Image base64 data is required for AI analysis');
   }
 
   const cleanBase64 = base64.replace(/^data:image\/\w+;base64,/, '');
 
-  // 1. Try Backend API endpoint first
+  // Keep the Gemini API key on the server; the mobile app only calls this endpoint.
   try {
     const response = await fetch(`${API_BASE_URL}/ai/scan`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ imageBase64: cleanBase64, mimeType }),
+      body: JSON.stringify({ imageBase64: cleanBase64, mimeType, userId }),
     });
 
     if (response.ok) {
@@ -28,71 +32,19 @@ export async function analyzeFoodImage(base64, mimeType = 'image/jpeg') {
         return {
           ...data.result,
           source: data.source || 'gemini_vision',
+          scanId: data.scanId || null,
+          // Real per-100g nutrition from our own Thai food database, if Gemini's
+          // guessed name matched something in it. null when no confident match.
+          dbMatch: data.dbMatch || null,
         };
       }
     }
   } catch (err) {
-    console.warn('Backend AI Scan endpoint unavailable, trying direct API call if key present...', err.message);
+    console.warn('Backend AI Scan endpoint unavailable:', err.message);
   }
 
-  // 2. Direct Gemini API call if API key present on client
-  if (GEMINI_API_KEY) {
-    try {
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-      const promptText = `
-คุณเป็นผู้เชี่ยวชาญด้านโภชนาการ วิเคราะห์ภาพอาหารนี้และตอบเป็น JSON เท่านั้นในรูปแบบต่อไปนี้:
-{
-  "name": "ชื่ออาหารภาษาไทย (ถ้าเป็นอาหารต่างชาติให้ทับศัพท์)",
-  "kcal": แคลอรี่โดยประมาณ (ตัวเลข integer),
-  "protein": โปรตีนกี่กรัม (ตัวเลข integer/float),
-  "carbs": คาร์โบไฮเดรตกี่กรัม (ตัวเลข integer/float),
-  "fat": ไขมันกี่กรัม (ตัวเลข integer/float),
-  "confidence": ค่าความมั่นใจในการระบุอาหาร (0.5 - 0.99)
-}
-ห้ามใส่ข้อความอื่น ห้ามใส่ markdown block เพิ่มเติม ให้ตอบเพียง JSON string เท่านั้น
-`;
-
-      const res = await fetch(geminiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                { text: promptText },
-                {
-                  inline_data: {
-                    mime_type: mimeType,
-                    data: cleanBase64,
-                  },
-                },
-              ],
-            },
-          ],
-        }),
-      });
-
-      const data = await res.json();
-      if (res.ok && data?.candidates?.[0]?.content?.parts?.[0]?.text) {
-        let text = data.candidates[0].content.parts[0].text.trim();
-        text = text.replace(/^```(json)?\s*/i, '').replace(/\s*```$/i, '').trim();
-        const parsed = JSON.parse(text);
-        return {
-          name: parsed.name || 'อาหารไม่ทราบชื่อ',
-          kcal: Number(parsed.kcal) || 350,
-          protein: Number(parsed.protein) || 15,
-          carbs: Number(parsed.carbs) || 45,
-          fat: Number(parsed.fat) || 12,
-          confidence: Number(parsed.confidence) || 0.92,
-          source: 'gemini_vision_direct',
-        };
-      }
-    } catch (directErr) {
-      console.warn('Direct Gemini API call error:', directErr.message);
-    }
-  }
-
-  // 3. Fallback response with random Thai dish
+  // Backend returns its own fallback when Gemini is unavailable. This local
+  // fallback keeps the screen usable when the backend itself cannot be reached.
   const sampleFoods = [
     { name: 'ข้าวมันไก่', kcal: 596, protein: 24, carbs: 70, fat: 24, confidence: 0.88 },
     { name: 'ผัดไทยกุ้งสด', kcal: 545, protein: 22, carbs: 64, fat: 20, confidence: 0.85 },
@@ -104,5 +56,7 @@ export async function analyzeFoodImage(base64, mimeType = 'image/jpeg') {
   return {
     ...picked,
     source: 'mock_fallback',
+    scanId: null,
+    dbMatch: null,
   };
 }
