@@ -1,95 +1,221 @@
-# CalTrack — แอปนับแคลอรี่ (React Native + Expo)
+# CalTrack
 
-แอปตัวอย่างที่รวมแนวคิดเด่นจาก 3 แอปที่เคยคุยกันไว้:
+แอปนับแคลอรี่และติดตามโภชนาการภาษาไทย สร้างด้วย React Native + Expo โดยมี Node.js/Express เป็น backend และ MongoDB เป็นฐานข้อมูล แอปสามารถใช้งานแบบ local ได้เมื่อ backend หรือเครือข่ายยังไม่พร้อม
 
-- **MyFitnessPal** → ค้นหา/บันทึกอาหารด้วยตนเอง + แถบสารอาหาร (โปรตีน/คาร์บ/ไขมัน)
-- **NubCal / Kalguroo** → ถ่ายรูปอาหารแล้วให้ Gemini Vision ช่วยประเมินแคลอรี่และสารอาหาร
-- แนวคิด **dashboard วิเคราะห์เทรนด์สุขภาพ** จากบทสนทนาก่อนหน้า → หน้า "เทรนด์" ที่มีกราฟแคลอรี่ 7 วันและกราฟน้ำหนัก
+## ฟีเจอร์หลัก
 
-สร้างด้วย `npx create-expo-app` (blank template) + React Navigation — ไม่ได้ก็อปโค้ดจากแอปใดๆ มาโดยตรง เป็นการ implement ฟีเจอร์แนวเดียวกันขึ้นใหม่ทั้งหมด
+- สมัครสมาชิกและเข้าสู่ระบบผ่าน backend หรือใช้ local authentication สำหรับการพัฒนา/ใช้งานออฟไลน์
+- กรอกข้อมูลส่วนตัวเพื่อคำนวณ BMR, TDEE และเป้าหมายแคลอรี่รายวัน
+- ค้นหาอาหารจากฐานข้อมูลอาหารไทยและคำนวณสารอาหารตามน้ำหนักเป็นกรัม
+- บันทึกอาหารรายวัน พร้อมแคลอรี่ โปรตีน คาร์โบไฮเดรต และไขมัน
+- ถ่ายรูปหรือเลือกรูปอาหารจากคลังภาพ แล้วให้ Gemini Vision ประเมินโภชนาการ
+- จับคู่ผลจาก AI กับฐานข้อมูลอาหารเพื่อใช้ค่าต่อ 100 กรัมที่ละเอียดขึ้น
+- ดูสรุปแคลอรี่ 7 วันและแนวโน้มน้ำหนัก
+- เก็บข้อมูลในเครื่องด้วย AsyncStorage และ sync profile/logs ไปยัง backend สำหรับบัญชี remote
+
+## เทคโนโลยี
+
+- **Mobile:** React Native 0.86, Expo 57, React Navigation
+- **Backend:** Node.js, Express, Mongoose, Multer
+- **Database:** MongoDB / MongoDB Atlas
+- **AI:** Gemini Vision ผ่าน backend
+- **Storage ฝั่ง mobile:** AsyncStorage
+- **Charts:** วาดด้วย `react-native-svg` โดยไม่ใช้ chart library เพิ่มเติม
+
+## ความต้องการของระบบ
+
+- Node.js 18 ขึ้นไป
+- npm
+- MongoDB หรือ MongoDB Atlas หากต้องการใช้ backend และข้อมูล remote
+- Expo Go สำหรับทดสอบบนมือถือ หรือ Android Studio สำหรับ emulator/native build
+- Gemini API key หากต้องการวิเคราะห์ภาพด้วย Gemini จริง
 
 ## เริ่มต้นใช้งาน
 
-ต้องมี **Node.js 18+** และ **npm** ในเครื่องก่อน
+### 1. ติดตั้ง dependencies
 
 ```bash
-cd CalTrackApp
+git clone https://github.com/Suratt028/Caltrack-App.git
+cd Caltrack-App
 npm install
 ```
 
-### วิธีที่ 1 — รันเร็วที่สุดด้วย Expo Go (แนะนำระหว่างพัฒนา)
+### 2. ตั้งค่า environment
 
-```bash
-npx expo start
+คัดลอก `.env.example` เป็น `.env` แล้วแก้ค่าตามสภาพแวดล้อม:
+
+```env
+MONGODB_URI="mongodb+srv://<username>:<password>@<cluster>.mongodb.net/caltrack?retryWrites=true&w=majority"
+MONGODB_DB_NAME="caltrack"
+AUTH_SECRET="เปลี่ยนเป็นค่าลับที่แข็งแรง"
+PORT=3001
+EXPO_PUBLIC_API_BASE_URL=http://10.0.2.2:3001/api
+EXPO_PUBLIC_AUTH_MODE=local
+GEMINI_API_KEY="your-gemini-api-key"
 ```
 
-จะได้ QR code ขึ้นมา ให้เปิดแอป **Expo Go** (โหลดจาก Play Store) ในมือถือ แล้วสแกน QR — ไม่ต้องใช้ Android Studio เลยในขั้นนี้ เหมาะกับตอนพัฒนา/เดโมให้อาจารย์ดูไว
+| ตัวแปร | ใช้สำหรับ |
+| --- | --- |
+| `MONGODB_URI` | connection string ของ MongoDB |
+| `MONGODB_DB_NAME` | ชื่อฐานข้อมูล ค่าเริ่มต้นคือ `caltrack` |
+| `AUTH_SECRET` | secret ที่ใช้ hash password ฝั่ง backend |
+| `PORT` | พอร์ต backend ค่าเริ่มต้นคือ `3001` |
+| `EXPO_PUBLIC_API_BASE_URL` | URL ที่ mobile ใช้เรียก API |
+| `EXPO_PUBLIC_AUTH_MODE` | ตั้งเป็น `local`, `mock` หรือ `offline` เพื่อบังคับ local auth |
+| `GEMINI_API_KEY` | API key ของ Google Gemini ที่ควรเก็บไว้ฝั่ง server เท่านั้น |
 
-### วิธีที่ 2 — เปิดเป็นโปรเจค Android จริงใน Android Studio
+Backend ยังรองรับตัวแปรทางเลือก `MONGODB_USERNAME`, `MONGODB_PASSWORD`, `MONGODB_HOST`, `FATSECRET_CLIENT_ID`, `FATSECRET_CLIENT_SECRET`, `FATSECRET_CUSTOMER_KEY` และ `FATSECRET_OAUTH_URL`
 
-Expo (managed workflow) ไม่ได้มีโฟลเดอร์ `android/` มาให้ตั้งแต่แรก ต้อง "prebuild" ให้ Expo สร้างโปรเจค native ให้ก่อน:
+### 3. รัน backend
+
+```bash
+npm run server
+```
+
+เมื่อเชื่อมต่อสำเร็จ backend จะฟังที่ `http://localhost:3001` ตรวจสอบได้ด้วย `GET /health` หรือ `GET /api/health` หากไม่มี `MONGODB_URI` server อาจเริ่มทำงานได้ แต่ route ที่อ่านหรือเขียนข้อมูล MongoDB จะใช้ไม่ได้
+
+### 4. รัน mobile app
+
+```bash
+npm start
+npm run android
+npm run ios
+npm run web
+```
+
+ค่า API URL ตามอุปกรณ์:
+
+- Android emulator: `http://10.0.2.2:3001/api`
+- iOS simulator: `http://localhost:3001/api`
+- Expo Go หรือมือถือจริง: ใช้ IP ของคอมพิวเตอร์ในวง LAN เช่น `http://192.168.1.10:3001/api`
+
+ต้องเปิด backend และให้มือถือกับคอมพิวเตอร์อยู่เครือข่ายเดียวกันเมื่อใช้ Expo Go หรือมือถือจริง
+
+### 5. Android native build
+
+โปรเจกต์นี้ยังไม่เก็บโฟลเดอร์ `android/` และ `ios/` ไว้ใน repository เพราะเป็น Expo managed workflow:
 
 ```bash
 npx expo prebuild --platform android
-```
-
-คำสั่งนี้จะสร้างโฟลเดอร์ `android/` ขึ้นมา จากนั้น:
-
-1. เปิด Android Studio
-2. เลือก **Open** แล้วชี้ไปที่โฟลเดอร์ `CalTrackApp/android`
-3. รอ Gradle sync เสร็จ แล้วกด Run ▶ บน emulator หรือมือถือจริงที่เปิด USB debugging
-
-หรือจะให้ Expo จัดการทั้ง prebuild + build + ติดตั้งให้อัตโนมัติในคำสั่งเดียวก็ได้:
-
-```bash
 npx expo run:android
 ```
 
-(ต้องมี Android SDK/Android Studio ติดตั้งและตั้งค่า `ANDROID_HOME` ไว้แล้ว)
+## โครงสร้างโปรเจกต์
 
-## โครงสร้างโปรเจค
-
-```
+```text
 CalTrackApp/
-├── App.js                     # entry point, ต่อ Context + เช็ค onboarding
-├── app.json                   # ชื่อแอป, ไอคอน, permission กล้อง/คลังภาพ
-└── src/
-    ├── theme/colors.js         # สี/ระยะห่าง/ตัวอักษร (design tokens)
-    ├── context/AppContext.js   # state กลาง + persist ด้วย AsyncStorage
-    ├── utils/calculations.js   # สูตร BMR/TDEE (Mifflin-St Jeor) + เป้าหมายแคลอรี่
-    ├── data/foodDatabase.js    # ฐานข้อมูลอาหารไทย+สากลตัวอย่าง (แทนที่ด้วย API จริงภายหลัง)
-    ├── navigation/RootNavigator.js  # bottom tabs
-    ├── screens/
-    │   ├── OnboardingScreen.js  # กรอกข้อมูลครั้งแรก คำนวณเป้าหมาย
-    │   ├── HomeScreen.js        # dashboard วันนี้ (วงแหวนแคลอรี่ + macro)
-    │   ├── LogScreen.js         # ค้นหา/บันทึกอาหารด้วยตนเอง
-   │   ├── ScanScreen.js        # ถ่ายรูป + ผล AI และสารอาหารรอง
-    │   ├── TrendsScreen.js      # กราฟแคลอรี่ 7 วัน + กราฟน้ำหนัก
-    │   └── ProfileScreen.js     # แก้ไขข้อมูล/เป้าหมาย, ล้างข้อมูล
-    └── components/              # CalorieRing, MacroBar, Card, ปุ่ม, ฯลฯ
+├── App.js                         # จุดเริ่มต้นของแอปและหน้าตรวจสถานะผู้ใช้
+├── index.js                       # register root component
+├── app.json                       # Expo metadata, icon และ permissions
+├── package.json                   # dependencies และ scripts
+├── server.js                      # Express server, models และ API routes
+├── seed-foods.js                  # นำเข้า thaiFoods_full.json ลง collection foods
+├── thaiFoods_full.json            # dataset อาหารไทยฉบับเต็ม
+├── controllers/                   # controller สำหรับ food upload/scan
+├── models/                        # Mongoose models
+├── services/                      # backend services เช่น Gemini และ FatSecret
+├── scripts/                       # scripts เสริม
+├── src/
+│   ├── config.js                  # API URL และ MongoDB Data API settings
+│   ├── context/AppContext.js      # state กลางและ AsyncStorage persistence
+│   ├── components/                # UI components ที่ใช้ร่วมกัน
+│   ├── data/foodDatabase.js       # local food database/fallback
+│   ├── navigation/RootNavigator.js# bottom tab navigation
+│   ├── screens/                   # Auth, onboarding, dashboard, log, scan, trends, profile
+│   ├── services/                  # mobile auth, API, AI vision และ nutrition services
+│   ├── style/                     # styles ของ app, screens และ components
+│   ├── theme/colors.js            # design tokens ด้านสี
+│   └── utils/calculations.js      # สูตร BMR/TDEE และเป้าหมายสารอาหาร
+├── tests/localAuth.test.js        # test สำหรับ local authentication
+└── docs/CalTrack_Chapter1-4.md    # เอกสารประกอบโครงงาน
 ```
 
-## ⚠️ ข้อจำกัดที่ควรรู้ก่อนใช้จริง
+## Flow ของแอป
 
-1. **AI วิเคราะห์รูปอาหาร (`src/screens/ScanScreen.js`)**
-   ระบบเรียก Gemini Vision เพื่อประเมินชื่ออาหาร แคลอรี่ สารอาหารหลัก สารอาหารรอง และหมู่อาหารที่มองเห็น
-   ค่าจากภาพเป็นค่าประมาณ ไม่ใช่ผลตรวจทางห้องปฏิบัติการ หากพบรายการตรงฐานข้อมูล ผู้ใช้สามารถระบุน้ำหนัก
-   เพื่อคำนวณสารอาหารตามข้อมูลต่อ 100 กรัมได้แม่นยำขึ้น
+1. `App.js` โหลด `AppProvider` และ state จาก AsyncStorage
+2. หากยังไม่มี user จะแสดง `AuthScreen`
+3. หาก login แล้วแต่ยังไม่มี profile จะแสดง `OnboardingScreen`
+4. เมื่อ onboarding เสร็จ จะเข้าสู่ `RootNavigator`
+5. Bottom tabs ประกอบด้วย `Home`, `Log`, `Scan`, `Trends` และ `Profile`
+6. ผู้ใช้ remote จะ sync profile และ food logs ไปยัง backend แต่ข้อมูล local ยังถูกเก็บไว้ในเครื่องเสมอ
 
-2. **ฐานข้อมูลอาหาร (`src/data/foodDatabase.js`)**
-   มีแค่ ~40 เมนูตัวอย่าง ของจริงควรต่อกับฐานข้อมูลอาหารไทยของสถาบันโภชนาการ มหาวิทยาลัยมหิดล (INMU)
-   และ/หรือ USDA FoodData Central API สำหรับเมนูสากล
+สูตรใช้ Mifflin-St Jeor, activity factors `1.2`, `1.375`, `1.55`, `1.725`, `1.9`, เป้าหมายลดน้ำหนัก `TDEE - 500 kcal`, รักษาน้ำหนัก `TDEE`, เพิ่มน้ำหนัก `TDEE + 300 kcal`, calorie floor `1,200 kcal` และ macro split เริ่มต้น โปรตีน 25%, คาร์โบไฮเดรต 45%, ไขมัน 30%
 
-3. **การจัดเก็บข้อมูล** — แอปเก็บข้อมูลในเครื่องด้วย AsyncStorage และ sync log/profile ไปยัง Node.js + MongoDB
-   เมื่อ backend พร้อมใช้งาน การสแกนทุกครั้งจะบันทึกภาพใน collection `scanImages` และคืน `scanId` ผูกกับรายการอาหาร
-   หาก backend หรือเครือข่ายไม่พร้อม แอปยังใช้งาน local ได้ แต่ภาพจะยังไม่ถูกส่งเข้าฐานข้อมูลจนกว่าจะสแกนใหม่
+## Backend API
 
-4. **ยังไม่ได้ต่อ wearable API** (Google Fit/Health Connect, Fitbit ฯลฯ) — ตอนนี้ผู้ใช้กรอกน้ำหนัก/ข้อมูลเองทั้งหมด
+```text
+GET    /health
+GET    /api/health
+GET    /api/diagnostics
+POST   /api/auth/register
+POST   /api/auth/login
+GET    /api/profiles/:userId
+PUT    /api/profiles/:userId
+DELETE /api/profiles/:userId
+GET    /api/logs/:userId
+POST   /api/logs/:userId
+PATCH  /api/logs/:userId/:logId
+GET    /api/foods/search?q=<query>&limit=<number>
+GET    /api/foods/:foodId
+POST   /api/nutrition/calculate
+POST   /api/food/scan
+POST   /api/food/upload
+POST   /api/ai/scan
+GET    /api/scan-images/:scanId
+GET/POST /api/seed-demo
+POST   /api/fatsecret/token
+```
 
-## Known dependencies
+`/api/ai/scan` เป็น endpoint ที่ mobile ใช้จริง รับ JSON `imageBase64`, `mimeType` และ `userId` ส่วน `/api/food/scan` และ `/api/food/upload` รับ multipart field ชื่อ `image` ขนาดสูงสุด 5 MB
 
-ติดตั้งไว้แล้วใน `package.json`: `@react-navigation/native`, `@react-navigation/bottom-tabs`,
-`react-native-screens`, `react-native-safe-area-context`, `@react-native-async-storage/async-storage`,
-`react-native-svg` (ใช้วาดวงแหวน/กราฟเอง ไม่พึ่ง chart library ภายนอก), `expo-image-picker`, `@expo/vector-icons`
+สำหรับการคำนวณโภชนาการ ส่ง `POST /api/nutrition/calculate` ด้วย body เช่น:
 
-โปรเจคนี้ถูก bundle ทดสอบผ่าน Metro แล้ว (`npx expo export --platform android`) ไม่มี syntax/import error
+```json
+{
+  "items": [
+    { "foodId": "1001", "grams": 150 },
+    { "foodId": "4012", "grams": 80 }
+  ]
+}
+```
+
+ข้อมูลในฐานอาหารเก็บต่อ 100 กรัม และ endpoint จะคืน `totals`, `breakdown` และ `notFound`
+
+หมายเหตุ: `src/services/atlasService.js` มี `deleteLog()` แต่ backend ปัจจุบันยังไม่มี `DELETE /api/logs/:userId/:logId`
+
+## นำเข้าฐานข้อมูลอาหาร
+
+ตั้งค่า `MONGODB_URI` และ `MONGODB_DB_NAME` ใน `.env` แล้วใช้:
+
+```bash
+node seed-foods.js
+```
+
+สคริปต์จะอ่าน `thaiFoods_full.json`, ลบข้อมูลเดิมใน collection `foods` แล้ว insert ข้อมูลชุดใหม่ จึงควรสำรองข้อมูลก่อนใช้กับฐานข้อมูลที่มีข้อมูลอยู่แล้ว
+
+## การทดสอบและตรวจสอบ
+
+```bash
+node tests/localAuth.test.js
+node --check server.js
+node --check seed-foods.js
+npx expo export --platform android
+```
+
+## ความปลอดภัยและข้อจำกัด
+
+- ห้าม commit `.env`, MongoDB URI, password, Gemini key หรือ FatSecret secret
+- ตัวแปร `EXPO_PUBLIC_*` ถูกส่งไปฝั่ง client และไม่ควรใช้เก็บ secret
+- เก็บ `GEMINI_API_KEY` ไว้ที่ backend เท่านั้น
+- เปลี่ยน `AUTH_SECRET` ก่อนใช้งานจริง และอย่าใช้ค่า fallback `dev-secret-change-me`
+- local auth เก็บข้อมูลบัญชีไว้ใน AsyncStorage เหมาะสำหรับ demo/offline ไม่ใช่ production authentication
+- backend ยังไม่มี authentication middleware สำหรับตรวจสิทธิ์ตาม `userId`
+- CORS เปิดกว้างด้วยค่าเริ่มต้นของ `cors()` ควรจำกัด origin ก่อน deploy จริง
+- diagnostics, seed demo และ FatSecret ยังไม่มี access control
+- ผลวิเคราะห์จากภาพเป็นค่าประมาณ ไม่ใช่ผลตรวจทางห้องปฏิบัติการ
+- หาก Gemini หรือ backend ใช้งานไม่ได้ แอปจะใช้ sample fallback เพื่อให้หน้าสแกนยังทำงานต่อได้
+- backend รับ JSON body สูงสุด 10 MB และรูปภาพผ่าน Multer สูงสุด 5 MB
+
+## License
+
+ดูรายละเอียดใน [LICENSE](LICENSE)
