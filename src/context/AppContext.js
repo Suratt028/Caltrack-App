@@ -8,6 +8,7 @@ const STORAGE_KEYS = {
   logs: '@caltrack/logs', // { [dateKey]: FoodLogEntry[] }
   weights: '@caltrack/weights', // { [dateKey]: number }
   user: '@caltrack/user',
+  adminToken: '@caltrack/admin-token',
 };
 
 const AppContext = createContext(null);
@@ -120,9 +121,15 @@ export function AppProvider({ children }) {
       id: existingUser.id,
       email: existingUser.email,
       displayName: existingUser.displayName || displayNameFromEmail(existingUser.email),
+      role: existingUser.role || 'user',
     };
 
     await persistUser(nextUser);
+    if (existingUser.adminToken) {
+      await AsyncStorage.setItem(STORAGE_KEYS.adminToken, existingUser.adminToken);
+    } else {
+      await AsyncStorage.removeItem(STORAGE_KEYS.adminToken);
+    }
     if (isRemoteUser(nextUser)) {
       await loadRemoteData(nextUser.id);
     }

@@ -52,6 +52,10 @@ PORT=3001
 EXPO_PUBLIC_API_BASE_URL=http://10.0.2.2:3001/api
 EXPO_PUBLIC_AUTH_MODE=local
 GEMINI_API_KEY="your-gemini-api-key"
+GEMINI_SCAN_MODELS="gemini-3.6-flash,gemini-3.5-flash-lite"
+ADMIN_EMAIL="admin@caltrack.app"
+ADMIN_PASSWORD="Admin@1234"
+ADMIN_DISPLAY_NAME="CalTrack Administrator"
 ```
 
 | ตัวแปร | ใช้สำหรับ |
@@ -63,6 +67,10 @@ GEMINI_API_KEY="your-gemini-api-key"
 | `EXPO_PUBLIC_API_BASE_URL` | URL ที่ mobile ใช้เรียก API |
 | `EXPO_PUBLIC_AUTH_MODE` | ตั้งเป็น `local`, `mock` หรือ `offline` เพื่อบังคับ local auth |
 | `GEMINI_API_KEY` | API key ของ Google Gemini ที่ควรเก็บไว้ฝั่ง server เท่านั้น |
+| `GEMINI_SCAN_MODELS` | ลำดับโมเดล Gemini สำหรับสแกนภาพ คั่นด้วย comma; ค่าเริ่มต้นคือ `gemini-3.6-flash,gemini-3.5-flash-lite` ระบบ retry แบบ backoff ก่อนสลับไปโมเดลถัดไป |
+| `ADMIN_EMAIL` | อีเมลสำหรับเข้าสู่ระบบ Admin Web |
+| `ADMIN_PASSWORD` | รหัสผ่านสำหรับเข้าสู่ระบบ Admin Web ควรเก็บใน backend เท่านั้น |
+| `ADMIN_DISPLAY_NAME` | ชื่อแสดงของ Admin ค่าเริ่มต้นคือ `CalTrack Administrator` |
 
 Backend ยังรองรับตัวแปรทางเลือก `MONGODB_USERNAME`, `MONGODB_PASSWORD`, `MONGODB_HOST`, `FATSECRET_CLIENT_ID`, `FATSECRET_CLIENT_SECRET`, `FATSECRET_CUSTOMER_KEY` และ `FATSECRET_OAUTH_URL`
 
@@ -82,6 +90,10 @@ npm run android
 npm run ios
 npm run web
 ```
+
+หน้า Admin ใช้งานผ่านหน้า Login หลักที่ `http://localhost:8081/` โดยกรอก `ADMIN_EMAIL` และ `ADMIN_PASSWORD` ระบบจะเปิด Dashboard Admin อัตโนมัติ โดยต้องเปิด backend ควบคู่กันด้วย `npm run server`
+
+เมื่อ backend เชื่อมต่อ MongoDB สำเร็จ ระบบจะสร้างบัญชี Admin เริ่มต้นใน collection `users` อัตโนมัติด้วยค่าเริ่มต้น `admin@caltrack.app` / `Admin@1234` และกำหนด `role: "admin"` หากมีบัญชีอีเมลนี้อยู่แล้ว ระบบจะปรับ role เป็น Admin โดยไม่เขียนทับรหัสผ่านเดิม ควรเปลี่ยนค่าทั้งสองใน `.env` ก่อนใช้งานจริง
 
 ค่า API URL ตามอุปกรณ์:
 
@@ -109,6 +121,7 @@ CalTrackApp/
 ├── app.json                       # Expo metadata, icon และ permissions
 ├── package.json                   # dependencies และ scripts
 ├── server.js                      # Express server, models และ API routes
+├── server/nutritionMath.js        # pure helpers สำหรับคำนวณสารอาหารต่อกรัม
 ├── seed-foods.js                  # นำเข้า thaiFoods_full.json ลง collection foods
 ├── thaiFoods_full.json            # dataset อาหารไทยฉบับเต็ม
 ├── controllers/                   # controller สำหรับ food upload/scan
@@ -118,15 +131,16 @@ CalTrackApp/
 ├── src/
 │   ├── config.js                  # API URL และ MongoDB Data API settings
 │   ├── context/AppContext.js      # state กลางและ AsyncStorage persistence
-│   ├── components/                # UI components ที่ใช้ร่วมกัน
+│   ├── components/                # UI components รวมถึงหน้าทบทวนผลสแกนอาหาร
 │   ├── data/foodDatabase.js       # local food database/fallback
 │   ├── navigation/RootNavigator.js# bottom tab navigation
 │   ├── screens/                   # Auth, onboarding, dashboard, log, scan, trends, profile
+│   ├── screens/Admin/AdminScreen.js # Admin dashboard สำหรับผู้ดูแลระบบ
 │   ├── services/                  # mobile auth, API, AI vision และ nutrition services
 │   ├── style/                     # styles ของ app, screens และ components
 │   ├── theme/colors.js            # design tokens ด้านสี
 │   └── utils/calculations.js      # สูตร BMR/TDEE และเป้าหมายสารอาหาร
-├── tests/localAuth.test.js        # test สำหรับ local authentication
+├── tests/                         # unit tests สำหรับ authentication และ nutrition math
 └── docs/CalTrack_Chapter1-4.md    # เอกสารประกอบโครงงาน
 ```
 
@@ -149,6 +163,13 @@ GET    /api/health
 GET    /api/diagnostics
 POST   /api/auth/register
 POST   /api/auth/login
+POST   /api/admin/login
+GET    /api/admin/overview        # ต้องใช้ Admin Bearer token
+GET    /api/admin/users           # ต้องใช้ Admin Bearer token
+GET    /api/admin/foods           # ต้องใช้ Admin Bearer token
+POST   /api/admin/foods           # ต้องใช้ Admin Bearer token
+PATCH  /api/admin/foods/:foodId   # ต้องใช้ Admin Bearer token
+DELETE /api/admin/foods/:foodId   # ต้องใช้ Admin Bearer token
 GET    /api/profiles/:userId
 PUT    /api/profiles/:userId
 DELETE /api/profiles/:userId
@@ -166,7 +187,7 @@ GET/POST /api/seed-demo
 POST   /api/fatsecret/token
 ```
 
-`/api/ai/scan` เป็น endpoint ที่ mobile ใช้จริง รับ JSON `imageBase64`, `mimeType` และ `userId` ส่วน `/api/food/scan` และ `/api/food/upload` รับ multipart field ชื่อ `image` ขนาดสูงสุด 5 MB
+`/api/ai/scan` เป็น endpoint ที่ mobile ใช้จริง รับ JSON `imageBase64`, `mimeType`, `userId` และ `storeImage` (ต้องเป็น `true` เมื่อผู้ใช้ยินยอมให้เก็บรูป) ผลวิเคราะห์คืน `result.items` ซึ่งมีชื่ออาหาร กรอบภาพ ปริมาณโดยประมาณเป็นช่วง สารอาหารที่ AI ประเมิน และตัวเลือกอาหารจากฐานข้อมูล ผู้ใช้ต้องยืนยันชื่อและกรัมก่อนบันทึก หาก Gemini ใช้งานไม่ได้ API จะแจ้ง error แทนการคืนค่าอาหารตัวอย่าง ส่วน `/api/food/scan` และ `/api/food/upload` รับ multipart field ชื่อ `image` ขนาดสูงสุด 5 MB
 
 สำหรับการคำนวณโภชนาการ ส่ง `POST /api/nutrition/calculate` ด้วย body เช่น:
 
@@ -179,7 +200,7 @@ POST   /api/fatsecret/token
 }
 ```
 
-ข้อมูลในฐานอาหารเก็บต่อ 100 กรัม และ endpoint จะคืน `totals`, `breakdown` และ `notFound`
+ข้อมูลในฐานอาหารเก็บต่อ 100 กรัม และ endpoint จะคืน `totals`, `breakdown` และ `notFound` โดยรับน้ำหนัก 1–5,000 กรัมต่อรายการ
 
 หมายเหตุ: `src/services/atlasService.js` มี `deleteLog()` แต่ backend ปัจจุบันยังไม่มี `DELETE /api/logs/:userId/:logId`
 
@@ -196,7 +217,7 @@ node seed-foods.js
 ## การทดสอบและตรวจสอบ
 
 ```bash
-node tests/localAuth.test.js
+npm test
 node --check server.js
 node --check seed-foods.js
 npx expo export --platform android
@@ -212,6 +233,8 @@ npx expo export --platform android
 - backend ยังไม่มี authentication middleware สำหรับตรวจสิทธิ์ตาม `userId`
 - CORS เปิดกว้างด้วยค่าเริ่มต้นของ `cors()` ควรจำกัด origin ก่อน deploy จริง
 - diagnostics, seed demo และ FatSecret ยังไม่มี access control
+- Admin Web ต้องตั้งค่า `ADMIN_EMAIL` และ `ADMIN_PASSWORD` ใน backend และควรใช้ HTTPS เมื่อ deploy จริง
+- Admin token มีอายุ 8 ชั่วโมง และห้ามนำค่า credential ไปใส่ใน `EXPO_PUBLIC_*`
 - ผลวิเคราะห์จากภาพเป็นค่าประมาณ ไม่ใช่ผลตรวจทางห้องปฏิบัติการ
 - หาก Gemini หรือ backend ใช้งานไม่ได้ แอปจะใช้ sample fallback เพื่อให้หน้าสแกนยังทำงานต่อได้
 - backend รับ JSON body สูงสุด 10 MB และรูปภาพผ่าน Multer สูงสุด 5 MB

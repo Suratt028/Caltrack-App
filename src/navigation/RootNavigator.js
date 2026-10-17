@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../theme/colors';
 
 import HomeScreen from '../screens/HomeScreen';
@@ -13,45 +14,75 @@ import ProfileScreen from '../screens/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
 
+// Focused / unfocused icon pairs so the active tab always looks active.
 const TAB_ICONS = {
-  Home: 'home',
-  Log: 'add-circle',
-  Scan: 'camera',
-  Trends: 'stats-chart',
-  Profile: 'person-circle',
+  Home: ['home', 'home-outline'],
+  Log: ['add-circle', 'add-circle-outline'],
+  Trends: ['stats-chart', 'stats-chart-outline'],
+  Profile: ['person-circle', 'person-circle-outline'],
 };
 
 export default function RootNavigator() {
+  const insets = useSafeAreaInsets();
+  const bottomPadding = Math.max(insets.bottom, 8);
+
   return (
     <NavigationContainer>
       <Tab.Navigator
         screenOptions={({ route }) => ({
           headerShown: false,
+          tabBarHideOnKeyboard: true,
           tabBarActiveTintColor: colors.primary,
-          tabBarInactiveTintColor: colors.inkFaint,
+          tabBarInactiveTintColor: colors.inkMuted,
           tabBarStyle: {
             borderTopColor: colors.border,
             backgroundColor: colors.surface,
-            height: 74,
-            paddingBottom: 8,
+            height: 62 + bottomPadding,
+            paddingBottom: bottomPadding,
             paddingTop: 7,
             boxShadow: '0px -2px 10px rgba(43, 36, 32, 0.08)',
             elevation: 6,
           },
-          tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
-          tabBarIcon: ({ color, size, focused }) => (
-            route.name === 'Scan' ? (
-              <View style={{ width: 54, height: 54, borderRadius: 27, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', marginTop: -18, borderWidth: 4, borderColor: colors.surface, boxShadow: '0px 6px 10px rgba(47, 143, 107, 0.35)', elevation: 6 }}>
-                <Ionicons name="add" size={30} color={colors.white} />
-              </View>
-            ) : <Ionicons name={TAB_ICONS[route.name]} size={focused ? size + 1 : size} color={color} />
-          ),
+          tabBarLabelStyle: { fontSize: 11, fontWeight: '700' },
+          tabBarIcon: ({ color, size, focused }) => {
+            if (route.name === 'Scan') {
+              return (
+                <View
+                  style={{
+                    width: 54,
+                    height: 54,
+                    borderRadius: 27,
+                    backgroundColor: colors.primary,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginTop: -18,
+                    borderWidth: 4,
+                    borderColor: colors.surface,
+                    boxShadow: '0px 6px 12px rgba(26, 92, 67, 0.35)',
+                    elevation: 6,
+                  }}
+                >
+                  <Ionicons name="camera" size={26} color={colors.white} />
+                </View>
+              );
+            }
+            const [activeIcon, inactiveIcon] = TAB_ICONS[route.name] || ['ellipse', 'ellipse-outline'];
+            return <Ionicons name={focused ? activeIcon : inactiveIcon} size={focused ? size + 1 : size} color={color} />;
+          },
         })}
       >
         <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: 'หน้าหลัก' }} />
-        <Tab.Screen name="Log" component={LogScreen} options={{ tabBarLabel: 'บันทึก' }} />
-        <Tab.Screen name="Scan" component={ScanScreen} options={{ tabBarLabel: 'เพิ่มอาหาร' }} />
-        <Tab.Screen name="Trends" component={TrendsScreen} options={{ tabBarLabel: 'เทรนด์' }} />
+        <Tab.Screen
+          name="Log"
+          component={LogScreen}
+          options={{ tabBarLabel: 'บันทึก', tabBarAccessibilityLabel: 'บันทึกอาหาร' }}
+        />
+        <Tab.Screen
+          name="Scan"
+          component={ScanScreen}
+          options={{ tabBarLabel: 'สแกน', tabBarAccessibilityLabel: 'สแกนอาหารด้วย AI' }}
+        />
+        <Tab.Screen name="Trends" component={TrendsScreen} options={{ tabBarLabel: 'แนวโน้ม' }} />
         <Tab.Screen name="Profile" component={ProfileScreen} options={{ tabBarLabel: 'โปรไฟล์' }} />
       </Tab.Navigator>
     </NavigationContainer>

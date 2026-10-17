@@ -1,25 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, TextInput, ActivityIndicator, Pressable, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  Image,
+  TextInput,
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  Switch,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
-import { colors, spacing, typography, radius } from '../theme/colors';
+import { colors, spacing } from '../theme/colors';
 import PrimaryButton from '../components/PrimaryButton';
 import Card from '../components/Card';
+import FoodScanReview from '../components/FoodScanReview';
+import MealChips from '../components/MealChips';
+import Banner from '../components/Banner';
+import ScreenHeader from '../components/ScreenHeader';
 import { useApp } from '../context/AppContext';
-import { getAllFoods, searchFood } from '../services/foodService';
+import { searchNutritionFoods } from '../services/foodService';
 import { analyzeFoodImage } from '../services/aiVisionService';
-import { calculateSingleFoodMacros } from '../services/nutritionService';
 import styles from '../style/screens/ScanScreenStyles';
 
-const MEALS = [
-  { key: 'breakfast', label: 'มื้อเช้า' },
-  { key: 'lunch', label: 'มื้อเที่ยง' },
-  { key: 'dinner', label: 'มื้อเย็น' },
-  { key: 'snack', label: 'ของว่าง' },
-];
-
-const DEFAULT_DB_GRAMS = '100';
 const FOOD_CATEGORIES = [
   ['ข้าว / แป้ง', 'restaurant-outline'],
   ['เนื้อสัตว์', 'fish-outline'],
@@ -29,48 +33,75 @@ const FOOD_CATEGORIES = [
   ['อื่น ๆ', 'grid-outline'],
 ];
 
+function FoodBoxOverlays({ items = [] }) {
+  if (!Array.isArray(items) || items.length === 0) return null;
+
+  return items.map((item, index) => {
+    if (!Array.isArray(item.box_2d) || item.box_2d.length !== 4) return null;
+    const [ymin, xmin, ymax, xmax] = item.box_2d.map((value) =>
+      Math.max(0, Math.min(1000, Number(value)))
+    );
+    if (![ymin, xmin, ymax, xmax].every(Number.isFinite) || ymax <= ymin || xmax <= xmin) return null;
+
+    return (
+      <View
+        key={`${item.name_th || 'food'}_${index}`}
+        style={{
+          position: 'absolute',
+          top: `${ymin / 10}%`,
+          left: `${xmin / 10}%`,
+          width: `${(xmax - xmin) / 10}%`,
+          height: `${(ymax - ymin) / 10}%`,
+          borderWidth: 2,
+          borderColor: colors.primary,
+          pointerEvents: 'none', // แก้จาก prop pointerEvents บน View มาไว้ใน style
+        }}
+      >
+        <Text style={{ alignSelf: 'flex-start', backgroundColor: colors.primary, color: '#fff', fontSize: 10 }}>
+          {item.name_th}
+        </Text>
+      </View>
+    );
+  });
+}
+
 export default function ScanScreen({ navigation }) {
   const { addFoodLog, user } = useApp();
-  const [foodData, setFoodData] = useState([]);
   const [imageUri, setImageUri] = useState(null);
+  const [lastAsset, setLastAsset] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState(null);
+  const [analysisError, setAnalysisError] = useState('');
+  const [notice, setNotice] = useState('');
   const [meal, setMeal] = useState('lunch');
   const [saved, setSaved] = useState(false);
   const [foodQuery, setFoodQuery] = useState('');
   const [foodResults, setFoodResults] = useState([]);
   const [searchingFoods, setSearchingFoods] = useState(false);
-
-  // --- dbMatch confirmation state ---
-  const [dbGrams, setDbGrams] = useState(DEFAULT_DB_GRAMS);
-  const [applyingDbMatch, setApplyingDbMatch] = useState(false);
-  const [dbMatchApplied, setDbMatchApplied] = useState(false);
-  const [dbMatchError, setDbMatchError] = useState('');
-
-  useEffect(() => {
-    (async () => {
-      const data = await getAllFoods();
-      setFoodData(data);
-    })();
-  }, []);
+  const [foodSearchError, setFoodSearchError] = useState('');
+  const [storeImageConsent, setStoreImageConsent] = useState(false);
 
   useEffect(() => {
     const query = foodQuery.trim();
     if (!query) {
       setFoodResults([]);
       setSearchingFoods(false);
+      setFoodSearchError('');
       return undefined;
     }
 
     let active = true;
     const timer = setTimeout(async () => {
       setSearchingFoods(true);
+      setFoodSearchError('');
       try {
-        const results = await searchFood(query);
+        const results = await searchNutritionFoods(query, 8);
         if (active) setFoodResults(results.slice(0, 8));
       } catch (error) {
-        console.warn('Food search error:', error);
-        if (active) setFoodResults([]);
+        if (active) {
+          setFoodResults([]);
+          setFoodSearchError(error.message || 'ค้นหาฐานข้อมูลอาหารไม่สำเร็จ');
+        }
       } finally {
         if (active) setSearchingFoods(false);
       }
@@ -82,137 +113,97 @@ export default function ScanScreen({ navigation }) {
     };
   }, [foodQuery]);
 
-  const runAiAnalysis = async (asset) => {
+  const runAiAnalysis = async (asset, storeImage) => {
     setAnalyzing(true);
     setResult(null);
     setSaved(false);
-    setDbMatchApplied(false);
-    setDbMatchError('');
-    setDbGrams(DEFAULT_DB_GRAMS);
+    setAnalysisError('');
+    setNotice('');
+    setLastAsset(asset);
 
     try {
-      const aiResult = await analyzeFoodImage(asset.base64, asset.mimeType || 'image/jpeg', user?.id);
-      setResult(aiResult);
+      const aiResult = await analyzeFoodImage(
+        asset.base64,
+        asset.mimeType || 'image/jpeg',
+        user?.id,
+        storeImage
+      );
+      setResult({ ...aiResult, reviewKey: aiResult.scanId || `scan_${Date.now()}` });
     } catch (err) {
       console.error('Analysis error:', err);
-      // Fallback if exception occurs
-      const sample = foodData[Math.floor(Math.random() * foodData.length)];
-      setResult({
-        name: sample?.name || 'ผัดไทยกุ้งสด',
-        kcal: sample?.kcal || 540,
-        protein: sample?.protein || 22,
-        carbs: sample?.carbs || 65,
-        fat: sample?.fat || 20,
-        fiber: sample?.fiber || 0,
-        sugar: sample?.sugar || 0,
-        sodium: sample?.sodium || 0,
-        calcium: sample?.calcium || 0,
-        iron: sample?.iron || 0,
-        vitaminC: sample?.vitaminC || 0,
-        foodGroups: [],
-        confidence: 0.85,
-        source: 'mock_fallback',
-        dbMatch: null,
-      });
+      setAnalysisError(err.message || 'วิเคราะห์ภาพไม่สำเร็จ กรุณาลองใหม่หรือค้นหาอาหารด้วยตนเอง');
     } finally {
       setAnalyzing(false);
     }
   };
 
   const pickFrom = async (source) => {
+    setNotice('');
     const perm =
       source === 'camera'
         ? await ImagePicker.requestCameraPermissionsAsync()
         : await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) return;
+    if (!perm.granted) {
+      setNotice(
+        source === 'camera'
+          ? 'ต้องอนุญาตให้ใช้กล้องก่อนจึงจะสแกนได้ หรือเลือกจากคลังภาพแทน'
+          : 'ต้องอนุญาตให้เข้าถึงรูปภาพก่อนจึงจะเลือกจากคลังภาพได้'
+      );
+      return;
+    }
 
     const picker = source === 'camera' ? ImagePicker.launchCameraAsync : ImagePicker.launchImageLibraryAsync;
     const res = await picker({ quality: 0.7, base64: true, allowsEditing: true, aspect: [1, 1] });
     if (!res.canceled && res.assets?.[0]?.uri) {
       setImageUri(res.assets[0].uri);
-      runAiAnalysis(res.assets[0]);
+      runAiAnalysis(res.assets[0], storeImageConsent);
+      setStoreImageConsent(false);
     }
   };
-
-  const updateResultField = (key, value) => setResult((r) => ({ ...r, [key]: value }));
 
   const selectFoodFromDatabase = (food) => {
     setImageUri(null);
+    setLastAsset(null);
     setFoodQuery(food.name);
     setFoodResults([]);
     setSaved(false);
-    setDbMatchApplied(true);
-    setDbMatchError('');
+    setAnalysisError('');
+    setNotice('');
+    setStoreImageConsent(false);
     setResult({
-      name: food.name,
-      kcal: food.kcal,
-      protein: food.protein,
-      carbs: food.carbs,
-      fat: food.fat,
-      fiber: food.fiber || 0,
-      sugar: food.sugar || 0,
-      sodium: food.sodium || 0,
-      calcium: food.calcium || 0,
-      iron: food.iron || 0,
-      vitaminC: food.vitaminC || 0,
-      foodGroups: [],
-      confidence: 1,
+      reviewKey: `manual_${Date.now()}`,
+      items: [{
+        name_th: food.name,
+        name_en: food.nameEn,
+        foodId: food.foodId,
+        per100g: food.per100g,
+        estimated_grams: null,
+        estimated_nutrition: null,
+        confidence: 1,
+      }],
+      reference_object: '',
       source: 'database_search',
-      dbMatch: null,
+      scanId: null,
     });
   };
 
-  // Pulls real per-100g nutrition for the matched database food, scaled by
-  // the grams the user enters, and overwrites the editable macro fields.
-  const applyDbMatch = async () => {
-    if (!result?.dbMatch?.foodId) return;
-    const grams = Number(dbGrams);
-    if (!grams || grams <= 0) {
-      setDbMatchError('กรุณาใส่น้ำหนักเป็นตัวเลขมากกว่า 0');
-      return;
-    }
-
-    setApplyingDbMatch(true);
-    setDbMatchError('');
-    try {
-      const macros = await calculateSingleFoodMacros(result.dbMatch.foodId, grams);
-      setResult((r) => ({
-        ...r,
-        kcal: macros.kcal,
-        protein: macros.protein,
-        carbs: macros.carbs,
-        fat: macros.fat,
-        fiber: macros.fiber,
-        sugar: macros.sugar,
-        sodium: macros.sodium,
-        calcium: macros.calcium,
-        iron: macros.iron,
-        vitaminC: macros.vitaminC,
-        source: 'gemini_vision_db_matched',
-      }));
-      setDbMatchApplied(true);
-    } catch (err) {
-      setDbMatchError(err.message || 'คำนวณไม่สำเร็จ กรุณาลองใหม่');
-    } finally {
-      setApplyingDbMatch(false);
-    }
-  };
-
-  const confirmAdd = async () => {
+  const confirmAdd = async ({ items, totals }) => {
     await addFoodLog({
-      name: result.name,
+      name: items.map((item) => item.name).join(' + '),
       meal,
-      kcal: Number(result.kcal) || 0,
-      protein: Number(result.protein) || 0,
-      carbs: Number(result.carbs) || 0,
-      fat: Number(result.fat) || 0,
-      fiber: Number(result.fiber) || 0,
-      sugar: Number(result.sugar) || 0,
-      sodium: Number(result.sodium) || 0,
-      calcium: Number(result.calcium) || 0,
-      iron: Number(result.iron) || 0,
-      vitaminC: Number(result.vitaminC) || 0,
-      foodGroups: result.foodGroups || [],
+      kcal: totals.kcal,
+      protein: totals.protein,
+      carbs: totals.carbs,
+      fat: totals.fat,
+      fiber: totals.fiber,
+      sugar: totals.sugar,
+      sodium: totals.sodium,
+      calcium: totals.calcium,
+      iron: totals.iron,
+      vitaminC: totals.vitaminC,
+      items,
+      aiPredictions: result?.source === 'gemini_vision' ? result.items : undefined,
+      feedbackCapturedAt: result?.source === 'gemini_vision' ? new Date().toISOString() : undefined,
       servings: 1,
       source: result?.source || 'ai_scan',
       scanId: result?.scanId || null,
@@ -222,20 +213,25 @@ export default function ScanScreen({ navigation }) {
 
   const reset = () => {
     setImageUri(null);
+    setLastAsset(null);
     setResult(null);
     setSaved(false);
-    setDbMatchApplied(false);
-    setDbMatchError('');
-    setDbGrams(DEFAULT_DB_GRAMS);
+    setAnalysisError('');
+    setNotice('');
+    setStoreImageConsent(false);
   };
 
-  const isRealAi = result?.source?.includes('gemini_vision');
+  const isRealAi = result?.source === 'gemini_vision';
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>สแกนอาหารด้วย AI</Text>
-        <Text style={styles.subtitle}>ถ่ายรูปมื้ออาหาร แล้วให้ระบบช่วยประเมินแคลอรี่เบื้องต้น</Text>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <ScreenHeader
+          title="สแกนอาหารด้วย AI"
+          subtitle="ถ่ายรูปมื้ออาหาร แล้วให้ระบบช่วยประเมินแคลอรี่เบื้องต้นให้"
+        />
+
+        {!!notice && <Banner tone="warning" message={notice} onDismiss={() => setNotice('')} style={{ marginBottom: spacing.md }} />}
 
         {!imageUri && (
           <View>
@@ -258,11 +254,14 @@ export default function ScanScreen({ navigation }) {
                   placeholderTextColor={colors.inkFaint}
                   style={styles.databaseSearchInput}
                   returnKeyType="search"
+                  accessibilityLabel="ค้นหาอาหารในฐานข้อมูล"
                 />
                 {searchingFoods && <ActivityIndicator size="small" color={colors.primary} />}
               </View>
-              {foodQuery.trim() && !searchingFoods && foodResults.length === 0 && (
-                <Text style={styles.noSearchResults}>ไม่พบอาหารที่ค้นหา ลองใช้ชื่อเมนูอื่น</Text>
+              {Boolean(foodQuery.trim()) && !searchingFoods && foodResults.length === 0 && (
+                <Text style={styles.noSearchResults}>
+                  {foodSearchError || 'ไม่พบอาหารที่ค้นหา ลองใช้ชื่อเมนูอื่น'}
+                </Text>
               )}
               {foodResults.length > 0 && (
                 <View style={styles.searchResults}>
@@ -270,6 +269,8 @@ export default function ScanScreen({ navigation }) {
                     <Pressable
                       key={food.id}
                       onPress={() => selectFoodFromDatabase(food)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`เลือก ${food.name}`}
                       style={({ pressed }) => [styles.searchResultItem, pressed && { opacity: 0.7 }]}
                     >
                       <View style={styles.searchResultIcon}>
@@ -277,7 +278,9 @@ export default function ScanScreen({ navigation }) {
                       </View>
                       <View style={{ flex: 1 }}>
                         <Text style={styles.searchResultName} numberOfLines={1}>{food.name}</Text>
-                        <Text style={styles.searchResultMeta}>{food.serving} · {Math.round(food.kcal)} kcal</Text>
+                        <Text style={styles.searchResultMeta}>
+                          {food.serving ? `${food.serving} · ` : ''}{food.per100g?.kcal ?? '-'} kcal / 100 g
+                        </Text>
                       </View>
                       <Ionicons name="chevron-forward" size={18} color={colors.inkFaint} />
                     </Pressable>
@@ -285,202 +288,146 @@ export default function ScanScreen({ navigation }) {
                 </View>
               )}
             </View>
+
             <View style={styles.scanHero}>
               <View style={styles.scanHeroIcon}><Ionicons name="camera" size={34} color={colors.primary} /></View>
-              <Text style={{ color: colors.ink, fontWeight: '800', fontSize: 18 }}>สแกนอาหาร</Text>
-              <Text style={{ color: colors.inkMuted, textAlign: 'center', marginTop: 4 }}>ใช้กล้องถ่ายรูปเพื่อวิเคราะห์แคลอรี่ด้วย AI</Text>
-              <PrimaryButton title="เริ่มสแกน" onPress={() => pickFrom('camera')} style={{ width: '100%', marginTop: spacing.md }} />
+              <Text style={styles.scanHeroTitle}>สแกนอาหารด้วยกล้อง</Text>
+              <Text style={styles.scanHeroText}>ถ่ายให้เห็นอาหารทั้งจานในที่ที่มีแสงพอ เพื่อให้ AI ประเมินได้แม่นขึ้น</Text>
+
+              <View style={styles.stepsRow}>
+                <View style={styles.stepItem}>
+                  <View style={styles.stepIcon}><Ionicons name="camera-outline" size={15} color={colors.primary} /></View>
+                  <Text style={styles.stepText}>จัดจานให้อยู่ในกรอบ อย่าให้มือบัง</Text>
+                </View>
+                <View style={styles.stepItem}>
+                  <View style={styles.stepIcon}><Ionicons name="sunny-outline" size={15} color={colors.primary} /></View>
+                  <Text style={styles.stepText}>ถ่ายในที่แสงสว่าง เลี่ยงเงาที่บังอาหาร</Text>
+                </View>
+                <View style={styles.stepItem}>
+                  <View style={styles.stepIcon}><Ionicons name="create-outline" size={15} color={colors.primary} /></View>
+                  <Text style={styles.stepText}>ตรวจสอบชื่อและปริมาณก่อนบันทึกทุกครั้ง</Text>
+                </View>
+              </View>
+
+              <PrimaryButton
+                title="เริ่มสแกนด้วยกล้อง"
+                icon="camera"
+                onPress={() => pickFrom('camera')}
+                style={{ width: '100%', marginTop: spacing.md }}
+              />
+              <View style={styles.consentRow}>
+                <Switch
+                  value={storeImageConsent}
+                  onValueChange={setStoreImageConsent}
+                  accessibilityLabel="ยินยอมให้เก็บรูปสแกนเพื่อทบทวนผล"
+                />
+                <Text style={styles.consentText}>
+                  เก็บรูปนี้ไว้ทบทวนผลภายหลัง (ไม่บังคับ)
+                </Text>
+              </View>
             </View>
-            <Text style={styles.sectionTitle}>หรือเลือกจากหมวดหมู่</Text>
+
+            <Banner
+              tone="info"
+              icon="information-circle-outline"
+              message="ค่าที่ได้จากการประเมินเป็นเพียงค่าประมาณ ไม่ใช่คำแนะนำทางการแพทย์หรือโภชนาการ"
+              style={{ marginBottom: spacing.md }}
+            />
+
+            <Text style={styles.sectionTitle}>หรือเลือกรูปจากคลังภาพ</Text>
             <View style={styles.categoryGrid}>
               {FOOD_CATEGORIES.map(([label, icon]) => (
-                <Pressable key={label} style={styles.categoryItem} onPress={() => pickFrom('library')}>
+                <Pressable
+                  key={label}
+                  style={({ pressed }) => [styles.categoryItem, pressed && styles.categoryItemPressed]}
+                  onPress={() => pickFrom('library')}
+                  accessibilityRole="button"
+                  accessibilityLabel={`เลือกรูปจากคลังภาพ หมวด ${label}`}
+                >
                   <Ionicons name={icon} size={22} color={colors.primary} />
-                  <Text style={{ color: colors.inkMuted, fontSize: 11, marginTop: 4 }}>{label}</Text>
+                  <Text style={styles.categoryText}>{label}</Text>
                 </Pressable>
               ))}
             </View>
             <View style={styles.actionsRow}>
-              <PrimaryButton title="เลือกจากคลังภาพ" variant="outline" onPress={() => pickFrom('library')} style={{ flex: 1 }} />
+              <PrimaryButton title="เลือกจากคลังภาพ" variant="outline" icon="images-outline" onPress={() => pickFrom('library')} style={{ flex: 1 }} />
             </View>
           </View>
         )}
 
-        {imageUri && (
+        {Boolean(imageUri) && (
           <Card style={styles.imageCard}>
-            <Image source={{ uri: imageUri }} style={styles.image} />
+            <View style={{ position: 'relative', width: '100%', aspectRatio: 1 }}>
+              <Image source={{ uri: imageUri }} style={{ width: '100%', height: '100%' }} resizeMode="stretch" />
+              <FoodBoxOverlays items={result?.items} />
+            </View>
           </Card>
         )}
 
-        {analyzing && (
-          <View style={styles.analyzingBox}>
-            <ActivityIndicator color={colors.primary} size="large" />
-            <Text style={styles.analyzingText}>AI กำลังวิเคราะห์ภาพอาหาร...</Text>
+        {Boolean(analysisError) && !analyzing && (
+          <View style={{ marginTop: spacing.md }}>
+            <Banner tone="error" message={analysisError} />
+            <View style={[styles.actionsRow, { marginTop: spacing.md }]}>
+              {lastAsset && (
+                <PrimaryButton
+                  title="ลองวิเคราะห์อีกครั้ง"
+                  icon="refresh"
+                  onPress={() => runAiAnalysis(lastAsset, storeImageConsent)}
+                  style={[styles.actionGap, { flex: 1 }]}
+                />
+              )}
+              <PrimaryButton title="สแกนใหม่" variant="outline" onPress={reset} style={{ flex: 1 }} />
+            </View>
           </View>
         )}
 
-        {result && !analyzing && (
+        {analyzing && (
           <Card style={{ marginTop: spacing.md }}>
-            {saved && (
+            <View style={styles.analyzingBox}>
+              <ActivityIndicator color={colors.primary} size="large" />
+              <Text style={styles.analyzingText}>กำลังวิเคราะห์ภาพอาหาร...</Text>
+              <Text style={styles.analyzingHint}>ขั้นตอนนี้อาจใช้เวลาประมาณ 5–15 วินาที กรุณารอสักครู่</Text>
+            </View>
+          </Card>
+        )}
+
+        {Boolean(result) && !analyzing && (
+          <Card style={{ marginTop: spacing.md }}>
+            {saved ? (
               <View style={styles.successState}>
                 <View style={styles.successIcon}>
-                  <Ionicons name="heart" size={34} color={colors.primary} />
+                  <Ionicons name="checkmark" size={38} color={colors.primary} />
                 </View>
                 <Text style={styles.successTitle}>บันทึกมื้อนี้แล้ว</Text>
-                <Text style={styles.successText}>ทุกมื้อที่ดี คืออีกก้าวเล็ก ๆ สู่สุขภาพที่ดีในอนาคต</Text>
+                <Text style={styles.successText}>ดูรายการและยอดสารอาหารของวันนี้ได้ที่หน้าหลัก</Text>
                 <View style={styles.successActions}>
-                  <PrimaryButton title="สแกนมื้อถัดไป" onPress={reset} style={{ flex: 1, marginRight: spacing.sm }} />
+                  <PrimaryButton title="สแกนมื้อถัดไป" onPress={reset} style={[styles.actionGap, { flex: 1 }]} />
                   <PrimaryButton title="กลับหน้าหลัก" variant="outline" onPress={() => navigation.navigate('Home')} style={{ flex: 1 }} />
                 </View>
               </View>
-            )}
-
-            {!saved && <>
-            <View style={[styles.demoTag, isRealAi && { backgroundColor: '#E8F5E9' }]}>
-              <Text style={[styles.demoTagText, isRealAi && { color: '#2E7D32' }]}>
-                {isRealAi ? '✨ วิเคราะห์โดย Vision AI' : '⚠️ ผลลัพธ์จำลอง (Demo Mode)'}
-              </Text>
-            </View>
-            <Text style={styles.resultConfidence}>
-              ความมั่นใจของโมเดล ~{Math.round((result.confidence || 0.85) * 100)}% — กรุณาตรวจสอบและแก้ไขก่อนบันทึก
-            </Text>
-
-            <View style={{ backgroundColor: colors.primarySoft, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.sm }}>
-              <Text style={{ fontWeight: '700', color: colors.ink, marginBottom: 6 }}>สารอาหารและหมู่อาหารที่ตรวจพบ</Text>
-              <Text style={{ color: colors.inkMuted, marginBottom: 8 }}>
-                {(result.foodGroups || []).length > 0 ? result.foodGroups.join(' · ') : 'ยังระบุหมู่อาหารจากภาพไม่ได้'}
-              </Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                {[
-                  ['ใยอาหาร', result.fiber, 'g'],
-                  ['น้ำตาล', result.sugar, 'g'],
-                  ['โซเดียม', result.sodium, 'mg'],
-                  ['แคลเซียม', result.calcium, 'mg'],
-                  ['ธาตุเหล็ก', result.iron, 'mg'],
-                  ['วิตามิน C', result.vitaminC, 'mg'],
-                ].map(([label, value, unit]) => (
-                  <View key={label} style={{ width: '30%' }}>
-                    <Text style={{ color: colors.inkMuted, fontSize: 12 }}>{label}</Text>
-                    <Text style={{ color: colors.ink, fontWeight: '700' }}>{Number(value || 0).toFixed(1)} {unit}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-
-            {/* --- Database match confirmation card --- */}
-            {result.dbMatch && (
-              <View
-                style={{
-                  backgroundColor: dbMatchApplied ? colors.primarySoft : colors.turmericSoft,
-                  borderRadius: radius.md,
-                  padding: spacing.md,
-                  marginTop: spacing.sm,
-                  marginBottom: spacing.sm,
-                }}
-              >
-                <Text style={{ fontWeight: '600', color: colors.ink, marginBottom: 4 }}>
-                  {dbMatchApplied ? '✓ ใช้ค่าจากฐานข้อมูลแล้ว' : '📚 พบข้อมูลจริงในฐานข้อมูล'}
-                </Text>
-                <Text style={{ color: colors.inkMuted, marginBottom: spacing.sm }}>
-                  {result.dbMatch.nameTh} — ค่าต่อ 100 กรัม: {result.dbMatch.per100g?.kcal ?? '-'} kcal,{' '}
-                  โปรตีน {result.dbMatch.per100g?.protein_g ?? '-'} g
-                </Text>
-
-                <Text style={styles.fieldLabel}>น้ำหนักที่กินจริง (กรัม)</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <TextInput
-                    style={[styles.input, { flex: 1, marginRight: spacing.sm }]}
-                    keyboardType="number-pad"
-                    value={dbGrams}
-                    onChangeText={(v) => {
-                      setDbGrams(v);
-                      setDbMatchApplied(false);
-                    }}
-                    placeholder="เช่น 150"
-                  />
-                  <Pressable
-                    onPress={applyDbMatch}
-                    disabled={applyingDbMatch}
-                    style={{
-                      backgroundColor: colors.primary,
-                      paddingHorizontal: spacing.md,
-                      paddingVertical: spacing.sm,
-                      borderRadius: radius.sm,
-                      opacity: applyingDbMatch ? 0.6 : 1,
-                    }}
-                  >
-                    {applyingDbMatch ? (
-                      <ActivityIndicator color="#fff" size="small" />
-                    ) : (
-                      <Text style={{ color: '#fff', fontWeight: '600' }}>ใช้ค่านี้</Text>
-                    )}
-                  </Pressable>
+            ) : (
+              <>
+                <View style={[styles.demoTag, isRealAi && { backgroundColor: colors.primarySoft }]}>
+                  <Text style={[styles.demoTagText, isRealAi && { color: colors.primaryDark }]}>
+                    {isRealAi ? 'วิเคราะห์โดย Vision AI' : 'เลือกจากฐานข้อมูล'}
+                  </Text>
                 </View>
-
-                {!!dbMatchError && (
-                  <Text style={{ color: colors.chili, marginTop: 6 }}>{dbMatchError}</Text>
+                {Boolean(imageUri) && (
+                  <Text style={styles.resultConfidence}>
+                    ผลการระบุชื่อและน้ำหนักเป็นค่าประมาณ โปรดยืนยันรายการและปริมาณก่อนบันทึก
+                  </Text>
                 )}
-              </View>
+                <View style={styles.mealSection}>
+                  <MealChips value={meal} onChange={setMeal} />
+                </View>
+                <FoodScanReview
+                  key={result.reviewKey}
+                  analysis={result}
+                  onConfirm={confirmAdd}
+                  onReset={reset}
+                />
+              </>
             )}
-
-            <Text style={styles.fieldLabel}>ชื่อเมนู</Text>
-            <TextInput style={styles.input} value={result.name} onChangeText={(v) => updateResultField('name', v)} />
-
-            <View style={styles.macroInputRow}>
-              <View style={styles.macroInputCol}>
-                <Text style={styles.fieldLabel}>kcal</Text>
-                <TextInput
-                  style={styles.input}
-                  keyboardType="number-pad"
-                  value={String(result.kcal)}
-                  onChangeText={(v) => updateResultField('kcal', v)}
-                />
-              </View>
-              <View style={styles.macroInputCol}>
-                <Text style={styles.fieldLabel}>โปรตีน (g)</Text>
-                <TextInput
-                  style={styles.input}
-                  keyboardType="number-pad"
-                  value={String(result.protein)}
-                  onChangeText={(v) => updateResultField('protein', v)}
-                />
-              </View>
-            </View>
-            <View style={styles.macroInputRow}>
-              <View style={styles.macroInputCol}>
-                <Text style={styles.fieldLabel}>คาร์บ (g)</Text>
-                <TextInput
-                  style={styles.input}
-                  keyboardType="number-pad"
-                  value={String(result.carbs)}
-                  onChangeText={(v) => updateResultField('carbs', v)}
-                />
-              </View>
-              <View style={styles.macroInputCol}>
-                <Text style={styles.fieldLabel}>ไขมัน (g)</Text>
-                <TextInput
-                  style={styles.input}
-                  keyboardType="number-pad"
-                  value={String(result.fat)}
-                  onChangeText={(v) => updateResultField('fat', v)}
-                />
-              </View>
-            </View>
-
-            <Text style={styles.fieldLabel}>มื้ออาหาร</Text>
-            <View style={styles.mealRow}>
-              {MEALS.map((m) => (
-                <Pressable key={m.key} onPress={() => setMeal(m.key)} style={[styles.mealChip, meal === m.key && styles.mealChipActive]}>
-                  <Text style={[styles.mealChipText, meal === m.key && styles.mealChipTextActive]}>{m.label}</Text>
-                </Pressable>
-              ))}
-            </View>
-
-            <View style={styles.actionsRow}>
-              <PrimaryButton title="สแกนใหม่" variant="outline" onPress={reset} style={{ flex: 1, marginRight: spacing.sm }} />
-              <PrimaryButton title={saved ? 'บันทึกแล้ว ✓' : 'บันทึกลงไดอารี่'} onPress={confirmAdd} style={{ flex: 1 }} />
-            </View>
-            </>}
           </Card>
         )}
       </ScrollView>

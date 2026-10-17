@@ -4,19 +4,32 @@ import Svg, { Circle } from 'react-native-svg';
 import { colors, typography } from '../theme/colors';
 import styles from '../style/components/CalorieRingStyles';
 
-// A ring that fills like a rice bowl as the day's calories are logged.
+// A ring that fills as the day's calories are logged.
+// Green while there is room left, warm red once the goal is passed.
 // consumed/goal are in kcal. size/strokeWidth are in dp.
 export default function CalorieRing({ consumed, goal, size = 220, strokeWidth = 18 }) {
+  const safeConsumed = Math.max(Number(consumed) || 0, 0);
+  const safeGoal = Number(goal) > 0 ? Number(goal) : 0;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
-  const pct = goal > 0 ? Math.min(consumed / goal, 1) : 0;
-  const remaining = Math.max(goal - consumed, 0);
-  const isOver = consumed > goal;
+  const pct = safeGoal > 0 ? Math.min(safeConsumed / safeGoal, 1) : 0;
+  const remaining = Math.max(safeGoal - safeConsumed, 0);
+  const over = Math.max(safeConsumed - safeGoal, 0);
+  const isOver = safeGoal > 0 && safeConsumed > safeGoal;
 
-  const ringColor = isOver ? colors.chili : colors.turmeric;
+  const ringColor = isOver ? colors.chili : colors.primary;
 
   return (
-    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+    <View
+      style={[styles.wrap, { width: size, height: size }]}
+      accessible
+      accessibilityRole="progressbar"
+      accessibilityLabel={
+        isOver
+          ? `กินไป ${Math.round(safeConsumed)} แคลอรี่ เกินเป้าหมาย ${Math.round(over)} แคลอรี่`
+          : `กินไป ${Math.round(safeConsumed)} แคลอรี่ จากเป้าหมาย ${Math.round(safeGoal)} แคลอรี่ เหลือ ${Math.round(remaining)} แคลอรี่`
+      }
+    >
       <Svg width={size} height={size}>
         <Circle
           cx={size / 2}
@@ -39,11 +52,13 @@ export default function CalorieRing({ consumed, goal, size = 220, strokeWidth = 
           transform={`rotate(-90 ${size / 2} ${size / 2})`}
         />
       </Svg>
-      <View style={styles.centerLabel}>
-        <Text style={[typography.stat, { color: colors.ink }]}>{Math.round(Math.abs(remaining))}</Text>
-        <Text style={styles.caption}>{isOver ? 'kcal เกินเป้า' : 'kcal เหลือวันนี้'}</Text>
+      <View style={styles.centerLabel} pointerEvents="none">
+        <Text style={[typography.stat, styles.value]}>{Math.round(isOver ? over : remaining)}</Text>
+        <Text style={[styles.unit, isOver && styles.unitOver]}>kcal</Text>
+        <Text style={[styles.caption, isOver && styles.captionOver]}>
+          {isOver ? 'เกินเป้าหมายวันนี้' : 'เหลือในวันนี้'}
+        </Text>
       </View>
     </View>
   );
 }
-

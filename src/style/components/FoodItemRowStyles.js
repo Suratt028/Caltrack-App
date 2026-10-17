@@ -1,10 +1,11 @@
 import { StyleSheet } from 'react-native';
-import { colors, radius, spacing } from '../../theme/colors';
+import { colors, radius, spacing, shadows, typography } from '../../theme/colors';
 
 export default StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
+    minHeight: 56,
     paddingVertical: 12,
     paddingHorizontal: spacing.md,
     backgroundColor: colors.surface,
@@ -12,18 +13,41 @@ export default StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     marginBottom: 8,
-    boxShadow: '0px 4px 8px rgba(43, 36, 32, 0.04)',
-    elevation: 1,
+    ...shadows.soft,
   },
-  name: { fontSize: 14, fontWeight: '700', color: colors.ink },
-  subtitle: { fontSize: 12, color: colors.inkMuted, marginTop: 2 },
-  kcal: { fontSize: 13, fontWeight: '700', color: colors.primary, marginLeft: spacing.sm },
+  rowPressed: {
+    opacity: 0.92,
+  },
+  main: {
+    flex: 1,
+  },
+  name: {
+    ...typography.bodyBold,
+    color: colors.ink,
+    lineHeight: 20,
+  },
+  subtitle: {
+    ...typography.body,
+    fontSize: 12,
+    color: colors.inkMuted,
+    marginTop: 2,
+  },
+  kcal: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.primaryDark,
+    marginLeft: spacing.sm,
+  },
   removeBtn: {
     marginLeft: spacing.sm,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    backgroundColor: '#FCE2DA',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.dangerSoft,
   },
-  removeText: { fontSize: 12, fontWeight: '700', color: colors.chili },
+  removeBtnPressed: {
+    opacity: 0.7,
+  },
 });

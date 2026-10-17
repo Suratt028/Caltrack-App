@@ -22,7 +22,7 @@ export default StyleSheet.create({
     width: 180,
     height: 180,
     borderRadius: 90,
-    backgroundColor: '#F7D9B9',
+    backgroundColor: colors.peach,
     top: -46,
     left: -52,
     opacity: 0.7,
@@ -32,7 +32,7 @@ export default StyleSheet.create({
     width: 150,
     height: 150,
     borderRadius: 75,
-    backgroundColor: '#DDF1E6',
+    backgroundColor: colors.primarySoft,
     top: 120,
     right: -36,
     opacity: 0.9,
@@ -42,7 +42,7 @@ export default StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: '#FCEEDD',
+    backgroundColor: colors.peachSoft,
     bottom: 52,
     left: -38,
     opacity: 0.9,
@@ -56,21 +56,34 @@ export default StyleSheet.create({
   },
   brandWrap: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 20,
+  },
+  brandBadge: {
+    width: 64,
+    height: 64,
+    borderRadius: 20,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.sm,
+    boxShadow: '0px 10px 20px rgba(26, 92, 67, 0.25)',
+    elevation: 4,
   },
   brandName: {
     fontSize: 27,
-    fontWeight: '700',
+    fontWeight: '800',
     color: colors.primaryDark,
     letterSpacing: -0.6,
   },
-  logoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  brandTagline: {
+    ...typography.body,
+    fontSize: 13,
+    color: colors.inkMuted,
+    marginTop: 2,
+    textAlign: 'center',
   },
-  logoEmoji: {
-    fontSize: 24,
+  logoRow: {
+    alignItems: 'center',
   },
   eyebrow: {
     ...typography.caption,
@@ -116,9 +129,25 @@ export default StyleSheet.create({
     paddingVertical: 13,
     fontSize: 15,
     color: colors.ink,
+    minHeight: 50,
   },
   inputFocused: {
     borderColor: colors.primary,
+  },
+  inputError: {
+    borderColor: colors.danger,
+    backgroundColor: colors.dangerSoft,
+  },
+  fieldError: {
+    color: colors.danger,
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 6,
+  },
+  fieldOk: {
+    color: colors.primaryDark,
+    fontSize: 12,
+    marginTop: 6,
   },
   rowBetween: {
     flexDirection: 'row',
@@ -126,23 +155,37 @@ export default StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: 12,
     marginBottom: 4,
+    gap: spacing.sm,
   },
-  rememberWrap: {
+  adminLink: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-  },
-  rememberText: {
-    color: colors.inkMuted,
-    fontSize: 13,
+    minHeight: 44,
+    paddingRight: spacing.sm,
   },
   linkText: {
     color: colors.primary,
-    fontWeight: '600',
+    fontWeight: '700',
     fontSize: 13,
+    marginLeft: 4,
   },
   buttonGroup: {
     marginTop: 18,
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 18,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.border,
+  },
+  dividerText: {
+    color: colors.inkFaint,
+    fontSize: 12.5,
+    marginHorizontal: 10,
   },
   socialRow: {
     flexDirection: 'row',
@@ -151,6 +194,7 @@ export default StyleSheet.create({
   },
   socialButton: {
     flex: 1,
+    flexDirection: 'row',
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
@@ -158,37 +202,34 @@ export default StyleSheet.create({
     paddingVertical: 13,
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: 48,
   },
   socialText: {
     color: colors.ink,
     fontSize: 14,
     fontWeight: '600',
+    marginLeft: 6,
   },
   footerText: {
     marginTop: 18,
     textAlign: 'center',
     fontSize: 13,
     color: colors.inkMuted,
+    minHeight: 44,
+    textAlignVertical: 'center',
   },
   footerLink: {
     color: colors.primary,
     fontWeight: '700',
   },
   errorBox: {
-    backgroundColor: colors.chiliSoft,
-    borderRadius: radius.sm,
-    padding: 12,
     marginTop: 14,
   },
-  errorText: {
-    color: colors.chili,
-    fontSize: 13,
-    fontWeight: '600',
-  },
   helperText: {
-    color: colors.inkFaint,
+    color: colors.inkMuted,
     fontSize: 12,
     textAlign: 'center',
     marginTop: 12,
+    lineHeight: 17,
   },
 });

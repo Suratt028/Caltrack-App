@@ -2,8 +2,7 @@
 import { API_BASE_URL } from '../config';
 
 /**
- * Calculates real nutrition totals by scaling a food's per-100g database
- * values by an actual gram amount (or a named serving x quantity).
+ * Calculates nutrition totals from per-100g database values and gram amounts.
  *
  * @param {Array<{ foodId: string, grams?: number, servingLabel?: string, quantity?: number }>} items
  * @returns {Promise<{
@@ -15,6 +14,18 @@ import { API_BASE_URL } from '../config';
 export async function calculateNutrition(items) {
   if (!Array.isArray(items) || items.length === 0) {
     throw new Error('calculateNutrition requires a non-empty items array');
+  }
+  const invalidItem = items.find((item) => {
+    const grams = Number(item?.grams);
+    return (
+      !item?.foodId ||
+      !Number.isFinite(grams) ||
+      grams <= 0 ||
+      grams > 5000
+    );
+  });
+  if (invalidItem) {
+    throw new Error('อาหารแต่ละรายการต้องมี foodId และน้ำหนัก 1–5000 กรัม');
   }
 
   const response = await fetch(`${API_BASE_URL}/nutrition/calculate`, {
@@ -32,9 +43,7 @@ export async function calculateNutrition(items) {
 }
 
 /**
- * Convenience helper for the common single-food case (e.g. AI scan dbMatch
- * confirmation): given a foodId and a gram amount, return the scaled
- * { kcal, protein, carbs, fat } ready to drop into a food log.
+ * Convenience helper for the common single-food case.
  */
 export async function calculateSingleFoodMacros(foodId, grams) {
   const { totals, notFound } = await calculateNutrition([{ foodId, grams }]);

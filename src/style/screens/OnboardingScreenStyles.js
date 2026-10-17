@@ -6,11 +6,13 @@ export default StyleSheet.create({
     flex: 1,
     backgroundColor: colors.bg,
   },
+  progressWrap: {
+    paddingHorizontal: 20,
+    paddingTop: 18,
+  },
   progressTrack: {
     flexDirection: 'row',
     gap: spacing.xs,
-    paddingHorizontal: 20,
-    paddingTop: 18,
   },
   progressDot: {
     flex: 1,
@@ -21,16 +23,16 @@ export default StyleSheet.create({
   progressDotActive: {
     backgroundColor: colors.primary,
   },
-  content: {
-    padding: 20,
-    paddingTop: 24,
-    paddingBottom: 24,
-  },
-  eyebrow: {
+  progressLabel: {
     ...typography.caption,
     color: colors.primary,
-    marginBottom: 10,
-    letterSpacing: 0.3,
+    marginTop: spacing.sm,
+    letterSpacing: 0.2,
+  },
+  content: {
+    padding: 20,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.lg,
   },
   title: {
     ...typography.display,
@@ -41,6 +43,7 @@ export default StyleSheet.create({
     ...typography.body,
     color: colors.inkMuted,
     marginBottom: 18,
+    lineHeight: 21,
   },
   fieldLabel: {
     ...typography.bodyBold,
@@ -55,9 +58,23 @@ export default StyleSheet.create({
     borderColor: colors.border,
     borderRadius: radius.sm,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingVertical: 12,
     fontSize: 16,
     color: colors.ink,
+    minHeight: 50,
+  },
+  inputError: {
+    borderColor: colors.danger,
+    backgroundColor: colors.dangerSoft,
+  },
+  fieldError: {
+    color: colors.danger,
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 6,
+    marginBottom: 4,
+  },
+  fieldBlock: {
     marginBottom: 10,
   },
   option: {
@@ -69,6 +86,10 @@ export default StyleSheet.create({
     borderRadius: radius.md,
     padding: 16,
     marginBottom: 12,
+    minHeight: 64,
+  },
+  optionPressed: {
+    opacity: 0.9,
   },
   optionSelected: {
     borderColor: colors.primary,
@@ -86,23 +107,39 @@ export default StyleSheet.create({
     fontSize: 12,
     color: colors.inkMuted,
     marginTop: spacing.xs,
+    lineHeight: 17,
   },
   radio: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     borderWidth: 2,
     borderColor: colors.border,
     marginLeft: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   radioSelected: {
     borderColor: colors.primary,
     backgroundColor: colors.primary,
   },
   footer: {
-    flexDirection: 'row',
     paddingHorizontal: 20,
     paddingBottom: 16,
-    paddingTop: 8,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    backgroundColor: colors.bg,
+  },
+  footerRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  requirementHint: {
+    ...typography.body,
+    fontSize: 12.5,
+    color: colors.inkMuted,
+    marginBottom: spacing.sm,
+    lineHeight: 17,
   },
 });

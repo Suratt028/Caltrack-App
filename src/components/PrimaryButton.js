@@ -1,29 +1,52 @@
 import React from 'react';
-import { Pressable, Text, ActivityIndicator } from 'react-native';
+import { Pressable, Text, View, ActivityIndicator } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import styles from '../style/components/PrimaryButtonStyles';
 
-export default function PrimaryButton({ title, onPress, variant = 'solid', loading = false, disabled = false, style }) {
+export default function PrimaryButton({
+  title,
+  onPress,
+  variant = 'solid',
+  loading = false,
+  disabled = false,
+  style,
+  icon,
+  accessibilityHint,
+  compact = false,
+}) {
   const isSolid = variant === 'solid';
+  const isDisabled = disabled || loading;
+  const iconColor = isSolid ? colors.white : colors.primary;
+
   return (
     <Pressable
       onPress={onPress}
-      disabled={disabled || loading}
+      disabled={isDisabled}
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      accessibilityHint={accessibilityHint}
+      accessibilityState={{ disabled: isDisabled, busy: loading }}
       style={({ pressed }) => [
         styles.base,
+        compact && styles.compact,
         isSolid ? styles.solid : styles.outline,
-        (disabled || loading) && styles.disabled,
-        pressed && !disabled && { opacity: 0.9, transform: [{ scale: 0.985 }] },
+        isDisabled && styles.disabled,
+        pressed && !isDisabled && styles.pressed,
         style,
       ]}
-      android_ripple={isSolid ? { color: 'rgba(255,255,255,0.15)' } : { color: 'rgba(47,143,107,0.08)' }}
+      android_ripple={isSolid ? { color: 'rgba(255,255,255,0.18)' } : { color: 'rgba(35,121,90,0.08)' }}
     >
       {loading ? (
         <ActivityIndicator color={isSolid ? colors.white : colors.primary} />
       ) : (
-        <Text style={[styles.text, isSolid ? styles.textSolid : styles.textOutline]}>{title}</Text>
+        <View style={styles.content}>
+          {!!icon && <Ionicons name={icon} size={18} color={iconColor} style={styles.icon} />}
+          <Text style={[styles.text, isSolid ? styles.textSolid : styles.textOutline]} numberOfLines={1}>
+            {title}
+          </Text>
+        </View>
       )}
     </Pressable>
   );
 }
-

@@ -1,62 +1,69 @@
-// src/services/aiVisionService.js
 import { API_BASE_URL } from '../config';
 
-/**
- * Analyzes an image of food using AI Vision (Gemini 1.5 Flash Vision / Server API).
- * @param {string} base64 - Base64 encoded string of the image
- * @param {string} mimeType - Image mime type (default: 'image/jpeg')
- * @returns {Promise<{
- *   name: string, kcal: number, protein: number, carbs: number, fat: number,
- *   confidence: number, source: string,
- *   dbMatch: { foodId: string, nameTh: string, nameEn: string, per100g: object } | null
- * }>}
- */
-export async function analyzeFoodImage(base64, mimeType = 'image/jpeg', userId = null) {
+/** Analyze a food image with automatic retry mechanism for 503/transient errors. */
+export async function analyzeFoodImage(
+  base64,
+  mimeType = 'image/jpeg',
+  userId = null,
+  storeImage = false,
+  maxRetries = 2
+) {
   if (!base64) {
-    throw new Error('Image base64 data is required for AI analysis');
+    throw new Error('กรุณาระบุข้อมูลรูปภาพก่อนทำการวิเคราะห์');
   }
 
   const cleanBase64 = base64.replace(/^data:image\/\w+;base64,/, '');
 
-  // Keep the Gemini API key on the server; the mobile app only calls this endpoint.
-  try {
-    const response = await fetch(`${API_BASE_URL}/ai/scan`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ imageBase64: cleanBase64, mimeType, userId }),
-    });
+  for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/ai/scan`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageBase64: cleanBase64, mimeType, userId, storeImage }),
+      });
 
-    if (response.ok) {
-      const data = await response.json();
-      if (data.success && data.result) {
-        return {
-          ...data.result,
-          source: data.source || 'gemini_vision',
-          scanId: data.scanId || null,
-          // Real per-100g nutrition from our own Thai food database, if Gemini's
-          // guessed name matched something in it. null when no confident match.
-          dbMatch: data.dbMatch || null,
-        };
+      const data = await response.json().catch(() => ({}));
+
+      // 1. ตรวจสอบสถานะ HTTP Response
+      if (!response.ok) {
+        const isUnavailable =
+          response.status === 503 ||
+          data.code === 'UNAVAILABLE' ||
+          data.error?.includes('high demand');
+
+        // หากเจอ 503 ให้ลองใหม่อัตโนมัติก่อนส่ง error
+        if (isUnavailable && attempt <= maxRetries) {
+          await new Promise((resolve) => setTimeout(resolve, 1500 * attempt));
+          continue;
+        }
+
+        if (isUnavailable) {
+          throw new Error('บริการ AI มีผู้ใช้งานหนาแน่นชั่วคราว กรุณากดลองใหม่อีกครั้งในภายหลัง');
+        }
+
+        throw new Error(data.error || data.message || `เชื่อมต่อเซิร์ฟเวอร์ไม่สำเร็จ (${response.status})`);
+      }
+
+      // 2. ตรวจสอบสถานะประมวลผลจาก Backend
+      if (!data.success) {
+        throw new Error(data.error || 'ไม่สามารถวิเคราะห์ภาพอาหารได้');
+      }
+
+      // 3. ตรวจสอบผลลัพธ์รายการอาหาร
+      const items = data.result?.items;
+      if (!Array.isArray(items) || items.length === 0) {
+        throw new Error('ไม่พบรายการอาหารในรูปภาพ กรุณาลองถ่ายมุมอื่นหรือค้นหาอาหารด้วยตนเอง');
+      }
+
+      return {
+        ...data.result,
+        source: data.source || 'gemini_vision',
+        scanId: data.scanId || null,
+      };
+    } catch (error) {
+      if (attempt > maxRetries) {
+        throw error;
       }
     }
-  } catch (err) {
-    console.warn('Backend AI Scan endpoint unavailable:', err.message);
   }
-
-  // Backend returns its own fallback when Gemini is unavailable. This local
-  // fallback keeps the screen usable when the backend itself cannot be reached.
-  const sampleFoods = [
-    { name: 'ข้าวมันไก่', kcal: 596, protein: 24, carbs: 70, fat: 24, confidence: 0.88 },
-    { name: 'ผัดไทยกุ้งสด', kcal: 545, protein: 22, carbs: 64, fat: 20, confidence: 0.85 },
-    { name: 'ข้าวผัดกระเพราหมูสับ + ไข่ดาว', kcal: 630, protein: 28, carbs: 68, fat: 26, confidence: 0.91 },
-    { name: 'ต้มยำกุ้งน้ำข้น', kcal: 320, protein: 26, carbs: 18, fat: 16, confidence: 0.82 },
-    { name: 'แกงเขียวหวานไก่', kcal: 480, protein: 20, carbs: 22, fat: 34, confidence: 0.86 },
-  ];
-  const picked = sampleFoods[Math.floor(Math.random() * sampleFoods.length)];
-  return {
-    ...picked,
-    source: 'mock_fallback',
-    scanId: null,
-    dbMatch: null,
-  };
 }

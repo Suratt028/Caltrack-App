@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { colors, radius, spacing } from '../../theme/colors';
+import { colors, radius, spacing, shadows } from '../../theme/colors';
 
 export default StyleSheet.create({
   card: {
@@ -8,7 +8,6 @@ export default StyleSheet.create({
     padding: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
-    boxShadow: '0px 6px 12px rgba(43, 36, 32, 0.06)',
-    elevation: 2,
+    ...shadows.card,
   },
 });

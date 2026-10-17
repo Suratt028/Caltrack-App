@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { colors, radius, spacing } from '../../theme/colors';
+import { colors, radius, spacing, shadows } from '../../theme/colors';
 
 export default StyleSheet.create({
   base: {
@@ -9,12 +9,31 @@ export default StyleSheet.create({
     paddingHorizontal: spacing.lg,
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: '0px 6px 10px rgba(47, 143, 107, 0.16)',
+    ...shadows.soft,
+  },
+  compact: {
+    minHeight: 44,
+    paddingVertical: 10,
+    paddingHorizontal: spacing.md,
+  },
+  solid: {
+    backgroundColor: colors.primary,
+    boxShadow: '0px 6px 12px rgba(35, 121, 90, 0.22)',
     elevation: 3,
   },
-  solid: { backgroundColor: colors.primary },
-  outline: { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: colors.border },
+  outline: {
+    backgroundColor: colors.surface,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+  },
   disabled: { opacity: 0.5 },
+  pressed: { opacity: 0.92, transform: [{ scale: 0.985 }] },
+  content: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  icon: { marginRight: spacing.sm },
   text: { fontSize: 15, fontWeight: '700' },
   textSolid: { color: colors.white },
   textOutline: { color: colors.ink },

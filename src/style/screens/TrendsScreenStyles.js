@@ -8,37 +8,42 @@ export default StyleSheet.create({
   },
   content: {
     padding: 20,
-    paddingBottom: 36,
+    paddingTop: 20,
+    paddingBottom: 40,
   },
   title: {
     ...typography.h1,
     color: colors.ink,
-    marginBottom: 6,
   },
   subtitle: {
     ...typography.body,
     color: colors.inkMuted,
-    marginBottom: 16,
+    marginTop: spacing.xs,
   },
   periodRow: {
     flexDirection: 'row',
     backgroundColor: colors.surfaceMuted,
     borderRadius: radius.pill,
     padding: 4,
-    marginBottom: 16,
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
   },
   periodChip: {
     flex: 1,
-    paddingVertical: 8,
+    minHeight: 40,
     borderRadius: radius.pill,
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  periodChipPressed: {
+    opacity: 0.8,
   },
   periodChipActive: {
     backgroundColor: colors.primary,
   },
   periodChipText: {
     fontSize: 12.5,
-    fontWeight: '600',
+    fontWeight: '700',
     color: colors.inkMuted,
   },
   periodChipTextActive: {
@@ -47,7 +52,8 @@ export default StyleSheet.create({
   summaryRow: {
     flexDirection: 'row',
     gap: 10,
-    marginBottom: 14,
+    marginBottom: spacing.md,
+    marginTop: spacing.sm,
   },
   summaryCard: {
     flex: 1,
@@ -80,41 +86,27 @@ export default StyleSheet.create({
     marginBottom: 14,
   },
   cardTitle: {
-    ...typography.h2,
+    ...typography.h3,
     color: colors.ink,
-    marginBottom: 8,
-    fontSize: 15,
+    marginBottom: spacing.xs,
   },
   cardSubtitle: {
     ...typography.body,
     color: colors.inkMuted,
-    marginBottom: 12,
+    marginBottom: spacing.sm,
     fontSize: 12,
+    lineHeight: 18,
   },
-  chartContainer: {
+  chartWrap: {
     width: '100%',
-    minHeight: 180,
-    justifyContent: 'center',
-  },
-  chartPlaceholder: {
-    height: 170,
-    borderRadius: radius.sm,
-    backgroundColor: colors.surfaceMuted,
-    borderWidth: 1,
-    borderColor: colors.border,
+    marginTop: spacing.sm,
     alignItems: 'center',
-    justifyContent: 'center',
-  },
-  chartPlaceholderText: {
-    fontSize: 14,
-    color: colors.inkMuted,
-    textAlign: 'center',
   },
   legendRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
-    marginTop: 12,
+    marginTop: 10,
   },
   legendItem: {
     flexDirection: 'row',
@@ -127,9 +119,35 @@ export default StyleSheet.create({
     backgroundColor: colors.primary,
     marginRight: 6,
   },
+  legendLine: {
+    width: 14,
+    height: 0,
+    borderTopWidth: 2,
+    borderTopColor: colors.inkFaint,
+    borderStyle: 'dashed',
+    marginRight: 6,
+  },
   legendText: {
     fontSize: 12,
     color: colors.inkMuted,
+  },
+  weightInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.sm,
+  },
+  weightInput: {
+    flex: 1,
+    backgroundColor: colors.surfaceMuted,
+    borderRadius: radius.sm,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
+    color: colors.ink,
+    marginRight: spacing.sm,
+    minHeight: 50,
   },
   insightBox: {
     backgroundColor: colors.primarySoft,
@@ -137,7 +155,7 @@ export default StyleSheet.create({
     padding: spacing.md,
     marginBottom: spacing.lg,
     borderWidth: 1,
-    borderColor: '#D7E9E1',
+    borderColor: '#C6E6D6',
   },
   insightTitle: {
     ...typography.bodyBold,
@@ -149,20 +167,8 @@ export default StyleSheet.create({
     color: colors.ink,
     lineHeight: 21,
   },
-  emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: spacing.xxl,
-  },
-  emptyStateTitle: {
-    ...typography.h2,
-    color: colors.ink,
-    textAlign: 'center',
-    marginBottom: spacing.xs,
-  },
-  emptyStateText: {
-    ...typography.body,
-    color: colors.inkMuted,
-    textAlign: 'center',
+  emptyWrap: {
+    marginTop: spacing.sm,
+    marginBottom: spacing.md,
   },
 });

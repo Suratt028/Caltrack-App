@@ -2,32 +2,34 @@ import { StyleSheet } from 'react-native';
 import { colors } from '../../theme/colors';
 
 export default StyleSheet.create({
-  centerLabel: {
-    position: 'absolute',
+  wrap: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: '100%',
-    top: '36%',
   },
-
+  centerLabel: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   value: {
-    fontSize: 30,
-    lineHeight: 34,
-    fontWeight: '900',
     color: colors.ink,
+    lineHeight: 46,
   },
-
   unit: {
-    marginTop: 1,
     fontSize: 13,
     fontWeight: '700',
-    color: colors.ink,
+    color: colors.inkMuted,
   },
-
+  unitOver: {
+    color: colors.danger,
+  },
   caption: {
-    marginTop: 7,
-    fontSize: 11,
+    marginTop: 6,
+    fontSize: 12,
     fontWeight: '600',
     color: colors.inkMuted,
+  },
+  captionOver: {
+    color: colors.danger,
   },
 });

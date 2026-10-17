@@ -123,3 +123,31 @@ export async function deleteLog(userId, logId) {
   const payload = await requestJson(`/logs/${userId}/${logId}`, { method: 'DELETE' });
   return payload.log;
 }
+
+export async function submitTicket({ userId, userEmail, topic, detail }) {
+  const payload = await requestJson('/tickets', {
+    method: 'POST',
+    body: JSON.stringify({ userId, userEmail, topic, detail }),
+  });
+  return payload.ticket;
+}
+
+export async function fetchTickets(userEmail) {
+  const path = userEmail ? `/tickets?email=${encodeURIComponent(userEmail)}` : '/tickets';
+  const payload = await requestJson(path);
+  return payload.tickets || [];
+}
+
+export async function updateTicketStatus(ticketId, status) {
+  const payload = await requestJson(`/tickets/${ticketId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
+  });
+  return payload.ticket;
+}
+
+export async function deleteTicket(ticketId) {
+  const payload = await requestJson(`/tickets/${ticketId}`, { method: 'DELETE' });
+  return payload;
+}
+

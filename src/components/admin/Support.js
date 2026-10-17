@@ -1,0 +1,113 @@
+import React, { useEffect, useState } from 'react';
+import { View, Text, Pressable, ActivityIndicator } from 'react-native';
+import styles from '../../style/screens/AdminScreenStyles';
+import { Title, Card, Badge, formatDate } from './AdminCommon';
+import { fetchTickets, updateTicketStatus, deleteTicket } from '../../services/atlasService';
+
+export default function Support({ token }) {
+  const [tickets, setTickets] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const loadTickets = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const list = await fetchTickets();
+      setTickets(list);
+    } catch (err) {
+      console.error('Failed to load tickets:', err);
+      setError(err.message || 'ไม่สามารถโหลดรายการตั๋วได้');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadTickets();
+  }, []);
+
+  const handleCycleStatus = async (ticket) => {
+    const statusCycle = { Open: 'In Progress', 'In Progress': 'Resolved', Resolved: 'Open' };
+    const nextStatus = statusCycle[ticket.status] || 'Open';
+    try {
+      await updateTicketStatus(ticket.ticketId || ticket._id, nextStatus);
+      await loadTickets();
+    } catch (err) {
+      alert('Error updating status: ' + err.message);
+    }
+  };
+
+  const handleDelete = async (ticketId) => {
+    if (typeof window !== 'undefined' && !window.confirm('คุณต้องการลบตั๋วรายงานนี้ใช่หรือไม่?')) {
+      return;
+    }
+    try {
+      await deleteTicket(ticketId);
+      await loadTickets();
+    } catch (err) {
+      alert('Error deleting ticket: ' + err.message);
+    }
+  };
+
+  const getStatusColor = (status) => {
+    if (status === 'Open') return 'coral';
+    if (status === 'In Progress') return 'blue';
+    if (status === 'Resolved') return 'green';
+    return 'tan';
+  };
+
+  return (
+    <>
+      <Title name="Support & Feedback" detail="จัดการตั๋วแจ้งปัญหาและข้อเสนอแนะจากผู้ใช้" />
+
+      <Card style={{ marginTop: 16, flexBasis: 'auto' }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <Text style={styles.sectionTitle}>User Support Tickets ({tickets.length})</Text>
+          <Pressable onPress={loadTickets} style={{ padding: 4 }}>
+            <Text style={{ color: '#2F8F6B', fontWeight: '600', fontSize: 13 }}>↻ โหลดใหม่</Text>
+          </Pressable>
+        </View>
+
+        {error ? <Text style={styles.error}>{error}</Text> : null}
+        {loading ? (
+          <ActivityIndicator color="#2F8F6B" style={{ marginVertical: 20 }} />
+        ) : tickets.length === 0 ? (
+          <Text style={{ color: '#888', fontStyle: 'italic', paddingVertical: 12 }}>ยังไม่มีรายงานปัญหาจากผู้ใช้</Text>
+        ) : (
+          <>
+            <View style={styles.tableHead}>
+              <Text style={styles.tableCell}>Ticket ID</Text>
+              <Text style={styles.tableCell}>User</Text>
+              <Text style={styles.tableCell}>Topic & Detail</Text>
+              <Text style={styles.tableCell}>Status (Click to change)</Text>
+              <Text style={styles.tableCell}>Action</Text>
+            </View>
+
+            {tickets.map((t) => (
+              <View style={styles.tableRow} key={t._id || t.ticketId}>
+                <Text style={styles.tableCell}>{t.ticketId || t._id?.slice(-6)}</Text>
+                <Text style={styles.tableCell}>{t.userEmail}</Text>
+                <View style={[styles.tableCell, { flex: 2 }]}>
+                  <Text style={styles.strong}>{t.topic}</Text>
+                  {t.detail ? <Text style={{ fontSize: 12, color: '#666', marginTop: 2 }}>{t.detail}</Text> : null}
+                  <Text style={{ fontSize: 10, color: '#999', marginTop: 2 }}>{formatDate(t.createdAt)}</Text>
+                </View>
+                <View style={styles.tableCell}>
+                  <Pressable onPress={() => handleCycleStatus(t)}>
+                    <Badge color={getStatusColor(t.status)}>{t.status}</Badge>
+                  </Pressable>
+                </View>
+                <View style={styles.tableCell}>
+                  <Pressable onPress={() => handleDelete(t.ticketId || t._id)}>
+                    <Text style={styles.delete}>Delete</Text>
+                  </Pressable>
+                </View>
+              </View>
+            ))}
+          </>
+        )}
+      </Card>
+    </>
+  );
+}

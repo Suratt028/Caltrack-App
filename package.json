@@ -30,7 +30,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "server": "node server.js"
+    "server": "node server.js",
+    "test": "node --test"
   },
   "private": true
 }

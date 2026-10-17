@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { colors, spacing, typography, radius } from '../../theme/colors';
+import { colors, spacing, typography, radius, shadows } from '../../theme/colors';
 
 export default StyleSheet.create({
   safe: {
@@ -8,14 +8,18 @@ export default StyleSheet.create({
   },
   content: {
     padding: 20,
-    paddingTop: 22,
+    paddingTop: 20,
     paddingBottom: 48,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: spacing.md,
+  },
+  headerText: {
+    flex: 1,
+    paddingRight: spacing.sm,
   },
   eyebrow: {
     ...typography.bodyBold,
@@ -28,17 +32,26 @@ export default StyleSheet.create({
     fontWeight: '700',
     color: colors.ink,
   },
+  dateText: {
+    ...typography.body,
+    fontSize: 13,
+    color: colors.inkMuted,
+    marginTop: 2,
+  },
   avatar: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     backgroundColor: colors.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: colors.surface,
+    ...shadows.soft,
   },
   avatarText: {
-    color: colors.primary,
-    fontSize: 18,
+    color: colors.primaryDark,
+    fontSize: 19,
     fontWeight: '800',
   },
   coachCard: {
@@ -47,160 +60,166 @@ export default StyleSheet.create({
     backgroundColor: colors.primarySoft,
     borderRadius: radius.lg,
     padding: 16,
-    marginBottom: 16,
-    boxShadow: '0px 5px 12px rgba(47, 143, 107, 0.1)',
-    elevation: 2,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: '#C6E6D6',
   },
-  coachMascot: {
+  coachIcon: {
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: 'rgba(255,255,255,0.45)',
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
-  },
-  coachEmoji: {
-    fontSize: 22,
+    marginRight: spacing.md,
   },
   coachText: {
     flex: 1,
     color: colors.primaryDark,
-    fontSize: 13,
+    fontSize: 13.5,
     fontWeight: '600',
-    lineHeight: 18,
+    lineHeight: 20,
   },
   ringCard: {
     alignItems: 'center',
-    paddingVertical: 22,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.md,
     borderRadius: radius.lg,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
   },
-  remainingCaption: {
+  ringCaption: {
     color: colors.inkMuted,
     fontSize: 13,
-    marginTop: -spacing.sm,
-    marginBottom: 10,
+    marginTop: spacing.sm,
+    textAlign: 'center',
   },
-  macroRow: {
+  ringCaptionStrong: {
+    color: colors.ink,
+    fontWeight: '700',
+  },
+  ringStatsRow: {
     flexDirection: 'row',
     width: '100%',
-    gap: 8,
-    marginTop: 4,
+    marginTop: spacing.md,
   },
-  macroChip: {
+  ringStat: {
     flex: 1,
-    borderRadius: radius.md,
-    paddingVertical: 12,
     alignItems: 'center',
-    justifyContent: 'center',
   },
-  primaryChip: {
-    backgroundColor: colors.primarySoft,
+  ringStatDivider: {
+    width: 1,
+    backgroundColor: colors.border,
+    alignSelf: 'stretch',
   },
-  turmericChip: {
-    backgroundColor: colors.turmericSoft,
-  },
-  skyChip: {
-    backgroundColor: '#DCEAF7',
-  },
-  macroEmoji: {
-    fontSize: 18,
-    marginBottom: 4,
-  },
-  macroValue: {
-    fontSize: 14,
+  ringStatValue: {
+    fontSize: 17,
     fontWeight: '800',
+    color: colors.ink,
   },
-  primaryText: {
-    color: colors.primaryDark,
-  },
-  turmericText: {
-    color: colors.turmeric,
-  },
-  skyText: {
-    color: '#4C8FC0',
-  },
-  macroLabel: {
+  ringStatLabel: {
+    fontSize: 11,
     color: colors.inkMuted,
-    fontSize: 10,
     marginTop: 2,
   },
   quickActions: {
     flexDirection: 'row',
     gap: spacing.sm,
-    marginTop: spacing.lg,
+    marginTop: spacing.md,
   },
   quickAction: {
     flex: 1,
-    minHeight: 82,
+    minHeight: 104,
     borderRadius: radius.md,
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
     padding: spacing.md,
-    justifyContent: 'center',
-    boxShadow: '0px 5px 10px rgba(43, 36, 32, 0.05)',
-    elevation: 2,
+    ...shadows.card,
+  },
+  quickActionPressed: {
+    opacity: 0.92,
+    transform: [{ scale: 0.985 }],
   },
   quickActionAccent: {
     backgroundColor: colors.primary,
     borderColor: colors.primary,
   },
-  quickIcon: {
-    color: colors.turmeric,
-    fontSize: 26,
-    fontWeight: '300',
-    lineHeight: 28,
+  quickIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.primarySoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.sm,
   },
-  quickIconAccent: {
-    color: colors.turmericSoft,
+  quickIconWrapAccent: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
   },
   quickLabel: {
     color: colors.ink,
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: '700',
-    marginTop: spacing.xs,
   },
   quickLabelAccent: {
     color: colors.white,
   },
+  quickHint: {
+    color: colors.inkMuted,
+    fontSize: 11.5,
+    marginTop: 2,
+    lineHeight: 16,
+  },
+  quickHintAccent: {
+    color: 'rgba(255,255,255,0.85)',
+  },
   macroCard: {
-    marginTop: spacing.lg,
-    paddingBottom: spacing.sm,
+    marginTop: spacing.md,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-  },
-  sectionHint: {
-    color: colors.inkFaint,
-    fontSize: 11,
+    marginBottom: spacing.md,
   },
   sectionTitle: {
     ...typography.h2,
     color: colors.ink,
-    marginBottom: spacing.md,
+  },
+  sectionHint: {
+    color: colors.inkMuted,
+    fontSize: 12,
   },
   mealsHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'baseline',
     marginTop: spacing.lg,
-    marginBottom: spacing.xs,
+    marginBottom: spacing.sm,
   },
   mealCount: {
-    color: colors.inkFaint,
+    color: colors.inkMuted,
     fontSize: 12,
+  },
+  mealGroup: {
     marginBottom: spacing.md,
   },
-  emptyText: {
+  mealGroupHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    marginBottom: spacing.sm,
+    paddingHorizontal: spacing.xs,
+  },
+  mealGroupTitle: {
+    ...typography.label,
+    color: colors.ink,
+  },
+  mealGroupKcal: {
+    fontSize: 12,
+    fontWeight: '600',
     color: colors.inkMuted,
-    fontSize: 13,
-    textAlign: 'center',
-    paddingVertical: spacing.sm,
+  },
+  emptyWrap: {
+    marginTop: spacing.xs,
   },
 });
