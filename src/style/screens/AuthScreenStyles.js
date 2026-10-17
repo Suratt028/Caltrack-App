@@ -66,7 +66,7 @@ export default StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.sm,
-    boxShadow: '0px 10px 20px rgba(26, 92, 67, 0.25)',
+    boxShadow: '0px 10px 20px rgba(27, 61, 47, 0.25)',
     elevation: 4,
   },
   brandName: {
@@ -110,7 +110,7 @@ export default StyleSheet.create({
     borderColor: colors.border,
     borderRadius: 24,
     padding: 18,
-    boxShadow: '0px 8px 16px rgba(43, 36, 32, 0.06)',
+    boxShadow: '0px 8px 16px rgba(31, 58, 47, 0.06)',
     elevation: 3,
   },
   fieldLabel: {

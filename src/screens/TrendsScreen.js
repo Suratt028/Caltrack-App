@@ -41,9 +41,9 @@ function CalorieTrendChart({ days, totalsByDay, goal, width }) {
         y1={goalY}
         x2={width}
         y2={goalY}
-        stroke={colors.inkFaint}
+        stroke={colors.carbs}
         strokeDasharray="4,4"
-        strokeWidth={1}
+        strokeWidth={1.5}
       />
       <SvgText x={width} y={Math.max(goalY - 5, 10)} fontSize="9" fill={colors.inkMuted} textAnchor="end">
         {`เป้าหมาย ${formatNumber(safeGoal)} kcal`}
@@ -53,7 +53,7 @@ function CalorieTrendChart({ days, totalsByDay, goal, width }) {
         const barHeight = maxVal > 0 ? (val / maxVal) * CHART_HEIGHT : 0;
         const x = i * (barWidth + barGap);
         const y = CHART_HEIGHT - barHeight;
-        const isOver = val > safeGoal;
+        const isToday = i === days.length - 1;
         const label = new Date(d).toLocaleDateString('th-TH', { weekday: 'short' });
         const showLabel = showEveryLabel === 1 || i % showEveryLabel === 0 || i === days.length - 1;
         return (
@@ -64,7 +64,7 @@ function CalorieTrendChart({ days, totalsByDay, goal, width }) {
               width={barWidth}
               height={Math.max(barHeight, 2)}
               rx={4}
-              fill={isOver ? colors.chili : colors.primary}
+              fill={isToday ? colors.primary : colors.barPast}
             />
             {showLabel && (
               <SvgText
@@ -255,11 +255,11 @@ export default function TrendsScreen() {
           <View style={styles.legendRow}>
             <View style={styles.legendItem}>
               <View style={styles.legendDot} />
-              <Text style={styles.legendText}>ภายในเป้าหมาย</Text>
+              <Text style={styles.legendText}>วันนี้</Text>
             </View>
             <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: colors.chili }]} />
-              <Text style={styles.legendText}>เกินเป้าหมาย</Text>
+              <View style={[styles.legendDot, { backgroundColor: colors.barPast }]} />
+              <Text style={styles.legendText}>วันก่อนหน้า</Text>
             </View>
             <View style={styles.legendItem}>
               <View style={styles.legendLine} />

@@ -63,7 +63,7 @@ export default StyleSheet.create({
     paddingTop: spacing.sm,
     paddingBottom: spacing.lg,
     maxHeight: '92%',
-    boxShadow: '0px -8px 24px rgba(43, 36, 32, 0.16)',
+    boxShadow: '0px -8px 24px rgba(27, 61, 47, 0.16)',
     elevation: 12,
   },
   sheetHandle: {

@@ -159,12 +159,12 @@ export default StyleSheet.create({
     backgroundColor: colors.primary,
   },
   goalSummary: {
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.mint,
     borderRadius: radius.md,
     padding: spacing.md,
     marginTop: spacing.md,
     borderWidth: 1,
-    borderColor: '#C6E6D6',
+    borderColor: colors.border,
   },
   goalSummaryTitle: {
     ...typography.label,

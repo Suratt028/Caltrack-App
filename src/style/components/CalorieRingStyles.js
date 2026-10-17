@@ -21,7 +21,7 @@ export default StyleSheet.create({
     color: colors.inkMuted,
   },
   unitOver: {
-    color: colors.danger,
+    color: colors.carbStrong,
   },
   caption: {
     marginTop: 6,
@@ -30,6 +30,6 @@ export default StyleSheet.create({
     color: colors.inkMuted,
   },
   captionOver: {
-    color: colors.danger,
+    color: colors.carbStrong,
   },
 });

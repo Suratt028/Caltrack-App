@@ -18,7 +18,7 @@ export default StyleSheet.create({
     flex: 1,
     height: 6,
     borderRadius: radius.pill,
-    backgroundColor: colors.surfaceMuted,
+    backgroundColor: colors.mint,
   },
   progressDotActive: {
     backgroundColor: colors.primary,

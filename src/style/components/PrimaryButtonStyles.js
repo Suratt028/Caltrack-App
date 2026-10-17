@@ -3,7 +3,7 @@ import { colors, radius, spacing, shadows } from '../../theme/colors';
 
 export default StyleSheet.create({
   base: {
-    borderRadius: radius.md,
+    borderRadius: radius.button,
     minHeight: 52,
     paddingVertical: 14,
     paddingHorizontal: spacing.lg,
@@ -18,7 +18,7 @@ export default StyleSheet.create({
   },
   solid: {
     backgroundColor: colors.primary,
-    boxShadow: '0px 6px 12px rgba(35, 121, 90, 0.22)',
+    boxShadow: '0px 6px 12px rgba(27, 61, 47, 0.18)',
     elevation: 3,
   },
   outline: {

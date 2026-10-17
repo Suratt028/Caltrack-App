@@ -35,7 +35,7 @@ export default function PrimaryButton({
         pressed && !isDisabled && styles.pressed,
         style,
       ]}
-      android_ripple={isSolid ? { color: 'rgba(255,255,255,0.18)' } : { color: 'rgba(35,121,90,0.08)' }}
+      android_ripple={isSolid ? { color: 'rgba(255,255,255,0.18)' } : { color: 'rgba(33,99,76,0.10)' }}
     >
       {loading ? (
         <ActivityIndicator color={isSolid ? colors.white : colors.primary} />

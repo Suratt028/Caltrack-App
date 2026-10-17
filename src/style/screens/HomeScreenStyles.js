@@ -62,7 +62,7 @@ export default StyleSheet.create({
     padding: 16,
     marginBottom: spacing.md,
     borderWidth: 1,
-    borderColor: '#C6E6D6',
+    borderColor: colors.border,
   },
   coachIcon: {
     width: 42,

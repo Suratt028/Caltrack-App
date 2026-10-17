@@ -1,5 +1,5 @@
 ﻿import { StyleSheet } from 'react-native';
-import { colors, spacing, typography, radius } from '../../theme/colors';
+import { colors, spacing, typography, radius, shadows } from '../../theme/colors';
 
 export default StyleSheet.create({
   safe: {
@@ -22,7 +22,7 @@ export default StyleSheet.create({
   },
   periodRow: {
     flexDirection: 'row',
-    backgroundColor: colors.surfaceMuted,
+    backgroundColor: colors.mint,
     borderRadius: radius.pill,
     padding: 4,
     marginTop: spacing.md,
@@ -39,7 +39,8 @@ export default StyleSheet.create({
     opacity: 0.8,
   },
   periodChipActive: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.surface,
+    ...shadows.soft,
   },
   periodChipText: {
     fontSize: 12.5,
@@ -47,7 +48,7 @@ export default StyleSheet.create({
     color: colors.inkMuted,
   },
   periodChipTextActive: {
-    color: colors.white,
+    color: colors.primaryDark,
   },
   summaryRow: {
     flexDirection: 'row',
@@ -123,7 +124,7 @@ export default StyleSheet.create({
     width: 14,
     height: 0,
     borderTopWidth: 2,
-    borderTopColor: colors.inkFaint,
+    borderTopColor: colors.carbs,
     borderStyle: 'dashed',
     marginRight: 6,
   },
@@ -150,12 +151,12 @@ export default StyleSheet.create({
     minHeight: 50,
   },
   insightBox: {
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.mint,
     borderRadius: radius.md,
     padding: spacing.md,
     marginBottom: spacing.lg,
     borderWidth: 1,
-    borderColor: '#C6E6D6',
+    borderColor: colors.border,
   },
   insightTitle: {
     ...typography.bodyBold,

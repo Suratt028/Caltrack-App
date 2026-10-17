@@ -32,7 +32,7 @@ export default function RootNavigator() {
         screenOptions={({ route }) => ({
           headerShown: false,
           tabBarHideOnKeyboard: true,
-          tabBarActiveTintColor: colors.primary,
+          tabBarActiveTintColor: colors.primaryDark,
           tabBarInactiveTintColor: colors.inkMuted,
           tabBarStyle: {
             borderTopColor: colors.border,
@@ -40,7 +40,7 @@ export default function RootNavigator() {
             height: 62 + bottomPadding,
             paddingBottom: bottomPadding,
             paddingTop: 7,
-            boxShadow: '0px -2px 10px rgba(43, 36, 32, 0.08)',
+            boxShadow: '0px -2px 10px rgba(27, 61, 47, 0.08)',
             elevation: 6,
           },
           tabBarLabelStyle: { fontSize: 11, fontWeight: '700' },
@@ -58,7 +58,7 @@ export default function RootNavigator() {
                     marginTop: -18,
                     borderWidth: 4,
                     borderColor: colors.surface,
-                    boxShadow: '0px 6px 12px rgba(26, 92, 67, 0.35)',
+                    boxShadow: '0px 6px 12px rgba(27, 61, 47, 0.35)',
                     elevation: 6,
                   }}
                 >
@@ -67,7 +67,22 @@ export default function RootNavigator() {
               );
             }
             const [activeIcon, inactiveIcon] = TAB_ICONS[route.name] || ['ellipse', 'ellipse-outline'];
-            return <Ionicons name={focused ? activeIcon : inactiveIcon} size={focused ? size + 1 : size} color={color} />;
+            return (
+              <View
+                style={
+                  focused
+                    ? {
+                        backgroundColor: colors.mint,
+                        borderRadius: 999,
+                        paddingHorizontal: 16,
+                        paddingVertical: 3,
+                      }
+                    : null
+                }
+              >
+                <Ionicons name={focused ? activeIcon : inactiveIcon} size={focused ? size + 1 : size} color={color} />
+              </View>
+            );
           },
         })}
       >

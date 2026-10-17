@@ -71,17 +71,17 @@ export default function ReportScreen({ onClose }) {
   };
 
   const getStatusBadge = (status) => {
-    let bgColor = '#FFF3CD';
-    let textColor = '#856404';
+    let bgColor = colors.warnBg;
+    let textColor = colors.carbStrong;
     let label = 'รอการตรวจสอบ';
 
     if (status === 'In Progress') {
-      bgColor = '#CCE5FF';
-      textColor = '#004085';
+      bgColor = colors.skySoft;
+      textColor = colors.skyDark;
       label = 'กำลังดำเนินการ';
     } else if (status === 'Resolved') {
-      bgColor = '#D4EDDA';
-      textColor = '#155724';
+      bgColor = colors.mint;
+      textColor = colors.primaryDark;
       label = 'แก้ไขเรียบร้อยแล้ว';
     }
 

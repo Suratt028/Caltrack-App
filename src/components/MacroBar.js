@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text } from 'react-native';
-import { colors } from '../theme/colors';
 import styles from '../style/components/MacroBarStyles';
 
 export default function MacroBar({ label, consumed, goal, color, unit = 'g' }) {
@@ -30,7 +29,7 @@ export default function MacroBar({ label, consumed, goal, color, unit = 'g' }) {
         <View
           style={[
             styles.fill,
-            { width: `${pct * 100}%`, backgroundColor: over ? colors.chili : color },
+            { width: `${pct * 100}%`, backgroundColor: color },
           ]}
         />
       </View>

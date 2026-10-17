@@ -5,10 +5,10 @@ import { colors } from '../theme/colors';
 import styles from '../style/components/BannerStyles';
 
 const TONES = {
-  success: { icon: 'checkmark-circle', color: colors.success, bg: colors.successSoft, border: '#C6E6D6' },
-  error: { icon: 'alert-circle', color: colors.danger, bg: colors.dangerSoft, border: '#F3CFC4' },
-  warning: { icon: 'information-circle', color: colors.turmericDark, bg: colors.turmericSoft, border: '#EBD9BC' },
-  info: { icon: 'information-circle', color: colors.skyDark, bg: colors.skySoft, border: '#C9DDEF' },
+  success: { icon: 'checkmark-circle', color: colors.success, bg: colors.successSoft, border: colors.border },
+  error: { icon: 'alert-circle', color: colors.danger, bg: colors.dangerSoft, border: colors.border },
+  warning: { icon: 'information-circle', color: colors.carbStrong, bg: colors.warnBg, border: colors.border },
+  info: { icon: 'information-circle', color: colors.primaryDark, bg: colors.mint, border: colors.border },
 };
 
 /**

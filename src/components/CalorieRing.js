@@ -17,7 +17,9 @@ export default function CalorieRing({ consumed, goal, size = 220, strokeWidth = 
   const over = Math.max(safeConsumed - safeGoal, 0);
   const isOver = safeGoal > 0 && safeConsumed > safeGoal;
 
-  const ringColor = isOver ? colors.chili : colors.primary;
+  // The ring always reads as progress in brand green — over-goal is never
+  // signalled with alarm red (design keeps feedback supportive, not blaming).
+  const ringColor = colors.primary;
 
   return (
     <View
@@ -35,7 +37,7 @@ export default function CalorieRing({ consumed, goal, size = 220, strokeWidth = 
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke={colors.surfaceMuted}
+          stroke={colors.mint}
           strokeWidth={strokeWidth}
           fill="none"
         />

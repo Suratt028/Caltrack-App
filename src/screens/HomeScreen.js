@@ -145,7 +145,7 @@ export default function HomeScreen({ navigation }) {
             </View>
             <View style={styles.ringStatDivider} />
             <View style={styles.ringStat}>
-              <Text style={[styles.ringStatValue, overGoal && { color: colors.danger }]}>
+              <Text style={[styles.ringStatValue, overGoal && { color: colors.carbStrong }]}>
                 {formatNumber(overGoal ? totals.kcal - calorieGoal : remaining)}
               </Text>
               <Text style={styles.ringStatLabel}>{overGoal ? 'เกิน (kcal)' : 'เหลือ (kcal)'}</Text>
