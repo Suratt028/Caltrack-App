@@ -54,7 +54,7 @@ export default function CalorieRing({ consumed, goal, size = 220, strokeWidth = 
           transform={`rotate(-90 ${size / 2} ${size / 2})`}
         />
       </Svg>
-      <View style={styles.centerLabel} pointerEvents="none">
+      <View style={[styles.centerLabel, { pointerEvents: 'none' }]}>
         <Text style={[typography.stat, styles.value]}>{Math.round(isOver ? over : remaining)}</Text>
         <Text style={[styles.unit, isOver && styles.unitOver]}>kcal</Text>
         <Text style={[styles.caption, isOver && styles.captionOver]}>
