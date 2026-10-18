@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Switch, Pressable } from 'react-native';
+import { View, Switch, Pressable } from 'react-native';
+import { Text } from '../AppText';
+import { TextInput } from '../AppTextInput';
 import styles from '../../style/screens/AdminScreenStyles';
+import { colors } from '../../theme/colors';
 import { Title, Card } from './AdminCommon';
 
 export default function Settings({ token }) {
@@ -23,7 +26,7 @@ export default function Settings({ token }) {
           />
         </View>
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginVertical: 16, borderTopWidth: 1, borderColor: '#EEE', paddingTop: 16 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginVertical: 16, borderTopWidth: 1, borderColor: colors.border, paddingTop: 16 }}>
           <View>
             <Text style={styles.sectionTitle}>Maintenance Mode</Text>
             <Text style={styles.detail}>ปิดระบบชั่วคราวเพื่อปรับปรุงระบบ</Text>

@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Pressable } from 'react-native';
+import { Text } from './AppText';
 import styles from '../style/components/MealChipsStyles';
 
 // Single source of truth for meal options (shared by Log + Scan screens).

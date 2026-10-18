@@ -1,6 +1,8 @@
 import React from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Pressable } from 'react-native';
+import { Text } from '../AppText';
 import styles from '../../style/screens/AdminScreenStyles';
+import { colors } from '../../theme/colors';
 import { Title, Stat, Card } from './AdminCommon';
 
 export default function Reports({ token }) {
@@ -24,7 +26,7 @@ export default function Reports({ token }) {
             { name: 'กาแฟดำ (ไม่ใส่น้ำตาล)', count: '820 ครั้ง' },
             { name: 'ไข่ต้ม', count: '760 ครั้ง' },
           ].map((item, index) => (
-            <View key={index} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderColor: '#EEE' }}>
+            <View key={index} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderColor: colors.border }}>
               <Text style={styles.strong}>{index + 1}. {item.name}</Text>
               <Text style={styles.detail}>{item.count}</Text>
             </View>

@@ -1,14 +1,24 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, TextInput, Pressable, Modal } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { View, ScrollView, Pressable, Modal } from 'react-native';
+import { Text } from '../components/AppText';
+import { TextInput } from '../components/AppTextInput';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing } from '../theme/colors';
 import { useApp } from '../context/AppContext';
-import { ACTIVITY_LEVELS, GOALS, buildProfileGoals } from '../utils/calculations';
+import {
+  ACTIVITY_LEVELS,
+  GOALS,
+  buildProfileGoals,
+  calculateCalorieGoal,
+  calculateMacroGoals,
+} from '../utils/calculations';
 import { confirmAction } from '../utils/confirm';
 import Card from '../components/Card';
 import PrimaryButton from '../components/PrimaryButton';
 import Banner from '../components/Banner';
+import ScreenHeader from '../components/ScreenHeader';
+import GoalPresetButton from '../components/GoalPresetButton';
 import styles from '../style/screens/ProfileScreenStyles';
 import ReportScreen from './ReportScreen';
 
@@ -16,17 +26,27 @@ const formatSigned = (value) => `${value > 0 ? '+' : ''}${value}`;
 
 export default function ProfileScreen() {
   const { profile, updateProfile, resetAllData, logout, user } = useApp();
+  const [displayName, setDisplayName] = useState(profile.displayName || user?.displayName || '');
   const [weightKg, setWeightKg] = useState(String(profile.weightKg));
   const [activityLevel, setActivityLevel] = useState(profile.activityLevel);
-  const [goal, setGoal] = useState(profile.goal);
+  const [selectedGoal, setSelectedGoal] = useState(profile.goal);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showReport, setShowReport] = useState(false);
 
+  // Keep the form in sync if the profile changes elsewhere.
+  useEffect(() => {
+    setSelectedGoal(profile.goal);
+  }, [profile.goal]);
+
+  useEffect(() => {
+    setDisplayName(profile.displayName || user?.displayName || '');
+  }, [profile.displayName, user?.displayName]);
+
   const weightValue = Number(weightKg);
   const weightValid = Number.isFinite(weightValue) && weightValue >= 20 && weightValue <= 400;
 
-  // Live preview computed with the same helper the app uses when saving,
+  // Live preview computed with the same helpers the app uses when saving,
   // so people can see how their choices change the daily targets.
   const preview = useMemo(() => {
     try {
@@ -34,25 +54,50 @@ export default function ProfileScreen() {
         ...profile,
         weightKg: weightValid ? weightValue : profile.weightKg,
         activityLevel,
-        goal,
+        goal: selectedGoal || 'maintain',
       });
     } catch (error) {
       return null;
     }
-  }, [profile, weightValue, weightValid, activityLevel, goal]);
+  }, [profile, weightValue, weightValid, activityLevel, selectedGoal]);
+
+  // One preset card per real GOALS option, each showing what that goal would
+  // produce for the current body data + activity level.
+  const presets = useMemo(() => {
+    if (!preview) return [];
+    return GOALS.map((item) => {
+      const kcal = calculateCalorieGoal({ tdee: preview.tdee, goalKey: item.key });
+      return { key: item.key, label: item.label, kcal, macroGoals: calculateMacroGoals(kcal) };
+    });
+  }, [preview]);
 
   const activeActivity = ACTIVITY_LEVELS.find((item) => item.key === activityLevel);
-  const activeGoal = GOALS.find((item) => item.key === goal);
+  const activeGoal = GOALS.find((item) => item.key === selectedGoal);
+  const hasGoal = !!selectedGoal && !!preview;
+
+  const clearSaved = () => {
+    if (saved) setSaved(false);
+  };
 
   const save = async () => {
-    if (!weightValid || saving) return;
+    if (!weightValid || !selectedGoal || saving) return;
     setSaving(true);
     try {
-      await updateProfile({ weightKg: weightValue, activityLevel, goal });
+      await updateProfile({
+        displayName: displayName.trim() || profile.displayName || user?.displayName || 'ผู้ใช้ CalTrack',
+        weightKg: weightValue,
+        activityLevel,
+        goal: selectedGoal,
+      });
       setSaved(true);
     } finally {
       setSaving(false);
     }
+  };
+
+  const clearGoal = () => {
+    setSelectedGoal(null);
+    clearSaved();
   };
 
   const confirmReset = () => {
@@ -77,77 +122,38 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>โปรไฟล์และเป้าหมาย</Text>
-        <Text style={styles.subtitle}>ปรับข้อมูลให้ตรงกับตัวคุณ เพื่อให้เป้าหมายแคลอรี่แม่นยำขึ้น</Text>
+        <ScreenHeader
+          title="โปรไฟล์และเป้าหมาย"
+          subtitle="ตั้งเป้าให้เหมาะกับคุณ ไม่มีค่าที่ถูกต้องเพียงค่าเดียว"
+        />
 
-        <View style={styles.profileHeader}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{(user?.displayName || 'ผ').slice(0, 1)}</Text>
-          </View>
-          <View style={styles.profileInfo}>
-            <Text style={styles.profileName} numberOfLines={1}>{user?.displayName || 'ผู้ใช้ CalTrack'}</Text>
-            <Text style={styles.profileMeta} numberOfLines={1}>{user?.email || 'ยังไม่ได้เข้าสู่ระบบ'}</Text>
-          </View>
-        </View>
-
-        {!!saved && (
-          <Banner
-            tone="success"
-            message="บันทึกการเปลี่ยนแปลงแล้ว เป้าหมายของคุณอัปเดตเรียบร้อย"
-            onDismiss={() => setSaved(false)}
-            style={{ marginBottom: spacing.md }}
-          />
-        )}
-
+        {/* Name */}
         <Card>
-          <Text style={styles.sectionTitle}>เป้าหมายของคุณตอนนี้</Text>
-          <Text style={styles.sectionHint}>
-            คำนวณจากข้อมูลร่างกาย ระดับกิจกรรม และเป้าหมายที่เลือกไว้
-          </Text>
-          <View style={styles.goalSummary}>
-            <Text style={styles.goalSummaryTitle}>เป้าหมายแคลอรี่ต่อวัน</Text>
-            <View style={styles.goalValueRow}>
-              <Text style={styles.goalValue}>
-                {preview ? preview.calorieGoal.toLocaleString('th-TH') : (profile.calorieGoal || 0).toLocaleString('th-TH')}
-              </Text>
-              <Text style={styles.goalUnit}>kcal/วัน</Text>
+          <View style={styles.identityRow}>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>{(user?.displayName || 'ผ').slice(0, 1)}</Text>
             </View>
-            <View style={styles.macroPreviewRow}>
-              <View style={styles.macroPreviewItem}>
-                <View style={[styles.macroDot, { backgroundColor: colors.protein }]} />
-                <Text style={styles.macroPreviewText}>
-                  โปรตีน {(preview?.macroGoals?.protein ?? profile.macroGoals?.protein ?? 0)} g
-                </Text>
-              </View>
-              <View style={styles.macroPreviewItem}>
-                <View style={[styles.macroDot, { backgroundColor: colors.carbs }]} />
-                <Text style={styles.macroPreviewText}>
-                  คาร์บ {(preview?.macroGoals?.carbs ?? profile.macroGoals?.carbs ?? 0)} g
-                </Text>
-              </View>
-              <View style={styles.macroPreviewItem}>
-                <View style={[styles.macroDot, { backgroundColor: colors.fat }]} />
-                <Text style={styles.macroPreviewText}>
-                  ไขมัน {(preview?.macroGoals?.fat ?? profile.macroGoals?.fat ?? 0)} g
-                </Text>
-              </View>
+            <View style={styles.identityInfo}>
+              <Text style={styles.identityName} numberOfLines={1}>{user?.displayName || 'ผู้ใช้ CalTrack'}</Text>
+              <Text style={styles.identityMeta} numberOfLines={1}>{user?.email || 'ยังไม่ได้เข้าสู่ระบบ'}</Text>
             </View>
-            {!!preview && (
-              <Text style={styles.goalNote}>
-                พลังงานที่ใช้ต่อวัน (TDEE) ประมาณ {preview.tdee.toLocaleString('th-TH')} kcal
-                {activeGoal?.adjustment
-                  ? ` · เป้าหมาย "${activeGoal.label}" ปรับพลังงาน ${formatSigned(activeGoal.adjustment)} kcal`
-                  : ' · เป้าหมาย "รักษาน้ำหนัก" ไม่ปรับพลังงานเพิ่ม'}
-              </Text>
-            )}
           </View>
-          {!saved && (
-            <Text style={styles.goalNote}>
-              * ตัวเลขด้านบนเป็นการพรีวิว กด “บันทึกการเปลี่ยนแปลง” เพื่อใช้ค่านี้จริง
-            </Text>
-          )}
+          <Text style={styles.fieldLabel}>ชื่อที่แสดง</Text>
+          <TextInput
+            style={styles.nameInput}
+            value={displayName}
+            onChangeText={(text) => {
+              setDisplayName(text);
+              clearSaved();
+            }}
+            placeholder="ชื่อที่แสดง"
+            placeholderTextColor={colors.inkFaint}
+            accessibilityLabel="ชื่อที่แสดง"
+            maxLength={40}
+          />
         </Card>
 
+        {/* Body metrics */}
         <Card style={styles.cardSpacing}>
           <Text style={styles.sectionTitle}>ข้อมูลพื้นฐาน</Text>
           <Text style={styles.sectionHint}>
@@ -164,7 +170,7 @@ export default function ProfileScreen() {
               value={weightKg}
               onChangeText={(text) => {
                 setWeightKg(text);
-                if (saved) setSaved(false);
+                clearSaved();
               }}
               accessibilityLabel="น้ำหนักปัจจุบัน หน่วยกิโลกรัม"
             />
@@ -174,6 +180,7 @@ export default function ProfileScreen() {
           </View>
         </Card>
 
+        {/* Activity level */}
         <Card style={styles.cardSpacing}>
           <Text style={styles.sectionTitle}>ระดับกิจกรรมในแต่ละวัน</Text>
           <Text style={styles.sectionHint}>
@@ -186,7 +193,7 @@ export default function ProfileScreen() {
                 key={activity.key}
                 onPress={() => {
                   setActivityLevel(activity.key);
-                  if (saved) setSaved(false);
+                  clearSaved();
                 }}
                 accessibilityRole="radio"
                 accessibilityState={{ selected: active }}
@@ -205,19 +212,20 @@ export default function ProfileScreen() {
           })}
         </Card>
 
+        {/* Weight-goal direction */}
         <Card style={styles.cardSpacing}>
           <Text style={styles.sectionTitle}>เป้าหมายน้ำหนัก</Text>
           <Text style={styles.sectionHint}>
             ระบบจะปรับแคลอรี่เป้าหมายให้เหมาะกับเป้าหมายที่เลือก โดยไม่ต่ำกว่า 1,200 kcal ต่อวัน
           </Text>
           {GOALS.map((item, index) => {
-            const active = goal === item.key;
+            const active = selectedGoal === item.key;
             return (
               <Pressable
                 key={item.key}
                 onPress={() => {
-                  setGoal(item.key);
-                  if (saved) setSaved(false);
+                  setSelectedGoal(item.key);
+                  clearSaved();
                 }}
                 accessibilityRole="radio"
                 accessibilityState={{ selected: active }}
@@ -240,20 +248,106 @@ export default function ProfileScreen() {
           })}
         </Card>
 
-        <PrimaryButton
-          title={saved ? 'บันทึกแล้ว' : 'บันทึกการเปลี่ยนแปลง'}
-          icon={saved ? 'checkmark' : undefined}
-          onPress={save}
-          loading={saving}
-          disabled={!weightValid}
-          style={{ marginTop: spacing.lg }}
-        />
-        {!!activeActivity && (
-          <Text style={[styles.dangerHint, { marginTop: spacing.sm }]}>
-            ระดับกิจกรรมปัจจุบัน: {activeActivity.label}
-          </Text>
-        )}
+        {/* Nutrition goal */}
+        <Card style={styles.cardSpacing}>
+          <Text style={styles.sectionTitle}>เป้าหมายโภชนาการ</Text>
 
+          {hasGoal ? (
+            <View style={styles.goalSummary}>
+              <Text style={styles.goalSummaryTitle}>พลังงานต่อวัน</Text>
+              <View style={styles.goalValueRow}>
+                <Text style={styles.goalValue}>{preview.calorieGoal.toLocaleString('th-TH')}</Text>
+                <Text style={styles.goalUnit}>kcal</Text>
+              </View>
+              <Text style={styles.goalMacroRow}>
+                โปรตีน {preview.macroGoals.protein} / คาร์บ {preview.macroGoals.carbs} / ไขมัน {preview.macroGoals.fat} กรัม
+              </Text>
+              <Text style={styles.goalNote}>
+                BMR ประมาณ {preview.bmr.toLocaleString('th-TH')} kcal · พลังงานที่ใช้ต่อวัน (TDEE) ประมาณ {preview.tdee.toLocaleString('th-TH')} kcal
+                {activeGoal?.adjustment
+                  ? ` · เป้าหมาย "${activeGoal.label}" ปรับพลังงาน ${formatSigned(activeGoal.adjustment)} kcal`
+                  : ' · เป้าหมาย "รักษาน้ำหนัก" ไม่ปรับพลังงานเพิ่ม'}
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.placeholderCard}>
+              <Ionicons name="leaf-outline" size={24} color={colors.primary} style={styles.placeholderIcon} />
+              <View style={styles.placeholderTextWrap}>
+                <Text style={styles.placeholderTitle}>ยังไม่ได้ตั้งเป้าหมาย</Text>
+                <Text style={styles.placeholderBody}>
+                  เลือกเป้าหมายด้านล่างเพื่อดูว่าหน้าต่าง ๆ จะแสดงผลอย่างไร
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {!saved && hasGoal && (
+            <Text style={styles.previewHint}>
+              * ตัวเลขด้านบนเป็นการพรีวิว กด “บันทึกเป้าหมาย” เพื่อใช้ค่านี้จริง
+            </Text>
+          )}
+
+          <Text style={styles.legend}>เลือกเป้าหมายตัวอย่าง</Text>
+          <View style={styles.presetGrid} accessibilityRole="radiogroup" accessibilityLabel="เลือกเป้าหมายตัวอย่าง">
+            {presets.map((item) => {
+              const active = selectedGoal === item.key;
+              return (
+                <GoalPresetButton
+                  key={item.key}
+                  style={styles.presetItem}
+                  kcal={item.kcal}
+                  protein={item.macroGoals.protein}
+                  carbs={item.macroGoals.carbs}
+                  fat={item.macroGoals.fat}
+                  active={active}
+                  onPress={() => {
+                    setSelectedGoal(item.key);
+                    clearSaved();
+                  }}
+                  accessibilityLabel={`${item.label} ${item.kcal} kcal ต่อวัน`}
+                  accessibilityHint="แตะเพื่อเลือกเป้าหมายนี้"
+                />
+              );
+            })}
+          </View>
+
+          <View style={styles.actionRow}>
+            <PrimaryButton
+              title="บันทึกเป้าหมาย"
+              onPress={save}
+              loading={saving}
+              disabled={!weightValid || !selectedGoal}
+              accessibilityHint="บันทึกชื่อ น้ำหนัก ระดับกิจกรรม และเป้าหมายที่เลือกไว้"
+              style={styles.actionBtn}
+            />
+            <PrimaryButton
+              title="ล้างเป้าหมาย"
+              variant="outline"
+              icon="trash-outline"
+              onPress={clearGoal}
+              accessibilityHint="ลบเป้าหมายที่เลือกไว้ชั่วคราว"
+              style={styles.actionBtn}
+            />
+          </View>
+
+          {saved && (
+            <View style={styles.savedWrap}>
+              <Banner
+                tone="success"
+                message="บันทึกเป้าหมายแล้ว"
+                onDismiss={() => setSaved(false)}
+              />
+            </View>
+          )}
+
+          {!!activeActivity && (
+            <Text style={styles.activityHint}>
+              ระดับกิจกรรมปัจจุบัน: {activeActivity.label}
+            </Text>
+          )}
+        </Card>
+
+        {/* Support */}
         <Card style={styles.cardSpacing}>
           <Text style={styles.sectionTitle}>ช่วยเหลือและสนับสนุน</Text>
           <Pressable
@@ -270,24 +364,26 @@ export default function ProfileScreen() {
           </Pressable>
         </Card>
 
-        <View style={styles.dangerZone}>
-          <Pressable
+        {/* Footer actions */}
+        <View style={styles.footerActions}>
+          <PrimaryButton
+            title="ออกจากระบบ"
+            variant="outline"
+            icon="log-out-outline"
             onPress={confirmLogout}
-            accessibilityRole="button"
-            accessibilityLabel="ออกจากระบบ"
-            style={({ pressed }) => [styles.secondaryBtn, pressed && { opacity: 0.8 }]}
-          >
-            <Text style={styles.secondaryBtnText}>ออกจากระบบ</Text>
-          </Pressable>
+            accessibilityHint="ออกจากระบบและลบข้อมูลที่เก็บไว้บนอุปกรณ์นี้"
+            style={styles.footerBtn}
+          />
           <Pressable
             onPress={confirmReset}
             accessibilityRole="button"
             accessibilityLabel="ล้างข้อมูลทั้งหมด"
-            style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: spacing.md }}
+            accessibilityHint="ล้างโปรไฟล์ บันทึกอาหาร และน้ำหนักทั้งหมดอย่างถาวร"
+            style={({ pressed }) => [styles.resetBtn, pressed && styles.resetBtnPressed]}
           >
             <Text style={styles.resetText}>ล้างข้อมูลทั้งหมด</Text>
           </Pressable>
-          <Text style={styles.dangerHint}>
+          <Text style={styles.footerHint}>
             การล้างข้อมูลจะลบโปรไฟล์ บันทึกอาหาร และน้ำหนักทั้งหมดอย่างถาวร
           </Text>
         </View>

@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Pressable } from 'react-native';
+import { View, Pressable } from 'react-native';
+import { Text } from '../AppText';
+import { TextInput } from '../AppTextInput';
 import styles from '../../style/screens/AdminScreenStyles';
+import { colors } from '../../theme/colors';
 import { Title, Stat, Card, Badge } from './AdminCommon';
 
 export default function AiScan({ token }) {
@@ -26,9 +29,9 @@ export default function AiScan({ token }) {
             <Pressable
               key={m}
               onPress={() => setModel(m)}
-              style={[styles.primarySmall, { backgroundColor: model === m ? '#2F8F6B' : '#E0E0E0' }]}
+              style={[styles.primarySmall, { backgroundColor: model === m ? colors.primary : colors.border }]}
             >
-              <Text style={{ color: model === m ? '#FFF' : '#333', fontWeight: 'bold' }}>{m}</Text>
+              <Text style={{ color: model === m ? colors.white : colors.ink, fontWeight: 'bold' }}>{m}</Text>
             </Pressable>
           ))}
         </View>

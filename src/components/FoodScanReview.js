@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, View } from 'react-native';
+import { Text } from './AppText';
+import { TextInput } from './AppTextInput';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { searchNutritionFoods } from '../services/foodService';

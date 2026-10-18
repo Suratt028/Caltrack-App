@@ -1,88 +1,52 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, TextInput, Pressable } from 'react-native';
+import { View, ScrollView, Pressable, useWindowDimensions } from 'react-native';
+import { Text } from '../components/AppText';
+import { TextInput } from '../components/AppTextInput';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Rect, Line, Circle, Polyline, Text as SvgText } from 'react-native-svg';
+import { Ionicons } from '@expo/vector-icons';
+import Svg, { Circle, Polyline, Text as SvgText } from 'react-native-svg';
 import { colors, spacing } from '../theme/colors';
 import { useApp } from '../context/AppContext';
-import { lastNDays } from '../utils/calculations';
+import { lastNDays, todayKey } from '../utils/calculations';
 import Card from '../components/Card';
 import PrimaryButton from '../components/PrimaryButton';
 import Banner from '../components/Banner';
 import EmptyState from '../components/EmptyState';
+import ScreenHeader from '../components/ScreenHeader';
+import SegmentedControl from '../components/SegmentedControl';
+import TrendStatCard from '../components/TrendStatCard';
+import TrendBarChart from '../components/TrendBarChart';
+import MacroGroupedChart from '../components/MacroGroupedChart';
+import TrendDataTable from '../components/TrendDataTable';
 import styles from '../style/screens/TrendsScreenStyles';
 
-const CHART_HEIGHT = 160;
-const MIN_CHART_WIDTH = 240;
-const MAX_CHART_WIDTH = 560;
+const WEIGHT_CHART_HEIGHT = 160;
 
-const RANGES = [
-  { key: 7, label: '7 วัน' },
-  { key: 30, label: '30 วัน' },
+const RANGE_OPTIONS = [
+  { value: '7', label: '7 วัน' },
+  { value: '30', label: '30 วัน' },
+  { value: 'custom', label: 'เลือกช่วง' },
 ];
 
+const THAI_MONTHS_SHORT = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+const THAI_MONTHS_LONG = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+
 const formatNumber = (value) => Math.round(Number(value) || 0).toLocaleString('th-TH');
-
-function CalorieTrendChart({ days, totalsByDay, goal, width }) {
-  const safeGoal = Number(goal) > 0 ? Number(goal) : 2000;
-  const maxVal = Math.max(safeGoal, ...days.map((d) => totalsByDay[d] || 0), 1);
-  const barGap = days.length > 14 ? 4 : 10;
-  const barWidth = Math.max((width - barGap * (days.length - 1)) / days.length, 2);
-  const goalY = CHART_HEIGHT - (safeGoal / maxVal) * CHART_HEIGHT;
-  const showEveryLabel = days.length > 10 ? Math.ceil(days.length / 6) : 1;
-
-  return (
-    <Svg width={width} height={CHART_HEIGHT + 26}>
-      <Line x1={0} y1={0} x2={width} y2={0} stroke={colors.border} strokeWidth={1} />
-      <SvgText x={0} y={12} fontSize="9" fill={colors.inkFaint}>
-        {`สูงสุด ${formatNumber(maxVal)}`}
-      </SvgText>
-      <Line
-        x1={0}
-        y1={goalY}
-        x2={width}
-        y2={goalY}
-        stroke={colors.carbs}
-        strokeDasharray="4,4"
-        strokeWidth={1.5}
-      />
-      <SvgText x={width} y={Math.max(goalY - 5, 10)} fontSize="9" fill={colors.inkMuted} textAnchor="end">
-        {`เป้าหมาย ${formatNumber(safeGoal)} kcal`}
-      </SvgText>
-      {days.map((d, i) => {
-        const val = totalsByDay[d] || 0;
-        const barHeight = maxVal > 0 ? (val / maxVal) * CHART_HEIGHT : 0;
-        const x = i * (barWidth + barGap);
-        const y = CHART_HEIGHT - barHeight;
-        const isToday = i === days.length - 1;
-        const label = new Date(d).toLocaleDateString('th-TH', { weekday: 'short' });
-        const showLabel = showEveryLabel === 1 || i % showEveryLabel === 0 || i === days.length - 1;
-        return (
-          <React.Fragment key={d}>
-            <Rect
-              x={x}
-              y={y}
-              width={barWidth}
-              height={Math.max(barHeight, 2)}
-              rx={4}
-              fill={isToday ? colors.primary : colors.barPast}
-            />
-            {showLabel && (
-              <SvgText
-                x={x + barWidth / 2}
-                y={CHART_HEIGHT + 16}
-                fontSize="10"
-                fill={colors.inkMuted}
-                textAnchor="middle"
-              >
-                {label}
-              </SvgText>
-            )}
-          </React.Fragment>
-        );
-      })}
-    </Svg>
-  );
-}
+const isDateKey = (value) => /^\d{4}-\d{2}-\d{2}$/.test(String(value || ''));
+const parseKey = (key) => {
+  const [y, m, d] = String(key).split('-').map(Number);
+  return new Date(Date.UTC(y, (m || 1) - 1, d || 1));
+};
+const shiftKey = (key, delta) => {
+  const date = parseKey(key);
+  date.setUTCDate(date.getUTCDate() + delta);
+  return date.toISOString().slice(0, 10);
+};
+const dayNumber = (key) => String(parseKey(key).getUTCDate());
+const shortDateFull = (key) => {
+  const date = parseKey(key);
+  return `${date.getUTCDate()} ${THAI_MONTHS_SHORT[date.getUTCMonth()]} ${date.getUTCFullYear() + 543}`;
+};
 
 function WeightTrendChart({ points, width }) {
   if (points.length < 2) return null;
@@ -94,53 +58,170 @@ function WeightTrendChart({ points, width }) {
 
   const coords = points.map((p, i) => {
     const x = i * stepX;
-    const y = CHART_HEIGHT - ((p.weight - min) / range) * (CHART_HEIGHT - 20) - 10;
+    const y = WEIGHT_CHART_HEIGHT - ((p.weight - min) / range) * (WEIGHT_CHART_HEIGHT - 20) - 10;
     return `${x},${y}`;
   });
 
   return (
-    <Svg width={width} height={CHART_HEIGHT}>
-      <SvgText x={0} y={12} fontSize="9" fill={colors.inkFaint}>
-        {`สูงสุด ${max.toFixed(1)} กก.`}
-      </SvgText>
-      <SvgText x={0} y={CHART_HEIGHT - 4} fontSize="9" fill={colors.inkFaint}>
-        {`ต่ำสุด ${min.toFixed(1)} กก.`}
-      </SvgText>
-      <Polyline points={coords.join(' ')} fill="none" stroke={colors.turmeric} strokeWidth={3} strokeLinejoin="round" />
-      {points.map((p, i) => {
-        const [x, y] = coords[i].split(',').map(Number);
-        return <Circle key={p.date} cx={x} cy={y} r={4} fill={colors.turmeric} />;
-      })}
-    </Svg>
+    <View
+      accessible
+      accessibilityRole="image"
+      accessibilityLabel={`กราฟแนวโน้มน้ำหนัก สูงสุด ${max.toFixed(1)} กิโลกรัม ต่ำสุด ${min.toFixed(1)} กิโลกรัม`}
+    >
+      <Svg width={width} height={WEIGHT_CHART_HEIGHT}>
+        <SvgText x={0} y={12} fontSize="9" fill={colors.inkFaint}>
+          {`สูงสุด ${max.toFixed(1)} กก.`}
+        </SvgText>
+        <SvgText x={0} y={WEIGHT_CHART_HEIGHT - 4} fontSize="9" fill={colors.inkFaint}>
+          {`ต่ำสุด ${min.toFixed(1)} กก.`}
+        </SvgText>
+        <Polyline points={coords.join(' ')} fill="none" stroke={colors.turmeric} strokeWidth={3} strokeLinejoin="round" />
+        {points.map((p, i) => {
+          const [x, y] = coords[i].split(',').map(Number);
+          return <Circle key={p.date} cx={x} cy={y} r={4} fill={colors.turmeric} />;
+        })}
+      </Svg>
+    </View>
   );
 }
 
-export default function TrendsScreen() {
-  const { profile, logsByDay, weightsByDay, logWeight } = useApp();
-  const [range, setRange] = useState(7);
+export default function TrendsScreen({ navigation }) {
+  const { profile, logsByDay, weightsByDay, logWeight, getDayTotals } = useApp();
+  const { width: windowWidth } = useWindowDimensions();
+  // Mirrors the web breakpoints: controls sit side by side from sm (640),
+  // stat cards form a row from lg (1024).
+  const isSmUp = windowWidth >= 640;
+  const isLgUp = windowWidth >= 1024;
+
+  const [range, setRange] = useState('7');
+  const [rangeOffset, setRangeOffset] = useState(0);
+  const [customFrom, setCustomFrom] = useState(() => lastNDays(7)[0]);
+  const [customTo, setCustomTo] = useState(() => lastNDays(7)[6]);
   const [chartWidth, setChartWidth] = useState(320);
   const [weightInput, setWeightInput] = useState('');
   const [weightNotice, setWeightNotice] = useState('');
   const [weightError, setWeightError] = useState('');
 
-  const days = useMemo(() => lastNDays(range), [range]);
-
-  const totalsByDay = useMemo(() => {
-    const map = {};
-    days.forEach((d) => {
-      const entries = logsByDay[d] || [];
-      map[d] = entries.reduce((sum, e) => sum + (e.kcal || 0), 0);
-    });
-    return map;
-  }, [days, logsByDay]);
-
-  const values = days.map((d) => totalsByDay[d] || 0);
-  const loggedDays = values.filter((v) => v > 0).length;
-  const hasData = loggedDays > 0;
-  // Keeps the original weekly average: total calories divided by the number of
-  // days in the selected range (days without logs count as 0).
-  const avgKcal = Math.round(values.reduce((a, b) => a + b, 0) / (values.length || 1));
+  const today = todayKey();
   const goal = Number(profile?.calorieGoal) > 0 ? Number(profile.calorieGoal) : 2000;
+  const windowLength = range === '30' ? 30 : 7;
+
+  // Selected window: last 7 / 30 days (optionally shifted back) or a custom range.
+  const days = useMemo(() => {
+    if (range === 'custom') {
+      if (!isDateKey(customFrom) || !isDateKey(customTo) || customFrom > customTo) return [];
+      const out = [];
+      let cursor = customFrom;
+      let guard = 0;
+      while (cursor <= customTo && out.length < 60 && guard < 400) {
+        out.push(cursor);
+        cursor = shiftKey(cursor, 1);
+        guard += 1;
+      }
+      return out;
+    }
+    const back = rangeOffset * windowLength;
+    const base = lastNDays(windowLength);
+    return back > 0 ? base.map((key) => shiftKey(key, -back)) : base;
+  }, [range, rangeOffset, windowLength, customFrom, customTo]);
+
+  const dayData = useMemo(
+    () =>
+      days.map((date) => {
+        const totals = getDayTotals(date) || {};
+        return {
+          date,
+          kcal: Number(totals.kcal) || 0,
+          protein: Number(totals.protein) || 0,
+          carbs: Number(totals.carbs) || 0,
+          fat: Number(totals.fat) || 0,
+        };
+      }),
+    [days, getDayTotals, logsByDay]
+  );
+
+  const loggedDays = useMemo(() => dayData.filter((day) => day.kcal > 0), [dayData]);
+  const enough = loggedDays.length >= 3;
+  const avgKcal = dayData.length
+    ? Math.round(dayData.reduce((sum, day) => sum + day.kcal, 0) / dayData.length)
+    : 0;
+  const completeDays = useMemo(
+    () => dayData.filter((day) => day.date !== today && day.kcal > 0),
+    [dayData, today]
+  );
+  const prevAvgKcal = completeDays.length
+    ? Math.round(completeDays.reduce((sum, day) => sum + day.kcal, 0) / completeDays.length)
+    : 0;
+  const selectedDay = dayData.length ? dayData[dayData.length - 1] : null;
+
+  const firstDay = days[0];
+  const lastDay = days[days.length - 1];
+
+  const rangeLabel = useMemo(() => {
+    if (range === 'custom') return 'กำหนดช่วงเอง';
+    if (!firstDay || !lastDay) return '';
+    if (firstDay.slice(0, 7) === lastDay.slice(0, 7)) {
+      const from = parseKey(firstDay);
+      const to = parseKey(lastDay);
+      return `${from.getUTCDate()}–${to.getUTCDate()} ${THAI_MONTHS_LONG[to.getUTCMonth()]} ${to.getUTCFullYear() + 543}`;
+    }
+    return `${shortDateFull(firstDay)} – ${shortDateFull(lastDay)}`;
+  }, [range, firstDay, lastDay]);
+
+  const statsBody = useMemo(() => {
+    if (!firstDay || !lastDay) return '';
+    if (firstDay.slice(0, 7) === lastDay.slice(0, 7)) {
+      const to = parseKey(lastDay);
+      return `ข้อมูลจาก ${dayNumber(firstDay)}–${dayNumber(lastDay)} ${THAI_MONTHS_LONG[to.getUTCMonth()]} ${to.getUTCFullYear() + 543}`;
+    }
+    return `ข้อมูลจาก ${shortDateFull(firstDay)} – ${shortDateFull(lastDay)}`;
+  }, [firstDay, lastDay]);
+
+  const monthCaption = useMemo(() => {
+    if (!lastDay) return rangeLabel;
+    if (lastDay === today) {
+      const to = parseKey(lastDay);
+      return `${THAI_MONTHS_LONG[to.getUTCMonth()]} ${to.getUTCFullYear() + 543} · วันที่ ${dayNumber(lastDay)} ยังบันทึกไม่ครบวัน`;
+    }
+    return rangeLabel;
+  }, [lastDay, today, rangeLabel]);
+
+  const canGoForward =
+    range === 'custom'
+      ? isDateKey(customFrom) && isDateKey(customTo) && customTo < today
+      : rangeOffset > 0;
+
+  const moveRange = (direction) => {
+    if (range === 'custom') {
+      if (!isDateKey(customFrom) || !isDateKey(customTo)) return;
+      const step = Math.max(days.length, 1);
+      const nextFrom = shiftKey(customFrom, direction * step);
+      const nextTo = shiftKey(customTo, direction * step);
+      if (direction > 0 && nextTo > today) return;
+      setCustomFrom(nextFrom);
+      setCustomTo(nextTo);
+      return;
+    }
+    setRangeOffset((prev) => (direction < 0 ? prev + 1 : Math.max(prev - 1, 0)));
+  };
+
+  const energyData = useMemo(
+    () => dayData.map((day) => ({ date: day.date, value: day.kcal, highlight: day.date === today })),
+    [dayData, today]
+  );
+  const macroData = useMemo(
+    () =>
+      dayData.map((day) => ({
+        date: day.date,
+        macros: { protein: day.protein, carbs: day.carbs, fat: day.fat },
+      })),
+    [dayData]
+  );
+  const tableRows = useMemo(
+    () => dayData.map((day) => ({ ...day, isToday: day.date === today })),
+    [dayData, today]
+  );
+  const showYear = Boolean(firstDay && lastDay && firstDay.slice(0, 4) !== lastDay.slice(0, 4));
 
   const weightPoints = useMemo(
     () =>
@@ -151,25 +232,10 @@ export default function TrendsScreen() {
     [weightsByDay]
   );
 
-  const insight = useMemo(() => {
-    if (!hasData) {
-      return 'ยังไม่มีข้อมูลการบันทึกในช่วงนี้ เริ่มบันทึกมื้ออาหารวันนี้เพื่อดูแนวโน้มของคุณ';
-    }
-    const diff = avgKcal - goal;
-    const tolerance = goal * 0.1;
-    if (Math.abs(diff) <= tolerance) {
-      return `ค่าเฉลี่ย ${formatNumber(avgKcal)} kcal ต่อวัน ใกล้เคียงเป้าหมาย ${formatNumber(goal)} kcal ถือว่าคงที่และควบคุมได้ดี`;
-    }
-    if (diff > 0) {
-      return `ค่าเฉลี่ย ${formatNumber(avgKcal)} kcal ต่อวัน สูงกว่าเป้าหมายประมาณ ${formatNumber(diff)} kcal ปรับมื้อใดมื้อหนึ่งเล็กน้อยก็ช่วยได้`;
-    }
-    return `ค่าเฉลี่ย ${formatNumber(avgKcal)} kcal ต่อวัน ต่ำกว่าเป้าหมายประมาณ ${formatNumber(-diff)} kcal อย่าลืมกินให้พอต่อความต้องการของร่างกาย`;
-  }, [avgKcal, goal, hasData]);
-
-  const onChartLayout = (event) => {
+  const onWeightChartLayout = (event) => {
     const layoutWidth = event?.nativeEvent?.layout?.width;
     if (!layoutWidth) return;
-    const next = Math.round(Math.min(Math.max(layoutWidth, MIN_CHART_WIDTH), MAX_CHART_WIDTH));
+    const next = Math.round(Math.min(Math.max(layoutWidth, 240), 560));
     if (next !== chartWidth) setChartWidth(next);
   };
 
@@ -189,96 +255,215 @@ export default function TrendsScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>แนวโน้มและรายงาน</Text>
-        <Text style={styles.subtitle}>ดูภาพรวมการกินและน้ำหนักย้อนหลัง พร้อมคำอธิบายที่เข้าใจง่าย</Text>
+        <ScreenHeader title="แนวโน้มของคุณ" subtitle="มองเห็นจังหวะการกิน ไม่ใช่คะแนนตัดสิน" />
 
-        <View style={styles.periodRow}>
-          {RANGES.map((item) => {
-            const active = range === item.key;
-            return (
-              <Pressable
-                key={item.key}
-                onPress={() => setRange(item.key)}
-                accessibilityRole="button"
-                accessibilityState={{ selected: active }}
-                accessibilityLabel={`ดูข้อมูลย้อนหลัง ${item.label}`}
-                style={({ pressed }) => [
-                  styles.periodChip,
-                  active && styles.periodChipActive,
-                  pressed && styles.periodChipPressed,
-                ]}
-              >
-                <Text style={[styles.periodChipText, active && styles.periodChipTextActive]}>
-                  {item.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-
-        <View style={styles.summaryRow}>
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryLabel}>แคลอรี่เฉลี่ย</Text>
-            <Text style={styles.summaryValue}>{hasData ? formatNumber(avgKcal) : '—'}</Text>
-            <Text style={styles.summaryUnit}>kcal/วัน เฉลี่ยทั้งช่วง</Text>
-          </View>
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryLabel}>เป้าหมาย</Text>
-            <Text style={styles.summaryValue}>{formatNumber(goal)}</Text>
-            <Text style={styles.summaryUnit}>kcal/วัน</Text>
-          </View>
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryLabel}>วันที่บันทึก</Text>
-            <Text style={styles.summaryValue}>{loggedDays}</Text>
-            <Text style={styles.summaryUnit}>จาก {range} วัน</Text>
-          </View>
-        </View>
-
-        {!hasData && (
-          <View style={styles.emptyWrap}>
-            <EmptyState
-              icon="stats-chart-outline"
-              title="ยังไม่มีข้อมูลในช่วงนี้"
-              message={`เมื่อคุณบันทึกอาหารครบใน ${range} วัน จะเห็นกราฟเปรียบเทียบกับเป้าหมายที่นี่`}
+        {/* Range picker + date navigator */}
+        <View style={[styles.controlsRow, isSmUp && styles.controlsRowWide]}>
+          <View style={styles.segmentWrap}>
+            <SegmentedControl
+              label="เลือกช่วงเวลาของแนวโน้ม"
+              size="sm"
+              options={RANGE_OPTIONS}
+              value={range}
+              onChange={(next) => {
+                setRange(next);
+                setRangeOffset(0);
+              }}
             />
           </View>
-        )}
 
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>แคลอรี่ที่ได้รับ</Text>
-          <Text style={styles.cardSubtitle}>
-            แกนตั้งคือแคลอรี่ (kcal) · แกนนอนคือวันในสัปดาห์ที่เลือก
-          </Text>
-          <View style={styles.chartWrap} onLayout={onChartLayout}>
-            <CalorieTrendChart days={days} totalsByDay={totalsByDay} goal={goal} width={chartWidth} />
-          </View>
-          <View style={styles.legendRow}>
-            <View style={styles.legendItem}>
-              <View style={styles.legendDot} />
-              <Text style={styles.legendText}>วันนี้</Text>
-            </View>
-            <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: colors.barPast }]} />
-              <Text style={styles.legendText}>วันก่อนหน้า</Text>
-            </View>
-            <View style={styles.legendItem}>
-              <View style={styles.legendLine} />
-              <Text style={styles.legendText}>เป้าหมายรายวัน</Text>
-            </View>
+          <View style={[styles.navigator, isSmUp && styles.navigatorWide]}>
+            <Pressable
+              onPress={() => moveRange(-1)}
+              accessibilityRole="button"
+              accessibilityLabel="ช่วงก่อนหน้า"
+              style={({ pressed }) => [styles.navBtn, pressed && styles.navBtnPressed]}
+            >
+              <Ionicons name="chevron-back" size={20} color={colors.ink} />
+            </Pressable>
+            <Text style={styles.navLabel} numberOfLines={1}>
+              {rangeLabel || 'กำหนดช่วงเอง'}
+            </Text>
+            <Pressable
+              onPress={() => moveRange(1)}
+              disabled={!canGoForward}
+              accessibilityRole="button"
+              accessibilityLabel="ช่วงถัดไป"
+              style={({ pressed }) => [
+                styles.navBtn,
+                pressed && canGoForward && styles.navBtnPressed,
+                !canGoForward && styles.navBtnDisabled,
+              ]}
+            >
+              <Ionicons name="chevron-forward" size={20} color={colors.ink} />
+            </Pressable>
           </View>
         </View>
 
-        <View style={styles.card}>
+        {/* Custom range inputs */}
+        {range === 'custom' && (
+          <Card style={styles.customCard}>
+            <View style={styles.customRow}>
+              <View style={styles.fieldWrap}>
+                <Text style={styles.fieldLabel}>ตั้งแต่</Text>
+                <TextInput
+                  style={styles.fieldInput}
+                  value={customFrom}
+                  onChangeText={setCustomFrom}
+                  placeholder="YYYY-MM-DD"
+                  placeholderTextColor={colors.inkFaint}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  keyboardType="numbers-and-punctuation"
+                  accessibilityLabel="วันเริ่มต้นช่วง (YYYY-MM-DD)"
+                />
+              </View>
+              <View style={styles.fieldWrap}>
+                <Text style={styles.fieldLabel}>ถึง</Text>
+                <TextInput
+                  style={styles.fieldInput}
+                  value={customTo}
+                  onChangeText={setCustomTo}
+                  placeholder="YYYY-MM-DD"
+                  placeholderTextColor={colors.inkFaint}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  keyboardType="numbers-and-punctuation"
+                  accessibilityLabel="วันสิ้นสุดช่วง (YYYY-MM-DD)"
+                />
+              </View>
+            </View>
+            <Text style={styles.customHint}>(ต้นแบบ: ใช้ข้อมูลสาธิต 7 วันล่าสุด)</Text>
+          </Card>
+        )}
+
+        {!enough ? (
+          <>
+            <Card style={styles.tipCard}>
+              <EmptyState
+                icon="leaf-outline"
+                title="ยังมีข้อมูลไม่พอสำหรับดูแนวโน้ม"
+                message="เริ่มบันทึกจากมื้อที่สะดวกได้เลย เมื่อมีข้อมูลอย่างน้อย 3 วัน เราจะช่วยแสดงภาพรวมให้คุณเห็น"
+              />
+            </Card>
+
+            <Card style={styles.tipCard}>
+              <Text style={styles.cardTitle}>ช่วงนี้ยังไม่มีวันที่บันทึก</Text>
+              <Text style={styles.cardBody}>
+                ไม่แสดงกราฟหรือค่าเฉลี่ยแทนข้อมูลที่หายไป คุณเริ่มใหม่ได้ทุกเมื่อ ไม่ต้องย้อนบันทึกให้ครบ
+              </Text>
+            </Card>
+
+            <PrimaryButton
+              title="บันทึกอาหารมื้อแรก"
+              icon="restaurant-outline"
+              onPress={() => navigation.navigate('Log')}
+              style={styles.cta}
+            />
+          </>
+        ) : (
+          <>
+            {/* Mobile summary */}
+            <Card style={styles.mintCard}>
+              <View style={styles.summaryHeadRow}>
+                <Text style={styles.mintLabel}>พลังงานเฉลี่ยต่อวัน</Text>
+                <View style={styles.chip}>
+                  <Text style={styles.chipText}>{`บันทึก ${loggedDays.length} วัน`}</Text>
+                </View>
+              </View>
+              <View style={styles.summaryValueRow}>
+                <Text style={styles.summaryValue}>{formatNumber(avgKcal)}</Text>
+                <Text style={styles.summaryUnit}>kcal</Text>
+              </View>
+              <Text style={styles.mintNote}>รวมวันนี้ที่ยังไม่ครบวัน · จากข้อมูลที่บันทึกเท่านั้น</Text>
+            </Card>
+
+            {/* Stat cards */}
+            <View style={styles.statRow}>
+              <TrendStatCard
+                title="พลังงานเฉลี่ยต่อวัน"
+                value={`${formatNumber(avgKcal)} kcal`}
+                body="รวมวันนี้ที่ยังไม่ครบวัน · จากข้อมูลที่บันทึกเท่านั้น"
+                style={isLgUp ? styles.statCardWide : styles.statCard}
+              />
+              <TrendStatCard
+                title="วันที่มีการบันทึก"
+                value={`${loggedDays.length} วัน`}
+                body={statsBody}
+                style={isLgUp ? styles.statCardWide : styles.statCard}
+              />
+              <TrendStatCard
+                title="เฉลี่ย 6 วันก่อนหน้า"
+                value={`${formatNumber(prevAvgKcal)} kcal`}
+                body="แยกวันนี้ที่ยังบันทึกไม่ครบออก"
+                style={isLgUp ? styles.statCardWide : styles.statCard}
+              />
+            </View>
+
+            {/* Energy chart */}
+            <Card style={styles.chartCard}>
+              <Text style={styles.cardTitle}>พลังงานในแต่ละวัน</Text>
+              <TrendBarChart
+                data={energyData}
+                goalValue={goal}
+                goalLabel={`เป้าหมายตัวอย่าง ${formatNumber(goal)}`}
+                axisUnit="กิโลแคลอรี"
+                caption={monthCaption}
+                title="พลังงานในแต่ละวัน"
+                description="กราฟแท่งแสดงพลังงานที่บันทึกในแต่ละวัน หน่วยกิโลแคลอรี"
+              />
+            </Card>
+
+            {/* Macro grouped chart */}
+            <Card style={styles.chartCard}>
+              <Text style={styles.cardTitle}>สารอาหารในแต่ละวัน</Text>
+              <Text style={styles.cardNote}>
+                ปริมาณเป็นกรัม ไม่ใช่สัดส่วนพลังงาน ดูตัวเลขรายวันได้จากตารางด้านล่าง
+              </Text>
+              <MacroGroupedChart
+                data={macroData}
+                axisUnit="กรัม"
+                title="สารอาหารในแต่ละวัน"
+                description="กราฟแท่งกลุ่มแสดงโปรตีน คาร์บ และไขมันในแต่ละวัน หน่วยกรัม"
+              />
+              {selectedDay && (
+                <Text style={styles.selectedDay}>
+                  {`วันที่ ${shortDateFull(selectedDay.date)} · โปรตีน ${formatNumber(selectedDay.protein)} / คาร์บ ${formatNumber(
+                    selectedDay.carbs
+                  )} / ไขมัน ${formatNumber(selectedDay.fat)} กรัม`}
+                </Text>
+              )}
+            </Card>
+
+            {/* Reminder */}
+            <Card style={styles.mintCard}>
+              <Text style={styles.reminderTitle}>แต่ละวันไม่จำเป็นต้องเหมือนกัน</Text>
+              <Text style={styles.reminderBody}>
+                {`6 วันก่อนเฉลี่ย ${formatNumber(prevAvgKcal)} kcal ส่วนวันนี้ยังไม่ครบ ความต่างอาจมาจากมื้อที่ยังไม่ได้บันทึก ใช้ภาพรวมนี้ค่อย ๆ ทำความรู้จักตัวเองนะ`}
+              </Text>
+            </Card>
+
+            {/* Data table (accessible alternative) */}
+            <Card style={styles.tableCard}>
+              <TrendDataTable
+                title={`เป้าหมายโปรไฟล์ตัวอย่าง ${formatNumber(goal)} kcal`}
+                rows={tableRows}
+                showYear={showYear}
+              />
+            </Card>
+          </>
+        )}
+
+        {/* Weight trend — extra feature kept from the original screen */}
+        <Card style={styles.weightCard}>
           <Text style={styles.cardTitle}>แนวโน้มน้ำหนัก</Text>
           <Text style={styles.cardSubtitle}>หน่วยเป็นกิโลกรัม (กก.) แสดงสูงสุด 14 ครั้งล่าสุด</Text>
           {weightPoints.length >= 2 ? (
-            <View style={styles.chartWrap} onLayout={onChartLayout}>
+            <View style={styles.chartWrap} onLayout={onWeightChartLayout}>
               <WeightTrendChart points={weightPoints} width={chartWidth} />
             </View>
           ) : (
-            <Text style={styles.cardSubtitle}>
-              บันทึกน้ำหนักอย่างน้อย 2 ครั้งเพื่อดูกราฟแนวโน้ม
-            </Text>
+            <Text style={styles.cardNote}>บันทึกน้ำหนักอย่างน้อย 2 ครั้งเพื่อดูกราฟแนวโน้ม</Text>
           )}
           <View style={styles.weightInputRow}>
             <TextInput
@@ -293,25 +478,20 @@ export default function TrendsScreen() {
               }}
               accessibilityLabel="น้ำหนักวันนี้ หน่วยกิโลกรัม"
             />
-            <PrimaryButton title="บันทึก" icon="checkmark" onPress={saveWeight} style={{ minWidth: 104 }} />
+            <PrimaryButton title="บันทึก" icon="checkmark" onPress={saveWeight} style={styles.weightButton} />
           </View>
           {!!weightError && (
-            <Banner tone="error" message={weightError} style={{ marginTop: spacing.sm }} />
+            <Banner tone="error" message={weightError} style={styles.bannerSpacing} />
           )}
           {!!weightNotice && (
             <Banner
               tone="success"
               message={weightNotice}
               onDismiss={() => setWeightNotice('')}
-              style={{ marginTop: spacing.sm }}
+              style={styles.bannerSpacing}
             />
           )}
-        </View>
-
-        <View style={styles.insightBox}>
-          <Text style={styles.insightTitle}>สรุปช่วง {range} วันล่าสุด</Text>
-          <Text style={styles.insightText}>{insight}</Text>
-        </View>
+        </Card>
       </ScrollView>
     </SafeAreaView>
   );

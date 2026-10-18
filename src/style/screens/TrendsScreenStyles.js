@@ -1,5 +1,5 @@
 ﻿import { StyleSheet } from 'react-native';
-import { colors, spacing, typography, radius, shadows } from '../../theme/colors';
+import { colors, spacing, typography, radius } from '../../theme/colors';
 
 export default StyleSheet.create({
   safe: {
@@ -9,82 +9,178 @@ export default StyleSheet.create({
   content: {
     padding: 20,
     paddingTop: 20,
-    paddingBottom: 40,
+    paddingBottom: 48,
   },
-  title: {
-    ...typography.h1,
-    color: colors.ink,
+
+  // Range picker + date navigator
+  controlsRow: {
+    gap: spacing.sm,
+    marginBottom: spacing.md,
   },
-  subtitle: {
-    ...typography.body,
-    color: colors.inkMuted,
-    marginTop: spacing.xs,
-  },
-  periodRow: {
+  controlsRowWide: {
     flexDirection: 'row',
-    backgroundColor: colors.mint,
-    borderRadius: radius.pill,
-    padding: 4,
-    marginTop: spacing.md,
-    marginBottom: spacing.sm,
+    alignItems: 'center',
+    gap: spacing.md,
   },
-  periodChip: {
+  segmentWrap: {
+    width: '100%',
+    maxWidth: 320,
+  },
+  navigator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  navigatorWide: {
     flex: 1,
-    minHeight: 40,
-    borderRadius: radius.pill,
+  },
+  navBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.icon,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.card,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  periodChipPressed: {
-    opacity: 0.8,
+  navBtnPressed: {
+    backgroundColor: colors.mint,
   },
-  periodChipActive: {
-    backgroundColor: colors.surface,
-    ...shadows.soft,
+  navBtnDisabled: {
+    opacity: 0.4,
   },
-  periodChipText: {
-    fontSize: 12.5,
-    fontWeight: '700',
+  navLabel: {
+    ...typography.label,
+    flex: 1,
+    textAlign: 'center',
     color: colors.inkMuted,
   },
-  periodChipTextActive: {
-    color: colors.primaryDark,
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    gap: 10,
+
+  // Custom range card
+  customCard: {
     marginBottom: spacing.md,
-    marginTop: spacing.sm,
   },
-  summaryCard: {
-    flex: 1,
-    padding: 14,
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
+  customRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
   },
-  summaryLabel: {
+  fieldWrap: {
+    flexGrow: 1,
+    flexBasis: 130,
+  },
+  fieldLabel: {
     ...typography.caption,
     color: colors.inkMuted,
-    marginBottom: 6,
+    marginBottom: spacing.xs,
   },
-  summaryValue: {
-    ...typography.h2,
+  fieldInput: {
+    minHeight: 46,
+    backgroundColor: colors.surfaceMuted,
+    borderRadius: radius.input,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
     color: colors.ink,
   },
-  summaryUnit: {
-    fontSize: 11,
+  customHint: {
+    fontSize: 11.5,
+    lineHeight: 16,
     color: colors.inkMuted,
-    marginTop: 4,
+    marginTop: spacing.sm,
   },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: 16,
-    marginBottom: 14,
+
+  // Insufficient state + CTA
+  tipCard: {
+    marginBottom: spacing.md,
+  },
+  cta: {
+    marginBottom: spacing.md,
+  },
+
+  // Mint summary + reminder cards
+  mintCard: {
+    backgroundColor: colors.mint,
+    borderColor: colors.mint,
+    marginBottom: spacing.md,
+  },
+  summaryHeadRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  mintLabel: {
+    ...typography.label,
+    color: colors.inkMuted,
+    flexShrink: 1,
+  },
+  chip: {
+    backgroundColor: colors.card,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 5,
+  },
+  chipText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.primaryDark,
+  },
+  summaryValueRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 6,
+    marginTop: spacing.xs,
+  },
+  summaryValue: {
+    ...typography.display,
+    color: colors.ink,
+    fontVariant: ['tabular-nums'],
+  },
+  summaryUnit: {
+    ...typography.body,
+    color: colors.inkMuted,
+  },
+  mintNote: {
+    fontSize: 11.5,
+    lineHeight: 16,
+    color: colors.inkMuted,
+    marginTop: spacing.xs,
+  },
+  reminderTitle: {
+    ...typography.h3,
+    color: colors.ink,
+  },
+  reminderBody: {
+    ...typography.body,
+    lineHeight: 22,
+    color: colors.inkMuted,
+    marginTop: spacing.xs,
+  },
+
+  // Stat cards
+  statRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  statCard: {
+    flexBasis: '100%',
+    flexGrow: 1,
+  },
+  statCardWide: {
+    flexBasis: '30%',
+    flexGrow: 1,
+  },
+
+  // Chart cards
+  chartCard: {
+    marginBottom: spacing.md,
   },
   cardTitle: {
     ...typography.h3,
@@ -93,44 +189,44 @@ export default StyleSheet.create({
   },
   cardSubtitle: {
     ...typography.body,
-    color: colors.inkMuted,
-    marginBottom: spacing.sm,
     fontSize: 12,
     lineHeight: 18,
+    color: colors.inkMuted,
+    marginBottom: spacing.sm,
+  },
+  cardNote: {
+    fontSize: 12,
+    lineHeight: 17,
+    color: colors.inkMuted,
+    marginBottom: spacing.sm,
+  },
+  cardBody: {
+    ...typography.body,
+    lineHeight: 22,
+    color: colors.inkMuted,
+    marginTop: spacing.xs,
+  },
+  selectedDay: {
+    ...typography.body,
+    fontSize: 13,
+    lineHeight: 19,
+    color: colors.inkMuted,
+    marginTop: spacing.sm,
+  },
+
+  // Table card
+  tableCard: {
+    marginBottom: spacing.md,
+  },
+
+  // Weight feature card
+  weightCard: {
+    marginBottom: spacing.md,
   },
   chartWrap: {
     width: '100%',
     marginTop: spacing.sm,
     alignItems: 'center',
-  },
-  legendRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginTop: 10,
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  legendDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: colors.primary,
-    marginRight: 6,
-  },
-  legendLine: {
-    width: 14,
-    height: 0,
-    borderTopWidth: 2,
-    borderTopColor: colors.carbs,
-    borderStyle: 'dashed',
-    marginRight: 6,
-  },
-  legendText: {
-    fontSize: 12,
-    color: colors.inkMuted,
   },
   weightInputRow: {
     flexDirection: 'row',
@@ -150,26 +246,10 @@ export default StyleSheet.create({
     marginRight: spacing.sm,
     minHeight: 50,
   },
-  insightBox: {
-    backgroundColor: colors.mint,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    marginBottom: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
+  weightButton: {
+    minWidth: 104,
   },
-  insightTitle: {
-    ...typography.bodyBold,
-    color: colors.primaryDark,
-    marginBottom: spacing.xs,
-  },
-  insightText: {
-    ...typography.body,
-    color: colors.ink,
-    lineHeight: 21,
-  },
-  emptyWrap: {
+  bannerSpacing: {
     marginTop: spacing.sm,
-    marginBottom: spacing.md,
   },
 });

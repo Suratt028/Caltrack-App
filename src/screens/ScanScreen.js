@@ -1,14 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  Image,
-  TextInput,
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  Switch,
-} from 'react-native';
+import { View, Image, ActivityIndicator, Pressable, ScrollView, Switch } from 'react-native';
+import { Text } from '../components/AppText';
+import { TextInput } from '../components/AppTextInput';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';

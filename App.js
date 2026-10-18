@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { View, ActivityIndicator, Platform } from 'react-native'; // เพิ่ม Platform
 import { StatusBar } from 'expo-status-bar';
+import { useFonts } from 'expo-font';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppProvider, useApp } from './src/context/AppContext';
+import { FONT_ASSETS } from './src/theme/fonts';
 import AuthScreen from './src/screens/AuthScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
 import RootNavigator from './src/navigation/RootNavigator';
@@ -79,6 +81,18 @@ function Gate() {
 }
 
 export default function App() {
+  const [fontsLoaded, fontError] = useFonts(FONT_ASSETS);
+
+  // Keep the splash/loading state until Noto Sans Thai is ready (or has failed,
+  // in which case we fall back to the platform font rather than blocking).
+  if (!fontsLoaded && !fontError) {
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
   return (
     <SafeAreaProvider>
       <AppProvider>

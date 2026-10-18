@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { colors, spacing, typography, radius, shadows } from '../../theme/colors';
+import { colors, spacing, typography, radius } from '../../theme/colors';
 
 export default StyleSheet.create({
   safe: {
@@ -10,53 +10,61 @@ export default StyleSheet.create({
     padding: 20,
     paddingTop: 20,
     paddingBottom: 40,
+    maxWidth: 640,
+    width: '100%',
+    alignSelf: 'center',
   },
-  title: {
-    ...typography.h1,
-    color: colors.ink,
-  },
-  subtitle: {
-    ...typography.body,
-    color: colors.inkMuted,
-    marginTop: spacing.xs,
-  },
-  profileHeader: {
+  // ----- Name card -----
+  identityRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: spacing.md,
-    marginBottom: spacing.lg,
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.md,
-    ...shadows.card,
+    marginBottom: spacing.md,
   },
   avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: colors.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.md,
   },
   avatarText: {
-    fontSize: 22,
+    fontSize: 19,
     fontWeight: '800',
     color: colors.primaryDark,
   },
-  profileInfo: {
+  identityInfo: {
     flex: 1,
   },
-  profileName: {
+  identityName: {
     ...typography.h3,
     color: colors.ink,
   },
-  profileMeta: {
+  identityMeta: {
     fontSize: 13,
     color: colors.inkMuted,
     marginTop: 2,
+  },
+  fieldLabel: {
+    ...typography.label,
+    color: colors.inkMuted,
+    marginBottom: spacing.xs,
+  },
+  nameInput: {
+    backgroundColor: colors.surfaceMuted,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.input,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 12,
+    minHeight: 48,
+    fontSize: 16,
+    color: colors.ink,
+  },
+  // ----- Shared section pieces -----
+  cardSpacing: {
+    marginTop: spacing.md,
   },
   sectionTitle: {
     ...typography.h3,
@@ -69,9 +77,6 @@ export default StyleSheet.create({
     color: colors.inkMuted,
     lineHeight: 18,
     marginBottom: spacing.md,
-  },
-  cardSpacing: {
-    marginTop: spacing.md,
   },
   row: {
     flexDirection: 'row',
@@ -97,11 +102,12 @@ export default StyleSheet.create({
   },
   input: {
     backgroundColor: colors.surfaceMuted,
-    borderWidth: 1.5,
-    borderColor: 'transparent',
-    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.input,
     paddingHorizontal: spacing.md,
     paddingVertical: 11,
+    minHeight: 48,
     fontSize: 16,
     color: colors.ink,
     marginTop: spacing.xs,
@@ -158,13 +164,14 @@ export default StyleSheet.create({
     borderColor: colors.primary,
     backgroundColor: colors.primary,
   },
+  // ----- Goal card -----
   goalSummary: {
     backgroundColor: colors.mint,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    marginTop: spacing.md,
+    borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.border,
+    padding: spacing.md,
+    marginTop: spacing.sm,
   },
   goalSummaryTitle: {
     ...typography.label,
@@ -182,29 +189,15 @@ export default StyleSheet.create({
   },
   goalUnit: {
     fontSize: 13,
-    color: colors.inkMuted,
+    fontWeight: '600',
+    color: colors.primaryDark,
     marginLeft: spacing.xs,
   },
-  macroPreviewRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.md,
-    marginTop: spacing.sm,
-  },
-  macroPreviewItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  macroDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 6,
-  },
-  macroPreviewText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.ink,
+  goalMacroRow: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.primaryDark,
+    marginTop: spacing.xs,
   },
   goalNote: {
     fontSize: 12,
@@ -212,6 +205,75 @@ export default StyleSheet.create({
     marginTop: spacing.sm,
     lineHeight: 17,
   },
+  previewHint: {
+    fontSize: 12,
+    color: colors.inkMuted,
+    marginTop: spacing.sm,
+    lineHeight: 17,
+  },
+  placeholderCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.md,
+    marginTop: spacing.sm,
+  },
+  placeholderIcon: {
+    marginTop: 2,
+    marginRight: spacing.sm,
+  },
+  placeholderTextWrap: {
+    flex: 1,
+  },
+  placeholderTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.ink,
+  },
+  placeholderBody: {
+    fontSize: 13.5,
+    color: colors.inkMuted,
+    marginTop: 2,
+    lineHeight: 20,
+  },
+  legend: {
+    ...typography.label,
+    color: colors.inkMuted,
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  presetGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  presetItem: {
+    flexBasis: '48%',
+    flexGrow: 1,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  actionBtn: {
+    flexBasis: '46%',
+    flexGrow: 1,
+  },
+  savedWrap: {
+    marginTop: spacing.md,
+  },
+  activityHint: {
+    fontSize: 12,
+    color: colors.inkMuted,
+    marginTop: spacing.sm,
+    lineHeight: 17,
+  },
+  // ----- Support -----
   supportRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -229,13 +291,16 @@ export default StyleSheet.create({
     color: colors.ink,
     flex: 1,
   },
-  dangerZone: {
+  // ----- Footer actions -----
+  footerActions: {
     marginTop: spacing.lg,
-    alignItems: 'center',
+    alignItems: 'stretch',
   },
-  secondaryBtn: {
+  footerBtn: {
+    marginBottom: spacing.sm,
+  },
+  resetBtn: {
     minHeight: 48,
-    width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radius.md,
@@ -244,17 +309,15 @@ export default StyleSheet.create({
     backgroundColor: colors.surface,
     marginBottom: spacing.sm,
   },
-  secondaryBtnText: {
-    color: colors.ink,
-    fontWeight: '700',
-    fontSize: 14,
+  resetBtnPressed: {
+    opacity: 0.85,
   },
   resetText: {
     color: colors.danger,
     fontWeight: '700',
     fontSize: 14,
   },
-  dangerHint: {
+  footerHint: {
     fontSize: 12,
     color: colors.inkMuted,
     textAlign: 'center',

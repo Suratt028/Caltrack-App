@@ -1,223 +1,214 @@
 import { StyleSheet } from 'react-native';
-import { colors, spacing, typography, radius } from '../../theme/colors';
+import { colors, spacing, radius, typography, shadows } from '../../theme/colors';
 
 export default StyleSheet.create({
   safe: {
     flex: 1,
     backgroundColor: colors.bg,
   },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: spacing.sm,
-  },
-  searchWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: radius.pill,
-    paddingHorizontal: spacing.md,
-    minHeight: 50,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-  },
-  search: {
-    flex: 1,
-    fontSize: 14.5,
-    color: colors.ink,
-    paddingVertical: 10,
-    paddingHorizontal: spacing.sm,
-  },
-  searchIcon: {
-    marginRight: spacing.xs,
-  },
-  clearBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  listContent: {
+  content: {
     paddingHorizontal: 20,
     paddingTop: spacing.sm,
     paddingBottom: 40,
   },
-  resultHint: {
-    ...typography.body,
-    fontSize: 12,
-    color: colors.inkMuted,
-    marginBottom: spacing.sm,
-    paddingHorizontal: spacing.xs,
-  },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: colors.overlay,
-    justifyContent: 'flex-end',
-  },
-  modalSheet: {
-    backgroundColor: colors.surface,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    paddingHorizontal: 20,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.lg,
-    maxHeight: '92%',
-    boxShadow: '0px -8px 24px rgba(27, 61, 47, 0.16)',
-    elevation: 12,
-  },
-  sheetHandle: {
-    alignSelf: 'center',
-    width: 44,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: colors.border,
+  mealWrap: {
+    maxWidth: 340,
     marginBottom: spacing.md,
   },
-  sheetHeader: {
+
+  // Search field
+  searchWrap: {
+    position: 'relative',
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: spacing.md,
+    alignItems: 'center',
+    minHeight: 52,
+    backgroundColor: colors.card,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    borderRadius: radius.input,
+    marginBottom: spacing.lg,
+    ...shadows.soft,
   },
-  sheetTitle: {
-    ...typography.h2,
+  searchIcon: {
+    position: 'absolute',
+    left: 14,
+    top: 14,
+    zIndex: 2,
+  },
+  searchInput: {
+    flex: 1,
+    minHeight: 48,
+    paddingVertical: 12,
+    paddingLeft: 44,
+    paddingRight: 48,
+    fontSize: 15,
     color: colors.ink,
+    textAlignVertical: 'center',
   },
-  sheetSubtitle: {
-    ...typography.body,
-    fontSize: 13,
-    color: colors.inkMuted,
-    marginTop: spacing.xs,
-  },
-  closeBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  clearBtn: {
+    position: 'absolute',
+    right: 2,
+    top: 2,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.surfaceMuted,
-    marginLeft: spacing.sm,
+    zIndex: 2,
+  },
+  clearBtnPressed: {
+    backgroundColor: colors.mint,
+  },
+
+  // Results
+  resultsHeader: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.xs,
+    marginBottom: spacing.sm,
+  },
+  resultsTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.ink,
+  },
+  resultsCount: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.inkMuted,
+  },
+  loadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    padding: 20,
+    ...shadows.soft,
+  },
+  loadingText: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: colors.inkMuted,
+  },
+  emptyCard: {
+    padding: spacing.xs,
+  },
+
+  // Add manually
+  manualSection: {
+    marginTop: spacing.lg,
+  },
+  manualToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    ...shadows.soft,
+  },
+  manualTogglePressed: {
+    borderColor: colors.primary,
+    opacity: 0.95,
+  },
+  manualTile: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.icon,
+    backgroundColor: colors.mint,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  manualTextCol: {
+    flex: 1,
+    minWidth: 0,
+    marginHorizontal: spacing.sm,
+  },
+  manualTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.ink,
+  },
+  manualSubtitle: {
+    fontSize: 12,
+    fontWeight: '400',
+    color: colors.inkMuted,
+    marginTop: 2,
+  },
+  chevron: {
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chevronOpen: {
+    transform: [{ rotate: '90deg' }],
+  },
+  manualForm: {
+    marginTop: spacing.sm,
+  },
+  inputGroup: {
+    marginBottom: spacing.sm,
   },
   fieldLabel: {
     ...typography.label,
     color: colors.ink,
-    marginBottom: spacing.sm,
+    marginBottom: 6,
   },
-  stepperRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.xs,
-  },
-  stepBtn: {
-    width: 46,
-    height: 46,
-    borderRadius: radius.sm,
+  manualInput: {
+    minHeight: 44,
     backgroundColor: colors.surfaceMuted,
     borderWidth: 1,
     borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stepBtnPressed: {
-    opacity: 0.7,
-  },
-  stepInput: {
-    flex: 1,
-    height: 46,
-    marginHorizontal: spacing.sm,
-    backgroundColor: colors.surfaceMuted,
-    borderWidth: 1.5,
-    borderColor: 'transparent',
-    borderRadius: radius.sm,
-    textAlign: 'center',
-    fontSize: 17,
-    fontWeight: '700',
+    borderRadius: radius.input,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 10,
+    fontSize: 15,
     color: colors.ink,
+    textAlignVertical: 'center',
   },
-  stepInputInvalid: {
-    borderColor: colors.danger,
-    backgroundColor: colors.dangerSoft,
-  },
-  hint: {
-    fontSize: 12,
-    color: colors.inkMuted,
-    marginBottom: spacing.md,
-  },
-  hintError: {
-    color: colors.danger,
-    fontWeight: '600',
-  },
-  summaryBox: {
-    backgroundColor: colors.primarySoft,
-    borderRadius: radius.md,
-    padding: spacing.md,
+  manualActions: {
+    flexDirection: 'row',
     marginTop: spacing.xs,
-    marginBottom: spacing.lg,
-  },
-  summaryLabel: {
-    ...typography.label,
-    color: colors.primaryDark,
-    marginBottom: spacing.xs,
-  },
-  summaryKcal: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: colors.ink,
-  },
-  summaryMacroRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.md,
-    marginTop: spacing.sm,
-  },
-  macroItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  macroDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 6,
-  },
-  macroText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.ink,
-  },
-  modalActions: {
-    flexDirection: 'row',
   },
   actionGap: {
     marginRight: spacing.sm,
   },
-  successWrap: {
-    alignItems: 'center',
-    paddingVertical: spacing.lg,
-  },
-  successIcon: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.md,
-  },
-  successTitle: {
-    ...typography.h2,
-    color: colors.ink,
-    marginBottom: spacing.xs,
-  },
-  successText: {
-    ...typography.body,
-    color: colors.inkMuted,
-    textAlign: 'center',
-    lineHeight: 21,
-    marginBottom: spacing.lg,
-  },
-  successActions: {
+
+  // Bottom info notice
+  noticeCard: {
     flexDirection: 'row',
-    width: '100%',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    backgroundColor: colors.mint,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginTop: spacing.lg,
+  },
+  noticeIcon: {
+    marginTop: 1,
+  },
+  noticeTextCol: {
+    flex: 1,
+    minWidth: 0,
+  },
+  noticeText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.primaryDark,
+  },
+  noticeSub: {
+    fontSize: 12,
+    fontWeight: '400',
+    color: colors.inkMuted,
+    marginTop: spacing.xs,
+    lineHeight: 17,
   },
 });

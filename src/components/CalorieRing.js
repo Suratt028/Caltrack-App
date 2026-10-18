@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
+import { Text } from './AppText';
 import Svg, { Circle } from 'react-native-svg';
 import { colors, typography } from '../theme/colors';
 import styles from '../style/components/CalorieRingStyles';

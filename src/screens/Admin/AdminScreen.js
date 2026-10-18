@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View, Modal, StyleSheet } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, View, Modal, StyleSheet } from 'react-native';
+import { Text } from '../../components/AppText';
+import { TextInput } from '../../components/AppTextInput';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL } from '../../config';
 import { useApp } from '../../context/AppContext';
+import { colors } from '../../theme/colors';
 import styles from '../../style/screens/AdminScreenStyles';
 
 // Import Shared Helpers/Components (ถอย 2 ชั้น)
@@ -225,7 +228,7 @@ export default function AdminScreen() {
 
         <ScrollView contentContainerStyle={styles.content}>
           {error ? <Text style={styles.error}>{error}</Text> : null}
-          {busy ? <ActivityIndicator color="#2F8F6B" /> : null}
+          {busy ? <ActivityIndicator color={colors.primary} /> : null}
 
           {page === 'dashboard' && <Dashboard summary={summary} users={users} onFoods={() => setPage('foods')} />}
           {page === 'users' && <Users users={users} token={token} onRefresh={() => refresh(token)} />}
@@ -376,7 +379,7 @@ function Users({ users, token, onRefresh }) {
       <View style={styles.tableRow} key={String(user._id)}>
         {!isAdmin ? (
           <Pressable onPress={() => handleInspectLogs(user)} style={{ flex: 1 }}>
-            <Text style={[styles.tableCell, styles.strong, { color: '#2F8F6B', textDecorationLine: 'underline' }]}>
+            <Text style={[styles.tableCell, styles.strong, { color: colors.primary, textDecorationLine: 'underline' }]}>
               {user.displayName || 'Unnamed'} 🔍
             </Text>
           </Pressable>
@@ -392,11 +395,11 @@ function Users({ users, token, onRefresh }) {
         </Text>
         <View style={[styles.tableCell, { flexDirection: 'row', gap: 8 }]}>
           <Pressable onPress={() => handleOpenEdit(user)}>
-            <Text style={{ color: '#0056b3', fontWeight: '600', fontSize: 13 }}>แก้ไข</Text>
+            <Text style={{ color: colors.sky, fontWeight: '600', fontSize: 13 }}>แก้ไข</Text>
           </Pressable>
           {!isAdmin && (
             <Pressable onPress={() => handleInspectLogs(user)}>
-              <Text style={{ color: '#2F8F6B', fontWeight: '600', fontSize: 13 }}>ดูรายการอาหาร</Text>
+              <Text style={{ color: colors.primary, fontWeight: '600', fontSize: 13 }}>ดูรายการอาหาร</Text>
             </Pressable>
           )}
           <Pressable onPress={() => handleDeleteUser(user._id)}>
@@ -466,15 +469,15 @@ function Users({ users, token, onRefresh }) {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <Pressable
                 onPress={() => setNewUser((u) => ({ ...u, role: 'user' }))}
-                style={{ padding: 6, backgroundColor: newUser.role === 'user' ? '#2F8F6B' : '#eee', borderRadius: 4 }}
+                style={{ padding: 6, backgroundColor: newUser.role === 'user' ? colors.primary : colors.border, borderRadius: 4 }}
               >
-                <Text style={{ color: newUser.role === 'user' ? '#fff' : '#333' }}>User</Text>
+                <Text style={{ color: newUser.role === 'user' ? colors.white : colors.ink }}>User</Text>
               </Pressable>
               <Pressable
                 onPress={() => setNewUser((u) => ({ ...u, role: 'admin' }))}
-                style={{ padding: 6, backgroundColor: newUser.role === 'admin' ? '#0056b3' : '#eee', borderRadius: 4 }}
+                style={{ padding: 6, backgroundColor: newUser.role === 'admin' ? colors.sky : colors.border, borderRadius: 4 }}
               >
-                <Text style={{ color: newUser.role === 'admin' ? '#fff' : '#333' }}>Admin</Text>
+                <Text style={{ color: newUser.role === 'admin' ? colors.white : colors.ink }}>Admin</Text>
               </Pressable>
             </View>
           </View>
@@ -485,7 +488,7 @@ function Users({ users, token, onRefresh }) {
       )}
 
       {editingUser && (
-        <Card style={{ flexBasis: 'auto', marginBottom: 16, borderColor: '#0056b3', borderWidth: 1 }}>
+        <Card style={{ flexBasis: 'auto', marginBottom: 16, borderColor: colors.sky, borderWidth: 1 }}>
           <Text style={styles.sectionTitle}>แก้ไขข้อมูลผู้ใช้: {editingUser.email}</Text>
           <View style={styles.formGrid}>
             <TextInput
@@ -504,15 +507,15 @@ function Users({ users, token, onRefresh }) {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <Pressable
                 onPress={() => setEditForm((f) => ({ ...f, role: 'user' }))}
-                style={{ padding: 6, backgroundColor: editForm.role === 'user' ? '#2F8F6B' : '#eee', borderRadius: 4 }}
+                style={{ padding: 6, backgroundColor: editForm.role === 'user' ? colors.primary : colors.border, borderRadius: 4 }}
               >
-                <Text style={{ color: editForm.role === 'user' ? '#fff' : '#333' }}>User</Text>
+                <Text style={{ color: editForm.role === 'user' ? colors.white : colors.ink }}>User</Text>
               </Pressable>
               <Pressable
                 onPress={() => setEditForm((f) => ({ ...f, role: 'admin' }))}
-                style={{ padding: 6, backgroundColor: editForm.role === 'admin' ? '#0056b3' : '#eee', borderRadius: 4 }}
+                style={{ padding: 6, backgroundColor: editForm.role === 'admin' ? colors.sky : colors.border, borderRadius: 4 }}
               >
-                <Text style={{ color: editForm.role === 'admin' ? '#fff' : '#333' }}>Admin</Text>
+                <Text style={{ color: editForm.role === 'admin' ? colors.white : colors.ink }}>Admin</Text>
               </Pressable>
             </View>
           </View>
@@ -521,7 +524,7 @@ function Users({ users, token, onRefresh }) {
               <Text style={styles.primaryText}>บันทึกการเปลี่ยนแปลง</Text>
             </Pressable>
             <Pressable style={{ padding: 8 }} onPress={() => setEditingUser(null)}>
-              <Text style={{ color: '#666' }}>ยกเลิก</Text>
+              <Text style={{ color: colors.inkMuted }}>ยกเลิก</Text>
             </Pressable>
           </View>
         </Card>
@@ -546,9 +549,9 @@ function Users({ users, token, onRefresh }) {
 
               <ScrollView style={{ maxHeight: 400 }}>
                 {loadingLogs ? (
-                  <ActivityIndicator color="#2F8F6B" style={{ marginVertical: 20 }} />
+                  <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} />
                 ) : userLogs.length === 0 ? (
-                  <Text style={{ padding: 16, color: '#888', fontStyle: 'italic' }}>ผู้ใช้นี้ยังไม่มีบันทึกรายการอาหารในฐานข้อมูล `user.foods`</Text>
+                  <Text style={{ padding: 16, color: colors.inkMuted, fontStyle: 'italic' }}>ผู้ใช้นี้ยังไม่มีบันทึกรายการอาหารในฐานข้อมูล `user.foods`</Text>
                 ) : (
                   userLogs.map((log) => {
                     const foodTitle = log.foodName || log.name || 'อาหารที่ไม่ระบุชื่อ';
@@ -560,18 +563,18 @@ function Users({ users, token, onRefresh }) {
                     return (
                       <View key={log._id} style={modalStyles.logRow}>
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <Text style={{ fontWeight: 'bold', color: '#2F8F6B', fontSize: 14 }}>{foodTitle}</Text>
-                          <Text style={{ fontSize: 12, color: '#888' }}>{log.dateKey || formatDate(log.createdAt)}</Text>
+                          <Text style={{ fontWeight: 'bold', color: colors.primary, fontSize: 14 }}>{foodTitle}</Text>
+                          <Text style={{ fontSize: 12, color: colors.inkMuted }}>{log.dateKey || formatDate(log.createdAt)}</Text>
                         </View>
-                        <Text style={{ fontSize: 13, color: '#333', marginTop: 4 }}>
-                          พลังงาน: <Text style={{ fontWeight: 'bold', color: '#D97706' }}>{kcal} kcal</Text> | โปรตีน: {protein}g | คาร์บ: {carbs}g | ไขมัน: {fat}g
+                        <Text style={{ fontSize: 13, color: colors.ink, marginTop: 4 }}>
+                          พลังงาน: <Text style={{ fontWeight: 'bold', color: colors.carbStrong }}>{kcal} kcal</Text> | โปรตีน: {protein}g | คาร์บ: {carbs}g | ไขมัน: {fat}g
                         </Text>
                         {log.entry && typeof log.entry === 'object' ? (
-                          <View style={{ marginTop: 4, paddingLeft: 8, borderLeftWidth: 2, borderLeftColor: '#2F8F6B' }}>
+                          <View style={{ marginTop: 4, paddingLeft: 8, borderLeftWidth: 2, borderLeftColor: colors.primary }}>
                             {Object.entries(log.entry).map(([mKey, item]) => {
                               if (!item || typeof item !== 'object') return null;
                               return (
-                                <Text key={mKey} style={{ fontSize: 12, color: '#555' }}>
+                                <Text key={mKey} style={{ fontSize: 12, color: colors.inkMuted }}>
                                   • {mKey}: {item.name || item.foodName} ({item.kcal || item.calories || 0} kcal)
                                 </Text>
                               );
@@ -653,14 +656,14 @@ function Foods({ foods, query, setQuery, removeFood, foodForm, setFoodForm, food
         </View>
 
         {foods.length === 0 ? (
-          <Text style={{ padding: 16, color: '#888', fontStyle: 'italic' }}>ไม่พบรายการอาหารตามเงื่อนไขที่ค้นหา</Text>
+          <Text style={{ padding: 16, color: colors.inkMuted, fontStyle: 'italic' }}>ไม่พบรายการอาหารตามเงื่อนไขที่ค้นหา</Text>
         ) : (
           foods.map((food) => (
             <View style={styles.tableRow} key={String(food._id || food.foodId)}>
               <Text style={styles.tableCell}>{food.foodId || '-'}</Text>
               <View style={[styles.tableCell, { flex: 2 }]}>
                 <Text style={styles.strong}>{food.nameTh || food.nameEn || '-'}</Text>
-                {food.nameEn && food.nameTh ? <Text style={{ fontSize: 11, color: '#666' }}>{food.nameEn}</Text> : null}
+                {food.nameEn && food.nameTh ? <Text style={{ fontSize: 11, color: colors.inkMuted }}>{food.nameEn}</Text> : null}
               </View>
               <Text style={styles.tableCell}>{food.kcal ?? '-'}</Text>
               <Text style={styles.tableCell}>{food.protein_g ?? '-'}</Text>
@@ -689,7 +692,7 @@ const modalStyles = StyleSheet.create({
   container: {
     width: '100%',
     maxWidth: 550,
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
     borderRadius: 12,
     padding: 20,
     boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
@@ -700,17 +703,17 @@ const modalStyles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: colors.border,
     paddingBottom: 10,
   },
   title: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#222',
+    color: colors.ink,
   },
   logRow: {
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: colors.border,
     paddingVertical: 10,
   },
 });

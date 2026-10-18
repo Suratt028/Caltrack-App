@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { colors, spacing, typography, radius, shadows } from '../../theme/colors';
+import { colors, spacing, typography, radius } from '../../theme/colors';
 
 export default StyleSheet.create({
   safe: {
@@ -11,215 +11,234 @@ export default StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 48,
   },
+
+  /* ------------------------------- header -------------------------------- */
   headerRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
+    gap: spacing.sm,
     marginBottom: spacing.md,
   },
   headerText: {
     flex: 1,
-    paddingRight: spacing.sm,
-  },
-  eyebrow: {
-    ...typography.bodyBold,
-    color: colors.primary,
-    fontSize: 13,
-    marginBottom: 2,
+    minWidth: 0,
   },
   greeting: {
-    fontSize: 24,
-    fontWeight: '700',
+    ...typography.h1,
     color: colors.ink,
   },
   dateText: {
     ...typography.body,
     fontSize: 13,
     color: colors.inkMuted,
-    marginTop: 2,
+    marginTop: spacing.xs,
   },
-  avatar: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    backgroundColor: colors.primarySoft,
+  leafBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.mint,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: colors.surface,
-    ...shadows.soft,
   },
-  avatarText: {
-    color: colors.primaryDark,
-    fontSize: 19,
-    fontWeight: '800',
+  leafBtnPressed: {
+    opacity: 0.75,
   },
-  coachCard: {
+  banner: {
+    marginBottom: spacing.md,
+  },
+
+  /* ------------------------------ shared --------------------------------- */
+  block: {
+    marginBottom: spacing.md,
+  },
+  mintCard: {
+    backgroundColor: colors.mint,
+    borderColor: colors.mint,
+  },
+  sectionTitle: {
+    ...typography.h3,
+    color: colors.ink,
+  },
+  linkText: {
+    ...typography.label,
+    fontSize: 12,
+    color: colors.primary,
+  },
+
+  /* ---------------------------- energy card ------------------------------ */
+  energyHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.primarySoft,
-    borderRadius: radius.lg,
-    padding: 16,
-    marginBottom: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
+    justifyContent: 'space-between',
+    gap: spacing.sm,
   },
-  coachIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: colors.surface,
+  energyRow: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: spacing.md,
+    gap: spacing.md,
+    marginTop: spacing.md,
   },
-  coachText: {
+  energyStats: {
     flex: 1,
-    color: colors.primaryDark,
-    fontSize: 13.5,
-    fontWeight: '600',
-    lineHeight: 20,
+    minWidth: 0,
+    gap: spacing.md,
+    alignItems: 'flex-start',
   },
-  ringCard: {
-    alignItems: 'center',
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.lg,
-  },
-  ringCaption: {
+  statLabel: {
+    fontSize: 12,
     color: colors.inkMuted,
+  },
+  statValue: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: colors.ink,
+    marginTop: 2,
+  },
+  statValueSm: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.ink,
+    marginTop: 2,
+  },
+  statUnit: {
+    fontSize: 12,
+    fontWeight: '400',
+    color: colors.inkMuted,
+  },
+  overText: {
+    ...typography.label,
     fontSize: 13,
-    marginTop: spacing.sm,
+    color: colors.carbStrong,
+    marginTop: spacing.md,
     textAlign: 'center',
   },
-  ringCaptionStrong: {
-    color: colors.ink,
-    fontWeight: '700',
-  },
-  ringStatsRow: {
-    flexDirection: 'row',
-    width: '100%',
-    marginTop: spacing.md,
-  },
-  ringStat: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  ringStatDivider: {
-    width: 1,
+  divider: {
+    height: 1,
     backgroundColor: colors.border,
-    alignSelf: 'stretch',
+    marginVertical: spacing.md,
   },
-  ringStatValue: {
-    fontSize: 17,
-    fontWeight: '800',
-    color: colors.ink,
-  },
-  ringStatLabel: {
-    fontSize: 11,
-    color: colors.inkMuted,
-    marginTop: 2,
-  },
-  quickActions: {
+  macroGrid: {
     flexDirection: 'row',
     gap: spacing.sm,
-    marginTop: spacing.md,
   },
-  quickAction: {
+  macroCell: {
     flex: 1,
-    minHeight: 104,
+    minWidth: 0,
+  },
+
+  /* ----------------------------- no-goal cards --------------------------- */
+  sproutTile: {
+    width: 48,
+    height: 48,
     borderRadius: radius.md,
     backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.md,
-    ...shadows.card,
-  },
-  quickActionPressed: {
-    opacity: 0.92,
-    transform: [{ scale: 0.985 }],
-  },
-  quickActionAccent: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  quickIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.sm,
   },
-  quickIconWrapAccent: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-  },
-  quickLabel: {
+  noGoalTitle: {
+    ...typography.h3,
     color: colors.ink,
-    fontSize: 15,
-    fontWeight: '700',
+    marginTop: spacing.xs,
   },
-  quickLabelAccent: {
-    color: colors.white,
+  noGoalDesc: {
+    ...typography.body,
+    fontSize: 13.5,
+    color: colors.primaryDark,
+    lineHeight: 20,
+    marginTop: spacing.xs,
   },
-  quickHint: {
-    color: colors.inkMuted,
-    fontSize: 11.5,
-    marginTop: 2,
-    lineHeight: 16,
-  },
-  quickHintAccent: {
-    color: 'rgba(255,255,255,0.85)',
-  },
-  macroCard: {
+  noGoalCta: {
     marginTop: spacing.md,
+    alignSelf: 'stretch',
   },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: spacing.md,
-  },
-  sectionTitle: {
-    ...typography.h2,
+  bigKcal: {
+    fontSize: 32,
+    fontWeight: '800',
     color: colors.ink,
+    marginTop: spacing.sm,
   },
-  sectionHint: {
+  bigKcalUnit: {
+    fontSize: 14,
+    fontWeight: '400',
     color: colors.inkMuted,
-    fontSize: 12,
   },
-  mealsHeader: {
+  explainText: {
+    ...typography.body,
+    fontSize: 13,
+    color: colors.inkMuted,
+    lineHeight: 20,
+    marginTop: spacing.sm,
+  },
+
+  /* --------------------------- food today list --------------------------- */
+  foodHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'baseline',
-    marginTop: spacing.lg,
     marginBottom: spacing.sm,
   },
-  mealCount: {
-    color: colors.inkMuted,
+  countText: {
     fontSize: 12,
+    color: colors.inkMuted,
   },
   mealGroup: {
     marginBottom: spacing.md,
   },
-  mealGroupHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'baseline',
+  mealGroupTitle: {
+    ...typography.label,
+    color: colors.inkMuted,
     marginBottom: spacing.sm,
     paddingHorizontal: spacing.xs,
   },
-  mealGroupTitle: {
-    ...typography.label,
+
+  /* ---------------------------- reflective card -------------------------- */
+  reflectBody: {
+    ...typography.body,
+    fontSize: 13.5,
+    color: colors.primaryDark,
+    lineHeight: 20,
+    marginTop: spacing.sm,
+  },
+
+  /* ------------------------------ goal card ------------------------------ */
+  goalKcal: {
+    fontSize: 24,
+    fontWeight: '800',
     color: colors.ink,
+    marginTop: spacing.sm,
   },
-  mealGroupKcal: {
-    fontSize: 12,
-    fontWeight: '600',
+  goalMacros: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  goalMacroItem: {
+    fontSize: 13,
     color: colors.inkMuted,
+    backgroundColor: colors.surfaceMuted,
+    borderRadius: radius.pill,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
   },
-  emptyWrap: {
-    marginTop: spacing.xs,
+  goalDisclaimer: {
+    fontSize: 12,
+    color: colors.inkMuted,
+    marginTop: spacing.md,
+  },
+  goalLinkRow: {
+    marginTop: spacing.sm,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignSelf: 'flex-start',
+  },
+
+  /* ------------------------------- actions ------------------------------- */
+  actions: {
+    gap: spacing.sm,
   },
 });

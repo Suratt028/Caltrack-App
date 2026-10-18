@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Pressable, ActivityIndicator } from 'react-native';
+import { View, Pressable, ActivityIndicator } from 'react-native';
+import { Text } from '../AppText';
 import styles from '../../style/screens/AdminScreenStyles';
+import { colors } from '../../theme/colors';
 import { Title, Card, Badge, formatDate } from './AdminCommon';
 import { fetchTickets, updateTicketStatus, deleteTicket } from '../../services/atlasService';
 
@@ -65,15 +67,15 @@ export default function Support({ token }) {
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
           <Text style={styles.sectionTitle}>User Support Tickets ({tickets.length})</Text>
           <Pressable onPress={loadTickets} style={{ padding: 4 }}>
-            <Text style={{ color: '#2F8F6B', fontWeight: '600', fontSize: 13 }}>↻ โหลดใหม่</Text>
+            <Text style={{ color: colors.primary, fontWeight: '600', fontSize: 13 }}>↻ โหลดใหม่</Text>
           </Pressable>
         </View>
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
         {loading ? (
-          <ActivityIndicator color="#2F8F6B" style={{ marginVertical: 20 }} />
+          <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} />
         ) : tickets.length === 0 ? (
-          <Text style={{ color: '#888', fontStyle: 'italic', paddingVertical: 12 }}>ยังไม่มีรายงานปัญหาจากผู้ใช้</Text>
+          <Text style={{ color: colors.inkMuted, fontStyle: 'italic', paddingVertical: 12 }}>ยังไม่มีรายงานปัญหาจากผู้ใช้</Text>
         ) : (
           <>
             <View style={styles.tableHead}>
@@ -90,8 +92,8 @@ export default function Support({ token }) {
                 <Text style={styles.tableCell}>{t.userEmail}</Text>
                 <View style={[styles.tableCell, { flex: 2 }]}>
                   <Text style={styles.strong}>{t.topic}</Text>
-                  {t.detail ? <Text style={{ fontSize: 12, color: '#666', marginTop: 2 }}>{t.detail}</Text> : null}
-                  <Text style={{ fontSize: 10, color: '#999', marginTop: 2 }}>{formatDate(t.createdAt)}</Text>
+                  {t.detail ? <Text style={{ fontSize: 12, color: colors.inkMuted, marginTop: 2 }}>{t.detail}</Text> : null}
+                  <Text style={{ fontSize: 10, color: colors.inkFaint, marginTop: 2 }}>{formatDate(t.createdAt)}</Text>
                 </View>
                 <View style={styles.tableCell}>
                   <Pressable onPress={() => handleCycleStatus(t)}>
