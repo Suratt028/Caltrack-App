@@ -388,13 +388,18 @@ export function AppProvider({ children }) {
     [logsByDay, persistLogs, user]
   );
 
+  // Today's weigh-in is also the profile's current weight, so goals stay in step.
+  // ProfileScreen passes syncProfile: false because it saves the profile itself.
   const logWeight = useCallback(
-    async (weightKg, dateKey = todayKey()) => {
+    async (weightKg, dateKey = todayKey(), { syncProfile = true } = {}) => {
       if (isRemoteUser(user)) await saveWeight(user.id, dateKey, weightKg);
       const next = { ...weightsByDay, [dateKey]: weightKg };
       await persistWeights(next);
+      if (syncProfile && profile && dateKey === todayKey() && Number(profile.weightKg) !== Number(weightKg)) {
+        await updateProfile({ weightKg });
+      }
     },
-    [weightsByDay, persistWeights, user]
+    [weightsByDay, persistWeights, user, profile, updateProfile]
   );
 
   const resetAllData = useCallback(async () => {

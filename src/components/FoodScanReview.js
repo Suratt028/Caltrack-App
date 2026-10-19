@@ -93,6 +93,8 @@ export default function FoodScanReview({ analysis, onConfirm, onReset }) {
   const [computedKey, setComputedKey] = useState('');
   const [calculating, setCalculating] = useState(false);
   const [calculationError, setCalculationError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
   const currentCalculationKey = calculationKey(items);
   const selectedItems = items.filter((item) => item.foodId && validGrams(item.grams));
@@ -218,14 +220,23 @@ export default function FoodScanReview({ analysis, onConfirm, onReset }) {
     !dbCalculationPending &&
     !calculationError;
 
-  const confirm = () => {
+  const confirm = async () => {
+    if (saving) return;
     const reviewItems = items.map((item) => ({
       ...item,
       grams: Number(item.grams),
       nutrition: getItemNutrition(item),
       nutritionSource: item.foodId ? 'database' : 'ai_estimate',
     }));
-    onConfirm({ items: reviewItems, totals });
+    setSaving(true);
+    setSaveError('');
+    try {
+      await onConfirm({ items: reviewItems, totals });
+    } catch (error) {
+      setSaveError(error?.message || 'บันทึกไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -445,14 +456,27 @@ export default function FoodScanReview({ analysis, onConfirm, onReset }) {
         </View>
       )}
 
+      {!!saveError && (
+        <View style={styles.errorBlock}>
+          <Banner tone="error" message={saveError} />
+        </View>
+      )}
+
       <View style={styles.actionRow}>
         <PrimaryButton
           title="ยกเลิก"
           variant="outline"
           onPress={onReset}
+          disabled={saving}
           style={[styles.actionGap, { flex: 1 }]}
         />
-        <PrimaryButton title="ยืนยันและบันทึก" onPress={confirm} disabled={!canSave} style={{ flex: 1 }} />
+        <PrimaryButton
+          title="ยืนยันและบันทึก"
+          onPress={confirm}
+          loading={saving}
+          disabled={!canSave || saving}
+          style={{ flex: 1 }}
+        />
       </View>
     </View>
   );

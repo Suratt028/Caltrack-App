@@ -17,6 +17,15 @@ const MEAL_ICON = {
 
 const formatNumber = (value) => Math.round(Number(value) || 0).toLocaleString('th-TH');
 
+// Entries store an ISO timestamp; show local "HH:mm". Older values may already be "HH:mm".
+function formatTime(value) {
+  if (!value) return '';
+  if (/^\d{1,2}:\d{2}$/.test(String(value))) return String(value);
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+}
+
 /**
  * A single logged food entry for the Home screen: mint meal tile, meal label +
  * time, name, serving line, kcal on the right, and an optional remove button.
@@ -27,19 +36,27 @@ export default function MealEntryCard({
   name,
   time,
   servings,
+  unit,
+  grams,
   kcal,
   onRemove,
 }) {
   const label = mealLabel || MEAL_LABEL[meal] || 'อาหาร';
   const iconName = MEAL_ICON[meal] || 'restaurant-outline';
   const calories = Math.round(Number(kcal) || 0);
+  const timeLabel = formatTime(time);
   const servingCount = Number(servings) || 0;
-  const showServings = servingCount > 0 && servingCount !== 1;
+  const gramCount = Math.round(Number(grams) || 0);
+  // Entries from the portion screen carry a unit and gram total; older ones only a count.
+  let servingLabel = '';
+  if (unit === 'กรัม' && gramCount > 0) servingLabel = `${gramCount} กรัม`;
+  else if (unit && servingCount > 0) servingLabel = `${servingCount} ${unit}${gramCount > 0 ? ` (≈${gramCount} ก.)` : ''}`;
+  else if (servingCount > 0 && servingCount !== 1) servingLabel = `${servingCount} หน่วย`;
   const accessibilityLabel = [
     label,
-    time || null,
+    timeLabel || null,
     name,
-    showServings ? `${servingCount} หน่วย` : null,
+    servingLabel || null,
     `${calories} แคลอรี่`,
   ]
     .filter(Boolean)
@@ -53,11 +70,11 @@ export default function MealEntryCard({
       <View style={styles.main}>
         <Text style={styles.meta} numberOfLines={1}>
           {label}
-          {time ? ` · ${time}` : ''}
+          {timeLabel ? ` · ${timeLabel}` : ''}
         </Text>
         <Text style={styles.name} numberOfLines={1}>{name}</Text>
-        {showServings ? (
-          <Text style={styles.subtitle} numberOfLines={1}>{servingCount} หน่วย</Text>
+        {servingLabel ? (
+          <Text style={styles.subtitle} numberOfLines={1}>{servingLabel}</Text>
         ) : null}
       </View>
       <Text style={styles.kcal}>

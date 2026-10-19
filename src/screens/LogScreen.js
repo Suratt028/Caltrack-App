@@ -5,7 +5,7 @@ import { TextInput } from '../components/AppTextInput';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
-import { searchFood } from '../services/foodService';
+import { searchNutritionFoods } from '../services/foodService';
 import { useApp } from '../context/AppContext';
 import FoodSearchRow from '../components/FoodSearchRow';
 import Card from '../components/Card';
@@ -18,6 +18,7 @@ import SegmentedControl from '../components/SegmentedControl';
 import styles from '../style/screens/LogScreenStyles';
 
 const SEARCH_DEBOUNCE_MS = 200;
+const SEARCH_LIMIT = 20;
 
 // Short meal labels — same wording as the web prototype (meals.*Short).
 const MEAL_OPTIONS = [
@@ -36,21 +37,29 @@ export default function LogScreen({ navigation }) {
   const [meal, setMeal] = useState(defaultMealForNow);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
-  const [searching, setSearching] = useState(true);
+  const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState('');
   const [manualOpen, setManualOpen] = useState(false);
   const [manualName, setManualName] = useState('');
   const [manualKcal, setManualKcal] = useState('');
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
-  // Debounced search against the real food service (with stale-response guard).
+  // Debounced search of the server's food database (with stale-response guard).
   useEffect(() => {
+    const trimmed = query.trim();
+    if (!trimmed) {
+      setResults([]);
+      setSearching(false);
+      setSearchError('');
+      return undefined;
+    }
     let cancelled = false;
     setSearching(true);
     setSearchError('');
     const timer = setTimeout(async () => {
       try {
-        const data = await searchFood(query);
+        const data = await searchNutritionFoods(trimmed, SEARCH_LIMIT);
         if (!cancelled) setResults(Array.isArray(data) ? data : []);
       } catch (error) {
         if (!cancelled) {
@@ -79,6 +88,7 @@ export default function LogScreen({ navigation }) {
     const name = manualName.trim();
     if (!name || saving) return;
     setSaving(true);
+    setSaveError('');
     try {
       await addFoodLog({
         name,
@@ -95,6 +105,7 @@ export default function LogScreen({ navigation }) {
       setManualOpen(false);
     } catch (error) {
       // Keep the form open (with the typed values) so the user can retry.
+      setSaveError(error?.message || 'บันทึกไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
     } finally {
       setSaving(false);
     }
@@ -143,12 +154,20 @@ export default function LogScreen({ navigation }) {
         {/* Results */}
         <View style={styles.resultsHeader}>
           <Text style={styles.resultsTitle}>อาหารที่พบ</Text>
-          {!searching && !searchError && (
+          {!!query.trim() && !searching && !searchError && (
             <Text style={styles.resultsCount}>{results.length} รายการ</Text>
           )}
         </View>
 
-        {searching ? (
+        {!query.trim() ? (
+          <Card style={styles.emptyCard}>
+            <EmptyState
+              icon="search-outline"
+              title="พิมพ์ชื่ออาหารเพื่อค้นหา"
+              message="ค้นได้ทั้งชื่อไทยและอังกฤษ จากฐานข้อมูลอาหารไทยกว่า 1,000 รายการ"
+            />
+          </Card>
+        ) : searching ? (
           <View style={styles.loadingRow}>
             <ActivityIndicator size="small" color={colors.primary} />
             <Text style={styles.loadingText}>กำลังค้นหา…</Text>
@@ -169,8 +188,8 @@ export default function LogScreen({ navigation }) {
               <FoodSearchRow
                 key={String(food.id)}
                 name={food.name}
-                subtitle={[food.nameEn, food.serving].filter(Boolean).join(' · ')}
-                kcal={food.kcal}
+                subtitle={[food.nameEn, 'ต่อ 100 กรัม'].filter(Boolean).join(' · ')}
+                kcal={food.per100g?.kcal}
                 onPress={() => goToPortion(food)}
               />
             ))}
@@ -226,6 +245,8 @@ export default function LogScreen({ navigation }) {
                   returnKeyType="done"
                 />
               </View>
+
+              {!!saveError && <Banner tone="error" message={saveError} onDismiss={() => setSaveError('')} />}
 
               <View style={styles.manualActions}>
                 <PrimaryButton

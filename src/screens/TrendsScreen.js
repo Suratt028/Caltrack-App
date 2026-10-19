@@ -250,9 +250,14 @@ export default function TrendsScreen({ navigation }) {
       return;
     }
     setWeightError('');
-    await logWeight(val);
-    setWeightInput('');
-    setWeightNotice(`บันทึกน้ำหนัก ${val} กก. แล้ว`);
+    setWeightNotice('');
+    try {
+      await logWeight(val);
+      setWeightInput('');
+      setWeightNotice(`บันทึกน้ำหนัก ${val} กก. แล้ว`);
+    } catch (error) {
+      setWeightError(error?.message || 'บันทึกน้ำหนักไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+    }
   };
 
   return (

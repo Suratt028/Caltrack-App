@@ -1909,15 +1909,23 @@ const handleCreateTicket = async (req, res) => {
     if (!userEmail || typeof topic !== 'string' || !topic.trim()) {
       return res.status(400).json({ error: 'userEmail and topic are required' });
     }
-    const ticketId = `TK-${Math.floor(1000 + Math.random() * 9000)}`;
-    const ticket = await Ticket.create({
-      ticketId,
+    const fields = {
       userId,
       userEmail: userEmail.trim().toLowerCase(),
-      topic: topic.trim(),
-      detail: String(detail || '').trim(),
+      topic: topic.trim().slice(0, 200),
+      detail: String(detail || '').trim().slice(0, 5000),
       status: 'Open',
-    });
+    };
+    // 8 random hex chars (~4 billion ids); retry on the rare unique-index collision.
+    let ticket;
+    for (let attempt = 0; !ticket; attempt += 1) {
+      const ticketId = `TK-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
+      try {
+        ticket = await Ticket.create({ ...fields, ticketId });
+      } catch (error) {
+        if (error?.code !== 11000 || attempt >= 4) throw error;
+      }
+    }
     res.status(201).json({ ticket });
   } catch (error) {
     res.status(500).json({ error: error.message });
