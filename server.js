@@ -125,6 +125,36 @@ async function requestGemini(url, body) {
   }
 }
 
+// isMongoReady follows the driver's connection events, so it recovers after a
+// network drop (the driver reconnects by itself). If the very first connect
+// fails, connectMongo keeps retrying with backoff instead of staying down
+// until someone restarts the server.
+const MONGO_RETRY_START_MS = 2000;
+const MONGO_RETRY_MAX_MS = 60 * 1000;
+let mongoRetryDelayMs = MONGO_RETRY_START_MS;
+let adminAccountEnsured = false;
+
+function onMongoUp(event) {
+  const wasReady = isMongoReady;
+  isMongoReady = true;
+  mongoRetryDelayMs = MONGO_RETRY_START_MS;
+  if (!wasReady) console.log(`✅ MongoDB ${event}`);
+  if (!adminAccountEnsured) {
+    adminAccountEnsured = true;
+    ensureAdminAccount().catch((error) => {
+      adminAccountEnsured = false;
+      console.error('❌ Admin account setup failed:', error.message);
+    });
+  }
+}
+
+mongoose.connection.on('connected', () => onMongoUp('connected'));
+mongoose.connection.on('reconnected', () => onMongoUp('reconnected'));
+mongoose.connection.on('disconnected', () => {
+  if (isMongoReady) console.warn('⚠️ MongoDB disconnected; the driver will try to reconnect');
+  isMongoReady = false;
+});
+
 async function connectMongo() {
   if (!uri) return;
   try {
@@ -132,11 +162,11 @@ async function connectMongo() {
       dbName,
       serverSelectionTimeoutMS: 10000,
     });
-    isMongoReady = true;
-    console.log('✅ MongoDB connected successfully');
   } catch (err) {
-    console.error('❌ MongoDB connection error:', err.message);
     isMongoReady = false;
+    console.error(`❌ MongoDB connection error: ${err.message} (retrying in ${mongoRetryDelayMs / 1000}s)`);
+    setTimeout(connectMongo, mongoRetryDelayMs);
+    mongoRetryDelayMs = Math.min(mongoRetryDelayMs * 2, MONGO_RETRY_MAX_MS);
   }
 }
 
@@ -299,6 +329,9 @@ const UserFood = mongoose.model('UserFood', userFoodSchema, 'user.foods');
 // Flexible schema: the "foods" collection holds ~1,167 Thai food-composition
 // records with many optional micronutrient fields, so we don't lock it down.
 const foodSchema = new mongoose.Schema({}, { strict: false });
+// foodId is always stored as a string; the unique index makes duplicate admin
+// inserts fail with E11000 (reported as "foodId already exists").
+foodSchema.index({ foodId: 1 }, { unique: true });
 const Food = mongoose.model('Food', foodSchema, 'foods');
 
 // Nutrient fields stored per 100g edible portion (see thaiFoods_full.json / seed-foods.js)
@@ -1324,7 +1357,8 @@ app.get('/api/admin/foods', requireAdmin, async (req, res) => {
 
 app.post('/api/admin/foods', requireAdmin, async (req, res) => {
   try {
-    const { foodId, nameTh, nameEn, kcal, protein_g, carbAvailable_g, fat_g } = req.body;
+    const { nameTh, nameEn, kcal, protein_g, carbAvailable_g, fat_g } = req.body;
+    const foodId = String(req.body.foodId ?? '').trim();
     if (!foodId || !nameTh) return res.status(400).json({ error: 'foodId and nameTh are required' });
     const food = await Food.create({ foodId, nameTh, nameEn, kcal, protein_g, carbAvailable_g, fat_g });
     return res.status(201).json({ food });
@@ -2086,12 +2120,9 @@ app.delete('/api/tickets/:id', requireAdmin, handleDeleteTicket);
 const port = process.env.PORT || 3001;
 
 async function startServer() {
+  // Wait for the first attempt so early requests don't race the connection;
+  // the admin account is ensured from the 'connected' handler.
   await connectMongo();
-  try {
-    await ensureAdminAccount();
-  } catch (error) {
-    console.error('❌ Admin account setup failed:', error.message);
-  }
 
   const server = app.listen(port, () => {
     console.log(`🚀 Server listening on port ${port}`);

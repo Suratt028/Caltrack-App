@@ -53,15 +53,16 @@ EXPO_PUBLIC_API_BASE_URL=http://10.0.2.2:3001/api
 GEMINI_API_KEY="your-gemini-api-key"
 GEMINI_SCAN_MODELS="gemini-3.6-flash,gemini-3.5-flash-lite"
 ADMIN_EMAIL="admin@caltrack.app"
-ADMIN_PASSWORD="Admin@1234"
+ADMIN_PASSWORD="ตั้งรหัสผ่านแอดมินที่แข็งแรง"
 ADMIN_DISPLAY_NAME="CalTrack Administrator"
+REPORT_TIMEZONE="Asia/Bangkok"
 ```
 
 | ตัวแปร | ใช้สำหรับ |
 | --- | --- |
 | `MONGODB_URI` | connection string ของ MongoDB |
 | `MONGODB_DB_NAME` | ชื่อฐานข้อมูล ค่าเริ่มต้นคือ `caltrack` |
-| `AUTH_SECRET` | secret ที่ใช้ hash password ฝั่ง backend |
+| `AUTH_SECRET` | secret สำหรับเซ็น token การล็อกอิน (ผู้ใช้และแอดมิน) ควรเป็นค่าสุ่มยาวอย่างน้อย 32 ตัวอักษร |
 | `PORT` | พอร์ต backend ค่าเริ่มต้นคือ `3001` |
 | `EXPO_PUBLIC_API_BASE_URL` | URL ที่ mobile และ Expo Web ใช้เรียก API |
 | `EXPO_PUBLIC_GOOGLE_*_CLIENT_ID` | Google OAuth client ID สำหรับ web, Android และ iOS ตามลำดับ |
@@ -75,6 +76,7 @@ ADMIN_DISPLAY_NAME="CalTrack Administrator"
 | `ADMIN_EMAIL` | อีเมลสำหรับเข้าสู่ระบบ Admin Web |
 | `ADMIN_PASSWORD` | รหัสผ่านสำหรับเข้าสู่ระบบ Admin Web ควรเก็บใน backend เท่านั้น |
 | `ADMIN_DISPLAY_NAME` | ชื่อแสดงของ Admin ค่าเริ่มต้นคือ `CalTrack Administrator` |
+| `REPORT_TIMEZONE` | โซนเวลาที่ใช้แบ่งวันในรายงานแอดมินและโควตาสแกนรายวัน ค่าเริ่มต้นคือ `Asia/Bangkok` |
 
 Backend ยังรองรับตัวแปรทางเลือก `MONGODB_USERNAME`, `MONGODB_PASSWORD`, `MONGODB_HOST`, `FATSECRET_CLIENT_ID`, `FATSECRET_CLIENT_SECRET`, `FATSECRET_CUSTOMER_KEY` และ `FATSECRET_OAUTH_URL`
 
@@ -240,7 +242,11 @@ POST   /api/fatsecret/token
 node seed-foods.js
 ```
 
-สคริปต์จะอ่าน `thaiFoods_full.json`, ลบข้อมูลเดิมใน collection `foods` แล้ว insert ข้อมูลชุดใหม่ จึงควรสำรองข้อมูลก่อนใช้กับฐานข้อมูลที่มีข้อมูลอยู่แล้ว
+สคริปต์จะอ่าน `thaiFoods_full.json` แล้ว upsert ตาม `foodId` คืออัปเดตรายการที่มีอยู่และเพิ่มรายการใหม่ โดยไม่ลบอาหารที่แอดมินเพิ่มเอง หากต้องการลบทั้ง collection แล้วนำเข้าใหม่ทั้งหมด (อาหารที่แอดมินเพิ่มจะหายด้วย) ใช้:
+
+```bash
+node seed-foods.js --replace --yes
+```
 
 ## การทดสอบและตรวจสอบ
 
@@ -256,7 +262,7 @@ npx expo export --platform android
 - ห้าม commit `.env`, MongoDB URI, password, Gemini key หรือ FatSecret secret
 - ตัวแปร `EXPO_PUBLIC_*` ถูกส่งไปฝั่ง client และไม่ควรใช้เก็บ secret
 - เก็บ `GEMINI_API_KEY` ไว้ที่ backend เท่านั้น
-- ตั้ง `AUTH_SECRET` ให้แข็งแรงก่อนเปิดใช้งานจริงและคงค่าเดิมหลังเริ่มมีบัญชี เพราะระบบใช้ค่านี้ตรวจรหัสผ่านที่บันทึกไว้
+- ตั้ง `AUTH_SECRET` เป็นค่าสุ่มยาวอย่างน้อย 32 ตัวอักษรก่อนเปิดใช้งานจริง ค่านี้ใช้เซ็น token การล็อกอิน ถ้าเปลี่ยนค่า ผู้ใช้ทุกคนต้องล็อกอินใหม่ (รหัสผ่านเก็บด้วย scrypt แบบมี salt จึงไม่ขึ้นกับค่านี้ ยกเว้นบัญชีเก่าที่ยังไม่เคยล็อกอินหลังอัปเกรด)
 - การสมัคร/เข้าสู่ระบบต้องใช้ MongoDB ที่เชื่อมต่อได้ หาก backend หรือฐานข้อมูลไม่พร้อม ระบบจะแจ้งข้อผิดพลาดและจะไม่สร้างบัญชี local แทน
 - backend ยังไม่มี authentication middleware สำหรับตรวจสิทธิ์ตาม `userId`
 - CORS เปิดกว้างด้วยค่าเริ่มต้นของ `cors()` ควรจำกัด origin ก่อน deploy จริง
