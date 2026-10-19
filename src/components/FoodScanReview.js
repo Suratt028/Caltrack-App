@@ -361,9 +361,9 @@ export default function FoodScanReview({ analysis, onConfirm, onReset }) {
                 </Text>
               )}
             </View>
-            {item.foodId && calculating && (
+            {Boolean(item.foodId) && Boolean(calculating) ? (
               <Text style={styles.estimateText}>กำลังคำนวณจากฐานข้อมูล...</Text>
-            )}
+            ) : null}
           </View>
         );
       })}

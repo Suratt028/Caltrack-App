@@ -43,7 +43,7 @@ export default function HomeScreen({ navigation }) {
   const over = hasGoal && totals.kcal > calorieGoal;
   const overBy = over ? totals.kcal - calorieGoal : 0;
 
-  const greetingName = user?.displayName || 'คุณ';
+  const greetingName = profile?.displayName || user?.displayName || 'คุณ';
   const dateLabel = new Date().toLocaleDateString('th-TH', {
     weekday: 'long',
     day: 'numeric',

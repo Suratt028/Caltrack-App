@@ -1,7 +1,23 @@
 ﻿import React from 'react';
-import { View } from 'react-native';
+import { Alert, Platform, View } from 'react-native';
 import { Text } from '../AppText';
 import styles from '../../style/screens/AdminScreenStyles';
+
+// window.confirm / alert only exist on web; native needs Alert.alert.
+export function confirmAction(message, confirmLabel = 'ลบ') {
+  if (Platform.OS === 'web') return Promise.resolve(window.confirm(message));
+  return new Promise((resolve) => {
+    Alert.alert('ยืนยัน', message, [
+      { text: 'ยกเลิก', style: 'cancel', onPress: () => resolve(false) },
+      { text: confirmLabel, style: 'destructive', onPress: () => resolve(true) },
+    ], { cancelable: true, onDismiss: () => resolve(false) });
+  });
+}
+
+export function notify(message) {
+  if (Platform.OS === 'web') window.alert(message);
+  else Alert.alert('', message);
+}
 
 export function formatDate(dateInput) {
   const d = dateInput instanceof Date ? dateInput : new Date(dateInput);

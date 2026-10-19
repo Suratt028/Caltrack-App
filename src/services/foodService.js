@@ -52,6 +52,15 @@ export async function searchNutritionFoods(query, limit = 5) {
   return (Array.isArray(payload.results) ? payload.results : []).map(normalizeNutritionFood);
 }
 
+export async function getNutritionFoodById(foodId) {
+  const response = await fetch(`${API_BASE_URL}/foods/${encodeURIComponent(foodId)}`);
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(payload.error || `โหลดข้อมูลอาหารไม่สำเร็จ (${response.status})`);
+  }
+  return payload.food ? normalizeNutritionFood(payload.food) : null;
+}
+
 const FALLBACK_FOODS = [
   {
     id: 'thai-01',

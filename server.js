@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const crypto = require('crypto');
 const mongoose = require('mongoose');
+const { OAuth2Client } = require('google-auth-library');
 
 const multer = require('multer');
 const { processAndSaveFood } = require('./controllers/foodController');
@@ -14,6 +15,7 @@ const { requestWithGeminiFallback } = require('./server/geminiScanRequest');
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: false }));
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
@@ -25,12 +27,29 @@ const authSecret = process.env.AUTH_SECRET || 'dev-secret-change-me';
 const adminEmail = (process.env.ADMIN_EMAIL || 'admin@caltrack.app').trim().toLowerCase();
 const adminPassword = process.env.ADMIN_PASSWORD || 'Admin@1234';
 const adminDisplayName = process.env.ADMIN_DISPLAY_NAME || 'CalTrack Administrator';
-const defaultAdminEmail = 'admin@caltrack.app';
-const defaultAdminPassword = 'Admin@1234';
+// The fallbacks above are public (they are in the repo), so anyone could sign
+// admin tokens or log in as admin. Fine for local dev only.
+if (!process.env.AUTH_SECRET) {
+  console.warn('⚠️  AUTH_SECRET is not set; admin tokens are signed with a public default. Set it before deploying.');
+}
+if (!process.env.ADMIN_PASSWORD) {
+  console.warn('⚠️  ADMIN_PASSWORD is not set; the admin account uses a public default password. Set it before deploying.');
+}
 const fatSecretClientId = process.env.FATSECRET_CLIENT_ID;
 const fatSecretClientSecret = process.env.FATSECRET_CLIENT_SECRET;
 const fatSecretCustomerKey = process.env.FATSECRET_CUSTOMER_KEY;
 const fatSecretOAuthUrl = process.env.FATSECRET_OAUTH_URL || 'https://oauth.fatsecret.com/connect/token';
+const googleOAuthClientIds = (process.env.GOOGLE_OAUTH_CLIENT_IDS || '')
+  .split(',')
+  .map((value) => value.trim())
+  .filter(Boolean);
+const appleOAuthClientIds = (process.env.APPLE_OAUTH_CLIENT_IDS || '')
+  .split(',')
+  .map((value) => value.trim())
+  .filter(Boolean);
+const appleServiceId = process.env.APPLE_SERVICE_ID;
+const appleRedirectUri = process.env.APPLE_REDIRECT_URI;
+const googleOAuthClient = new OAuth2Client();
 const geminiApiKey = process.env.GEMINI_API_KEY || process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
 const configuredGeminiScanModels = [...new Set(
   (process.env.GEMINI_SCAN_MODELS || 'gemini-3.6-flash,gemini-3.5-flash-lite')
@@ -104,7 +123,9 @@ async function connectMongo() {
 // Schema Definitions
 const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true, lowercase: true },
-  password: { type: String, required: true },
+  password: { type: String, required: false },
+  googleId: { type: String, unique: true, sparse: true },
+  appleId: { type: String, unique: true, sparse: true },
   displayName: String,
   role: { type: String, enum: ['user', 'admin'], default: 'user' },
   createdAt: { type: Date, default: Date.now },
@@ -112,6 +133,7 @@ const userSchema = new mongoose.Schema({
 
 const profileSchema = new mongoose.Schema({
   userId: { type: String, required: true, unique: true },
+  name: String,
   gender: String,
   age: Number,
   heightCm: Number,
@@ -133,11 +155,44 @@ const logSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
+const weightLogSchema = new mongoose.Schema({
+  userId: { type: String, required: true },
+  dateKey: { type: String, required: true },
+  weightKg: { type: Number, required: true },
+  updatedAt: { type: Date, default: Date.now },
+});
+weightLogSchema.index({ userId: 1, dateKey: 1 }, { unique: true });
+
 const scanImageSchema = new mongoose.Schema({
   userId: { type: String, required: false },
   imageBase64: { type: String, required: true },
   mimeType: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
+});
+
+// One row per /api/ai/scan request, for the admin "Recent Scan Audit Log".
+// Images are not stored here; scanId links to scanImages when the user consented.
+const scanLogSchema = new mongoose.Schema({
+  userId: { type: String, default: null },
+  scanId: { type: String, default: null },
+  mimeType: String,
+  model: { type: String, default: null },
+  status: { type: String, enum: ['success', 'low_conf', 'no_food', 'failed'], required: true },
+  items: [{ _id: false, name_th: String, confidence: Number }],
+  topConfidence: { type: Number, default: null },
+  latencyMs: Number,
+  tokens: { type: Number, default: null },
+  error: { type: String, default: null },
+  createdAt: { type: Date, default: Date.now },
+});
+scanLogSchema.index({ createdAt: -1 });
+
+// Admin-editable settings, one document per key (e.g. 'aiScan').
+const appSettingSchema = new mongoose.Schema({
+  key: { type: String, required: true, unique: true },
+  value: Object,
+  updatedBy: String,
+  updatedAt: { type: Date, default: Date.now },
 });
 
 const ticketSchema = new mongoose.Schema({
@@ -150,8 +205,15 @@ const ticketSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
+const oauthTicketSchema = new mongoose.Schema({
+  tokenHash: { type: String, required: true, unique: true },
+  userId: { type: String, required: true },
+  expiresAt: { type: Date, required: true, expires: 0 },
+});
+
 const userFoodSchema = new mongoose.Schema({
   userId: { type: String, required: true },
+  logId: { type: mongoose.Schema.Types.ObjectId },
   dateKey: String,
   foodName: String,
   kcal: { type: Number, default: 0 },
@@ -169,8 +231,12 @@ const userFoodSchema = new mongoose.Schema({
 const User = mongoose.model('User', userSchema, 'users');
 const Profile = mongoose.model('Profile', profileSchema, 'profiles');
 const Log = mongoose.model('Log', logSchema, 'logs');
+const WeightLog = mongoose.model('WeightLog', weightLogSchema, 'weightLogs');
 const ScanImage = mongoose.model('ScanImage', scanImageSchema, 'scanImages');
+const ScanLog = mongoose.model('ScanLog', scanLogSchema, 'scanLogs');
+const AppSetting = mongoose.model('AppSetting', appSettingSchema, 'appSettings');
 const Ticket = mongoose.model('Ticket', ticketSchema, 'tickets');
+const OAuthTicket = mongoose.model('OAuthTicket', oauthTicketSchema, 'oauthTickets');
 const UserFood = mongoose.model('UserFood', userFoodSchema, 'user.foods');
 
 // Flexible schema: the "foods" collection holds ~1,167 Thai food-composition
@@ -190,13 +256,183 @@ function escapeRegex(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+function normalizeFoodLog(log) {
+  const raw = typeof log.toObject === 'function' ? log.toObject() : log;
+  const entry = raw.entry && typeof raw.entry === 'object' ? raw.entry : {};
+  const macros = entry.macros && typeof entry.macros === 'object' ? entry.macros : {};
+  const protein = Number(entry.protein ?? macros.protein) || 0;
+  const carbs = Number(entry.carbs ?? entry.carb ?? macros.carbs ?? macros.carb) || 0;
+  const fat = Number(entry.fat ?? macros.fat) || 0;
+  const dateKey = raw.dateKey || entry.date || new Date(raw.createdAt || Date.now()).toISOString().slice(0, 10);
+
+  return {
+    ...raw,
+    entry: {
+      ...entry,
+      id: String(raw._id),
+      date: entry.date || dateKey,
+      meal: entry.meal || entry.mealType || 'snack',
+      protein,
+      carbs,
+      fat,
+      macros: { protein, carb: carbs, fat },
+    },
+  };
+}
+
 // Helper Functions
 function hashPassword(password) {
   return crypto.createHmac('sha256', authSecret).update(password).digest('hex');
 }
 
 function verifyPassword(inputPassword, storedPassword) {
-  return hashPassword(inputPassword) === storedPassword;
+  return Boolean(storedPassword) && hashPassword(inputPassword) === storedPassword;
+}
+
+function parseAppleOAuthState(state) {
+  if (!process.env.AUTH_SECRET || process.env.AUTH_SECRET === 'dev-secret-change-me' || Buffer.byteLength(authSecret) < 32) {
+    throw new Error('A strong AUTH_SECRET is required for Apple OAuth');
+  }
+  if (typeof state !== 'string') throw new Error('Invalid Apple OAuth state');
+  const [encodedPayload, signature] = state.split('.');
+  if (!encodedPayload || !signature) throw new Error('Invalid Apple OAuth state');
+
+  const expected = crypto.createHmac('sha256', authSecret).update(encodedPayload).digest('base64url');
+  const actualBuffer = Buffer.from(signature);
+  const expectedBuffer = Buffer.from(expected);
+  if (
+    actualBuffer.length !== expectedBuffer.length ||
+    !crypto.timingSafeEqual(actualBuffer, expectedBuffer)
+  ) {
+    throw new Error('Invalid Apple OAuth state');
+  }
+
+  const payload = JSON.parse(Buffer.from(encodedPayload, 'base64url').toString('utf8'));
+  if (!payload.exp || payload.exp < Date.now()) throw new Error('Apple OAuth state expired');
+  return payload;
+}
+
+function createAppleOAuthState(returnUri, nonce) {
+  const encodedPayload = Buffer.from(JSON.stringify({
+    returnUri,
+    nonce,
+    exp: Date.now() + 10 * 60 * 1000,
+  })).toString('base64url');
+  const signature = crypto.createHmac('sha256', authSecret).update(encodedPayload).digest('base64url');
+  return `${encodedPayload}.${signature}`;
+}
+
+function isAllowedAppleReturnUri(value) {
+  try {
+    const uri = new URL(value);
+    return uri.protocol === 'caltrack:' && uri.hostname === 'oauth' && uri.pathname === '/apple';
+  } catch {
+    return false;
+  }
+}
+
+async function verifyAppleIdentityToken(idToken, expectedNonce) {
+  if (!appleOAuthClientIds.length) {
+    const error = new Error('Apple OAuth is not configured on the server');
+    error.status = 503;
+    throw error;
+  }
+  const { createRemoteJWKSet, jwtVerify } = await import('jose');
+  const appleKeys = createRemoteJWKSet(new URL('https://appleid.apple.com/auth/keys'));
+  const { payload } = await jwtVerify(idToken, appleKeys, {
+    issuer: 'https://appleid.apple.com',
+    audience: appleOAuthClientIds,
+  });
+  if (expectedNonce && payload.nonce !== expectedNonce) {
+    throw new Error('Apple identity token nonce did not match');
+  }
+  if (!payload.sub || !payload.email || ![true, 'true'].includes(payload.email_verified)) {
+    throw new Error('Apple did not return a verified email address');
+  }
+  return {
+    provider: 'apple',
+    subject: payload.sub,
+    email: String(payload.email).trim().toLowerCase(),
+    displayName: '',
+  };
+}
+
+async function verifyGoogleIdentityToken(idToken) {
+  if (!googleOAuthClientIds.length) {
+    const error = new Error('Google OAuth is not configured on the server');
+    error.status = 503;
+    throw error;
+  }
+  const ticket = await googleOAuthClient.verifyIdToken({
+    idToken,
+    audience: googleOAuthClientIds,
+  });
+  const payload = ticket.getPayload();
+  if (!payload?.sub || !payload.email || payload.email_verified !== true) {
+    throw new Error('Google did not return a verified email address');
+  }
+  return {
+    provider: 'google',
+    subject: payload.sub,
+    email: payload.email.trim().toLowerCase(),
+    displayName: payload.name || '',
+  };
+}
+
+async function findOrCreateOAuthUser(identity) {
+  if (!isMongoReady) {
+    const error = new Error('Social sign-in requires an active MongoDB connection');
+    error.status = 503;
+    throw error;
+  }
+
+  const providerIdField = identity.provider === 'google' ? 'googleId' : 'appleId';
+  let user = await User.findOne({ [providerIdField]: identity.subject });
+  if (!user) {
+    user = await User.findOne({ email: identity.email });
+    if (user?.role === 'admin') {
+      throw new Error('Admin accounts cannot use social sign-in');
+    }
+    if (user) {
+      user[providerIdField] = identity.subject;
+      if (!user.displayName && identity.displayName) user.displayName = identity.displayName;
+      await user.save();
+    } else {
+      user = await User.create({
+        email: identity.email,
+        displayName: identity.displayName || identity.email.split('@')[0],
+        [providerIdField]: identity.subject,
+      });
+    }
+  }
+
+  if (user.role === 'admin') throw new Error('Admin accounts cannot use social sign-in');
+  return {
+    id: user._id.toString(),
+    email: user.email,
+    displayName: user.displayName,
+    role: user.role || 'user',
+  };
+}
+
+function createAppleClientSecret() {
+  const { APPLE_TEAM_ID: teamId, APPLE_KEY_ID: keyId, APPLE_PRIVATE_KEY: rawPrivateKey } = process.env;
+  if (!appleServiceId || !teamId || !keyId || !rawPrivateKey) {
+    const error = new Error('Apple OAuth server credentials are not configured');
+    error.status = 503;
+    throw error;
+  }
+  return import('jose').then(async ({ SignJWT, importPKCS8 }) => {
+    const privateKey = await importPKCS8(rawPrivateKey.replace(/\\n/g, '\n'), 'ES256');
+    return new SignJWT({})
+      .setProtectedHeader({ alg: 'ES256', kid: keyId })
+      .setIssuer(teamId)
+      .setSubject(appleServiceId)
+      .setAudience('https://appleid.apple.com')
+      .setIssuedAt()
+      .setExpirationTime('5m')
+      .sign(privateKey);
+  });
 }
 
 async function ensureAdminAccount() {
@@ -406,18 +642,157 @@ app.post('/api/seed-demo', async (req, res) => {
   }
 });
 
+app.post('/api/auth/oauth/:provider', async (req, res) => {
+  try {
+    const { provider } = req.params;
+    if (!['google', 'apple'].includes(provider)) {
+      return res.status(400).json({ error: 'unsupported OAuth provider' });
+    }
+    const idToken = String(req.body.idToken || '');
+    if (!idToken || idToken.length > 12000) {
+      return res.status(400).json({ error: 'a valid identity token is required' });
+    }
+    const identity = provider === 'google'
+      ? await verifyGoogleIdentityToken(idToken)
+      : await verifyAppleIdentityToken(idToken);
+    const user = await findOrCreateOAuthUser(identity);
+    return res.json({ user });
+  } catch (error) {
+    console.error('OAuth sign-in failed:', error.message);
+    return res.status(error.status || 401).json({ error: error.message || 'OAuth sign-in failed' });
+  }
+});
+
+app.get('/api/auth/apple/start', (req, res) => {
+  const redirectIsHttps = typeof appleRedirectUri === 'string' && appleRedirectUri.startsWith('https://');
+  if (
+    !appleServiceId ||
+    !redirectIsHttps ||
+    !process.env.APPLE_TEAM_ID ||
+    !process.env.APPLE_KEY_ID ||
+    !process.env.APPLE_PRIVATE_KEY ||
+    !process.env.AUTH_SECRET ||
+    process.env.AUTH_SECRET === 'dev-secret-change-me' ||
+    Buffer.byteLength(authSecret) < 32
+  ) {
+    return res.status(503).json({ error: 'Apple OAuth server credentials are not configured' });
+  }
+  const returnUri = String(req.query.returnUri || '');
+  if (!isAllowedAppleReturnUri(returnUri)) {
+    return res.status(400).json({ error: 'unapproved Apple OAuth return URI' });
+  }
+
+  const nonce = crypto.randomBytes(32).toString('base64url');
+  const state = createAppleOAuthState(returnUri, nonce);
+  const authUrl = new URL('https://appleid.apple.com/auth/authorize');
+  authUrl.searchParams.set('client_id', appleServiceId);
+  authUrl.searchParams.set('redirect_uri', appleRedirectUri);
+  authUrl.searchParams.set('response_type', 'code');
+  authUrl.searchParams.set('response_mode', 'form_post');
+  authUrl.searchParams.set('scope', 'name email');
+  authUrl.searchParams.set('state', state);
+  authUrl.searchParams.set('nonce', nonce);
+  return res.json({ authUrl: authUrl.toString() });
+});
+
+app.post('/api/auth/apple/callback', async (req, res) => {
+  let stateData;
+  try {
+    stateData = parseAppleOAuthState(req.body.state);
+    if (req.body.error) throw new Error('Apple sign-in was cancelled or denied');
+    if (!req.body.code || !appleRedirectUri || !appleServiceId) {
+      throw new Error('Apple authorization response is incomplete');
+    }
+
+    const clientSecret = await createAppleClientSecret();
+    const tokenResponse = await fetch('https://appleid.apple.com/auth/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: appleServiceId,
+        client_secret: clientSecret,
+        code: String(req.body.code),
+        grant_type: 'authorization_code',
+        redirect_uri: appleRedirectUri,
+      }),
+    });
+    const tokenData = await tokenResponse.json();
+    if (!tokenResponse.ok || !tokenData.id_token) {
+      throw new Error('Apple could not complete sign-in');
+    }
+
+    const identity = await verifyAppleIdentityToken(tokenData.id_token, stateData.nonce);
+    const user = await findOrCreateOAuthUser(identity);
+    const ticket = crypto.randomBytes(32).toString('base64url');
+    await OAuthTicket.create({
+      tokenHash: crypto.createHash('sha256').update(ticket).digest('hex'),
+      userId: user.id,
+      expiresAt: new Date(Date.now() + 2 * 60 * 1000),
+    });
+
+    const returnUrl = new URL(stateData.returnUri);
+    returnUrl.searchParams.set('ticket', ticket);
+    return res.redirect(returnUrl.toString());
+  } catch (error) {
+    console.error('Apple OAuth callback failed:', error.message);
+    if (stateData?.returnUri && isAllowedAppleReturnUri(stateData.returnUri)) {
+      const returnUrl = new URL(stateData.returnUri);
+      returnUrl.searchParams.set('error', 'apple_sign_in_failed');
+      return res.redirect(returnUrl.toString());
+    }
+    return res.status(error.status || 400).send('Apple sign-in could not be completed');
+  }
+});
+
+app.post('/api/auth/apple/exchange', async (req, res) => {
+  try {
+    const ticket = String(req.body.ticket || '');
+    if (!ticket || ticket.length > 200) {
+      return res.status(400).json({ error: 'a valid Apple sign-in ticket is required' });
+    }
+    const tokenHash = crypto.createHash('sha256').update(ticket).digest('hex');
+    const ticketRecord = await OAuthTicket.findOneAndDelete({
+      tokenHash,
+      expiresAt: { $gt: new Date() },
+    });
+    if (!ticketRecord) return res.status(401).json({ error: 'Apple sign-in ticket expired or already used' });
+
+    const user = await User.findById(ticketRecord.userId);
+    if (!user || user.role === 'admin') return res.status(401).json({ error: 'Apple sign-in could not be completed' });
+    return res.json({
+      user: {
+        id: user._id.toString(),
+        email: user.email,
+        displayName: user.displayName,
+        role: user.role || 'user',
+      },
+    });
+  } catch (error) {
+    console.error('Apple OAuth ticket exchange failed:', error.message);
+    return res.status(500).json({ error: 'Apple sign-in could not be completed' });
+  }
+});
+
 app.post('/api/auth/register', async (req, res) => {
   try {
-    const { email, password, displayName } = req.body;
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const password = String(req.body.password || '');
+    const displayName = String(req.body.displayName || '').trim();
     if (!email || !password) return res.status(400).json({ error: 'email and password are required' });
+    if (password.length < 6) return res.status(400).json({ error: 'password must be at least 6 characters' });
+    if (!isMongoReady || mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ error: 'database is unavailable; account was not created' });
+    }
 
     const existing = await User.findOne({ email });
     if (existing) return res.status(409).json({ error: 'email already exists' });
 
     const user = await User.create({ email, password: hashPassword(password), displayName });
-    res.json({ user: { id: user._id.toString(), email: user.email, displayName: user.displayName } });
+    return res.json({ user: { id: user._id.toString(), email: user.email, displayName: user.displayName } });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    if (error?.code === 11000) return res.status(409).json({ error: 'email already exists' });
+    console.error('Account registration failed:', error.message);
+    return res.status(500).json({ error: 'account registration failed' });
   }
 });
 
@@ -425,12 +800,12 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     const email = String(req.body.email || '').trim().toLowerCase();
     const password = String(req.body.password || '');
-    const configuredAdmin =
-      (email === adminEmail && password === adminPassword) ||
-      (email === defaultAdminEmail && password === defaultAdminPassword);
-    const user = isMongoReady ? await User.findOne({ email }) : null;
+    const configuredAdmin = email === adminEmail && password === adminPassword;
 
     if (configuredAdmin) {
+      const user = isMongoReady && mongoose.connection.readyState === 1
+        ? await User.findOne({ email })
+        : null;
       const adminUser = {
         id: user?._id?.toString() || 'admin-configured',
         email: adminEmail,
@@ -441,15 +816,21 @@ app.post('/api/auth/login', async (req, res) => {
       return res.json({ user: adminUser });
     }
 
+    if (!isMongoReady || mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ error: 'database is unavailable; please try again later' });
+    }
+
+    const user = await User.findOne({ email });
     if (!user || !verifyPassword(password, user.password)) {
       return res.status(401).json({ error: 'invalid credentials' });
     }
 
     const signedInUser = { id: user._id.toString(), email: user.email, displayName: user.displayName, role: user.role || 'user' };
     if (user.role === 'admin') signedInUser.adminToken = createAdminToken(user.email);
-    res.json({ user: signedInUser });
+    return res.json({ user: signedInUser });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Account login failed:', error.message);
+    return res.status(500).json({ error: 'account login failed' });
   }
 });
 
@@ -457,9 +838,7 @@ app.post('/api/admin/login', async (req, res) => {
   try {
     const email = String(req.body.email || '').trim().toLowerCase();
     const password = String(req.body.password || '');
-    const configuredAdmin =
-      (adminEmail && adminPassword && email === adminEmail && password === adminPassword) ||
-      (email === defaultAdminEmail && password === defaultAdminPassword);
+    const configuredAdmin = email === adminEmail && password === adminPassword;
     const databaseAdmin = await User.findOne({ email, role: 'admin' });
 
     if (!configuredAdmin && (!databaseAdmin || !verifyPassword(password, databaseAdmin.password))) {
@@ -484,10 +863,61 @@ app.get('/api/admin/overview', requireAdmin, async (req, res) => {
   }
 });
 
+app.get('/api/admin/scan-logs', requireAdmin, async (req, res) => {
+  try {
+    const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 100);
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const [logs, [totals]] = await Promise.all([
+      ScanLog.find().sort({ createdAt: -1 }).limit(limit).lean(),
+      ScanLog.aggregate([
+        { $match: { createdAt: { $gte: since } } },
+        {
+          $group: {
+            _id: null,
+            scans: { $sum: 1 },
+            avgLatencyMs: { $avg: '$latencyMs' },
+            tokens: { $sum: { $ifNull: ['$tokens', 0] } },
+            succeeded: { $sum: { $cond: [{ $eq: ['$status', 'success'] }, 1, 0] } },
+            failed: { $sum: { $cond: [{ $eq: ['$status', 'failed'] }, 1, 0] } },
+          },
+        },
+      ]),
+    ]);
+    const stats = {
+      scans: totals?.scans || 0,
+      avgLatencyMs: totals?.avgLatencyMs == null ? null : Math.round(totals.avgLatencyMs),
+      successRate: totals?.scans ? totals.succeeded / totals.scans : null,
+      tokens: totals?.tokens || 0,
+      failed: totals?.failed || 0,
+    };
+    return res.json({ logs, stats });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// Returns an error message if removing admin rights from `target` (delete or
+// demote) would lock the acting admin out or leave no admin account.
+async function checkAdminRemoval(target, actingAdmin) {
+  if (String(target.email || '').toLowerCase() === String(actingAdmin?.email || '').toLowerCase()) {
+    return 'You cannot remove your own admin account or rights';
+  }
+  const adminCount = await User.countDocuments({ role: 'admin' });
+  if (adminCount <= 1) return 'At least one admin account must remain';
+  return null;
+}
+
 app.get('/api/admin/users', requireAdmin, async (req, res) => {
   try {
-    const users = await User.find({}, { password: 0 }).sort({ createdAt: -1 }).limit(100).lean();
-    return res.json({ users });
+    const q = String(req.query.q || '').trim();
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 100, 1), 500);
+    const pattern = q ? new RegExp(escapeRegex(q), 'i') : null;
+    const filter = pattern ? { $or: [{ email: pattern }, { displayName: pattern }] } : {};
+    const [users, total] = await Promise.all([
+      User.find(filter, { password: 0 }).sort({ createdAt: -1 }).limit(limit).lean(),
+      User.countDocuments(filter),
+    ]);
+    return res.json({ users, total });
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
@@ -520,6 +950,13 @@ app.patch('/api/admin/users/:userId', requireAdmin, async (req, res) => {
     if (password) updates.password = hashPassword(password);
     if (role) updates.role = role === 'admin' ? 'admin' : 'user';
 
+    const target = await User.findById(req.params.userId).lean();
+    if (!target) return res.status(404).json({ error: 'User not found' });
+    if (target.role === 'admin' && updates.role === 'user') {
+      const guardError = await checkAdminRemoval(target, req.admin);
+      if (guardError) return res.status(400).json({ error: guardError });
+    }
+
     const user = await User.findByIdAndUpdate(req.params.userId, updates, { new: true, select: '-password' }).lean();
     if (!user) return res.status(404).json({ error: 'User not found' });
     return res.json({ user });
@@ -530,8 +967,24 @@ app.patch('/api/admin/users/:userId', requireAdmin, async (req, res) => {
 
 app.delete('/api/admin/users/:userId', requireAdmin, async (req, res) => {
   try {
-    const user = await User.findByIdAndDelete(req.params.userId).lean();
-    if (!user) return res.status(404).json({ error: 'User not found' });
+    const target = await User.findById(req.params.userId).lean();
+    if (!target) return res.status(404).json({ error: 'User not found' });
+    if (target.role === 'admin') {
+      const guardError = await checkAdminRemoval(target, req.admin);
+      if (guardError) return res.status(400).json({ error: guardError });
+    }
+
+    const userId = target._id.toString();
+    // Remove the user's personal data with the account. Scan audit logs are kept.
+    await Promise.all([
+      Profile.deleteMany({ userId }),
+      Log.deleteMany({ userId }),
+      WeightLog.deleteMany({ userId }),
+      UserFood.deleteMany({ userId }),
+      ScanImage.deleteMany({ userId }),
+    ]);
+    await User.deleteOne({ _id: target._id });
+    const { password: _password, ...user } = target;
     return res.json({ success: true, user });
   } catch (error) {
     return res.status(500).json({ error: error.message });
@@ -625,10 +1078,51 @@ app.delete('/api/profiles/:userId', async (req, res) => {
   }
 });
 
+app.get('/api/weights/:userId', async (req, res) => {
+  try {
+    const weights = await WeightLog.find({ userId: req.params.userId }).sort({ dateKey: 1 });
+    return res.json({ weights });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/weights/:userId/:dateKey', async (req, res) => {
+  try {
+    const weightKg = Number(req.body.weightKg);
+    if (!Number.isFinite(weightKg) || weightKg < 20 || weightKg > 400) {
+      return res.status(400).json({ error: 'weightKg must be between 20 and 400' });
+    }
+    const weight = await WeightLog.findOneAndUpdate(
+      { userId: req.params.userId, dateKey: req.params.dateKey },
+      { $set: { weightKg, updatedAt: new Date() } },
+      { upsert: true, new: true, setDefaultsOnInsert: true },
+    );
+    return res.json({ weight });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/users/:userId/data', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    await Promise.all([
+      Profile.deleteOne({ userId }),
+      Log.deleteMany({ userId }),
+      UserFood.deleteMany({ userId }),
+      WeightLog.deleteMany({ userId }),
+    ]);
+    return res.json({ message: 'user data cleared' });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
 app.get('/api/logs/:userId', async (req, res) => {
   try {
     const logs = await Log.find({ userId: req.params.userId }).sort({ createdAt: -1 });
-    res.json({ logs });
+    res.json({ logs: logs.map(normalizeFoodLog) });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -637,36 +1131,41 @@ app.get('/api/logs/:userId', async (req, res) => {
 app.post('/api/logs/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    const { dateKey, entry } = req.body;
-    const log = await Log.create({ userId, dateKey, entry });
+    const dateKey = String(req.body.dateKey || req.body.entry?.date || new Date().toISOString().slice(0, 10));
+    const inputEntry = req.body.entry && typeof req.body.entry === 'object' ? req.body.entry : {};
+    const macros = inputEntry.macros && typeof inputEntry.macros === 'object' ? inputEntry.macros : {};
+    const entryProtein = Number(inputEntry.protein ?? macros.protein) || 0;
+    const entryCarbs = Number(inputEntry.carbs ?? inputEntry.carb ?? macros.carbs ?? macros.carb) || 0;
+    const entryFat = Number(inputEntry.fat ?? macros.fat) || 0;
+    const entry = {
+      ...inputEntry,
+      id: undefined,
+      date: inputEntry.date || dateKey,
+      meal: inputEntry.meal || inputEntry.mealType || 'snack',
+      protein: entryProtein,
+      carbs: entryCarbs,
+      fat: entryFat,
+      macros: { protein: entryProtein, carb: entryCarbs, fat: entryFat },
+    };
+    delete entry.id;
+    const createdLog = await Log.create({ userId, dateKey, entry });
+    const log = normalizeFoodLog(createdLog);
 
     let foodName = 'อาหารทั่วไป';
     let kcal = 0, protein = 0, carbs = 0, fat = 0, fiber = 0, sugar = 0, sodium = 0;
 
-    if (entry) {
-      if (entry.name || entry.foodName) foodName = entry.name || entry.foodName;
-      if (entry.kcal || entry.calories) kcal = Number(entry.kcal || entry.calories) || 0;
-      if (entry.protein) protein = Number(entry.protein) || 0;
-      if (entry.carbs) carbs = Number(entry.carbs) || 0;
-      if (entry.fat) fat = Number(entry.fat) || 0;
-      if (entry.fiber) fiber = Number(entry.fiber) || 0;
-      if (entry.sugar) sugar = Number(entry.sugar) || 0;
-      if (entry.sodium) sodium = Number(entry.sodium) || 0;
-
-      for (const key of Object.keys(entry)) {
-        if (typeof entry[key] === 'object' && entry[key] !== null) {
-          const sub = entry[key];
-          if (sub.name || sub.foodName) foodName = sub.name || sub.foodName;
-          if (sub.kcal || sub.calories) kcal = Number(sub.kcal || sub.calories) || kcal;
-          if (sub.protein) protein = Number(sub.protein) || protein;
-          if (sub.carbs) carbs = Number(sub.carbs) || carbs;
-          if (sub.fat) fat = Number(sub.fat) || fat;
-        }
-      }
-    }
+    if (entry.name || entry.foodName) foodName = entry.name || entry.foodName;
+    kcal = Number(entry.kcal || entry.calories) || 0;
+    protein = Number(entry.protein) || 0;
+    carbs = Number(entry.carbs) || 0;
+    fat = Number(entry.fat) || 0;
+    fiber = Number(entry.fiber) || 0;
+    sugar = Number(entry.sugar) || 0;
+    sodium = Number(entry.sodium) || 0;
 
     const userFood = await UserFood.create({
       userId,
+      logId: log._id,
       dateKey: dateKey || new Date().toISOString().slice(0, 10),
       foodName,
       kcal,
@@ -689,6 +1188,19 @@ app.post('/api/logs/:userId', async (req, res) => {
 app.patch('/api/logs/:userId/:logId', async (req, res) => {
   try {
     const log = await Log.findOneAndUpdate({ userId: req.params.userId, _id: req.params.logId }, req.body, { new: true });
+    res.json({ log });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/logs/:userId/:logId', async (req, res) => {
+  try {
+    const { userId, logId } = req.params;
+    const log = await Log.findOneAndDelete({ userId, _id: logId });
+    if (!log) return res.status(404).json({ error: 'log not found' });
+    // best-effort: remove the mirrored analytics row too (has logId when created by this server)
+    await UserFood.deleteOne({ logId: log._id });
     res.json({ log });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -803,6 +1315,64 @@ app.post('/api/nutrition/calculate', async (req, res) => {
 // ---------------------------------------------------------------------------
 // AI VISION FOOD SCAN ENDPOINT
 // ---------------------------------------------------------------------------
+const SCAN_LOW_CONFIDENCE = 0.7;
+const SCAN_PROMPT_MAX_LENGTH = 4000;
+// The JSON response schema is fixed in code; admins only edit the instructions.
+const DEFAULT_SCAN_PROMPT = `
+วิเคราะห์อาหารทุกชนิดที่มองเห็นแยกเป็นรายการ ไม่รวมอาหารต่างชนิดเป็นเมนูเดียว
+ประเมินกรัมเป็นช่วง min/likely/max โดยย้ำว่าเป็นค่าประมาณจากภาพ ไม่ใช่การชั่งจริง
+ใส่กรอบภาพเป็น [ymin, xmin, ymax, xmax] ช่วง 0-1000 หากระบุตำแหน่งได้
+ประมาณสารอาหารสำหรับน้ำหนัก likely ของแต่ละรายการ และตอบ JSON ตาม schema เท่านั้น
+หากไม่แน่ใจชื่อ ให้ใช้ชื่อที่ใกล้เคียงและลด confidence ห้ามแต่งข้อมูลอ้างอิงหรือค่าความแม่นยำ
+`.trim();
+
+// Returns { model, prompt } with defaults filled in. The saved model is only
+// honoured if it is still in GEMINI_SCAN_MODELS.
+async function getAiScanConfig() {
+  let saved = {};
+  if (isMongoReady) {
+    try {
+      saved = (await AppSetting.findOne({ key: 'aiScan' }).lean())?.value || {};
+    } catch (error) {
+      console.warn('AI scan config could not be loaded:', error.message);
+    }
+  }
+  return {
+    model: geminiScanModels.includes(saved.model) ? saved.model : geminiScanModels[0],
+    prompt: typeof saved.prompt === 'string' && saved.prompt.trim() ? saved.prompt : DEFAULT_SCAN_PROMPT,
+  };
+}
+
+app.get('/api/admin/ai-scan-config', requireAdmin, async (req, res) => {
+  const config = await getAiScanConfig();
+  return res.json({ ...config, models: geminiScanModels, defaultPrompt: DEFAULT_SCAN_PROMPT });
+});
+
+app.put('/api/admin/ai-scan-config', requireAdmin, async (req, res) => {
+  try {
+    const { model, prompt } = req.body || {};
+    if (!geminiScanModels.includes(model)) {
+      return res.status(400).json({ error: `model must be one of: ${geminiScanModels.join(', ')}` });
+    }
+    if (typeof prompt !== 'string' || !prompt.trim()) {
+      return res.status(400).json({ error: 'prompt is required' });
+    }
+    if (prompt.length > SCAN_PROMPT_MAX_LENGTH) {
+      return res.status(400).json({ error: `prompt must be at most ${SCAN_PROMPT_MAX_LENGTH} characters` });
+    }
+    if (!isMongoReady) return res.status(503).json({ error: 'database is not connected' });
+
+    await AppSetting.findOneAndUpdate(
+      { key: 'aiScan' },
+      { value: { model, prompt: prompt.trim() }, updatedBy: req.admin?.email, updatedAt: new Date() },
+      { upsert: true }
+    );
+    return res.json(await getAiScanConfig());
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
 app.post('/api/ai/scan', async (req, res) => {
   try {
     const { imageBase64, mimeType = 'image/jpeg', userId = null, storeImage = false } = req.body || {};
@@ -820,6 +1390,22 @@ app.post('/api/ai/scan', async (req, res) => {
 
     const cleanBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, '');
     let scanId = null;
+    let usedModel = null;
+    const startedAt = Date.now();
+    // Fire-and-forget: an audit-log failure must never break the scan response.
+    const logScan = (status, fields = {}) => {
+      if (!isMongoReady) return;
+      ScanLog.create({
+        userId,
+        scanId,
+        mimeType,
+        model: usedModel,
+        status,
+        latencyMs: Date.now() - startedAt,
+        tokens: Number(data?.usageMetadata?.totalTokenCount) || null,
+        ...fields,
+      }).catch((logError) => console.warn('Scan audit log could not be saved:', logError.message));
+    };
 
     if (storeImage === true) {
       try {
@@ -830,13 +1416,10 @@ app.post('/api/ai/scan', async (req, res) => {
       }
     }
 
-    const promptText = `
-วิเคราะห์อาหารทุกชนิดที่มองเห็นแยกเป็นรายการ ไม่รวมอาหารต่างชนิดเป็นเมนูเดียว
-ประเมินกรัมเป็นช่วง min/likely/max โดยย้ำว่าเป็นค่าประมาณจากภาพ ไม่ใช่การชั่งจริง
-ใส่กรอบภาพเป็น [ymin, xmin, ymax, xmax] ช่วง 0-1000 หากระบุตำแหน่งได้
-ประมาณสารอาหารสำหรับน้ำหนัก likely ของแต่ละรายการ และตอบ JSON ตาม schema เท่านั้น
-หากไม่แน่ใจชื่อ ให้ใช้ชื่อที่ใกล้เคียงและลด confidence ห้ามแต่งข้อมูลอ้างอิงหรือค่าความแม่นยำ
-`;
+    const scanConfig = await getAiScanConfig();
+    const promptText = scanConfig.prompt;
+    // Admin's chosen model first; the remaining configured models stay as fallbacks.
+    const scanModels = [scanConfig.model, ...geminiScanModels.filter((m) => m !== scanConfig.model)];
 
       let data;
       try {
@@ -904,11 +1487,14 @@ app.post('/api/ai/scan', async (req, res) => {
           ],
         };
         data = await requestWithGeminiFallback(
-          geminiScanModels,
-          (model) => requestGemini(
-            `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${apiKey}`,
-            requestBody
-          ),
+          scanModels,
+          (model) => {
+            usedModel = model;
+            return requestGemini(
+              `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${apiKey}`,
+              requestBody
+            );
+          },
           {
             onFallback: (fromModel, toModel, error) => {
               console.warn('Gemini scan switching to fallback model:', {
@@ -927,11 +1513,13 @@ app.post('/api/ai/scan', async (req, res) => {
           code: geminiError.code || null,
           message: geminiError.message,
         });
+        logScan('failed', { error: details.error || geminiError.message });
         return res.status(502).json(details);
       }
 
       const responseText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!responseText) {
+        logScan('failed', { error: 'empty Gemini response' });
         return res.status(502).json({ error: 'AI ไม่ได้ส่งผลวิเคราะห์กลับมา กรุณาลองใหม่' });
       }
 
@@ -940,9 +1528,11 @@ app.post('/api/ai/scan', async (req, res) => {
         parsed = parseGeminiJson(responseText);
       } catch (parseError) {
         console.warn('Gemini returned malformed scan JSON:', parseError.message);
+        logScan('failed', { error: 'malformed Gemini JSON' });
         return res.status(502).json({ error: 'AI ส่งผลวิเคราะห์ในรูปแบบที่อ่านไม่ได้ กรุณาลองใหม่' });
       }
       if (!Array.isArray(parsed.items) || parsed.items.length === 0) {
+        logScan('no_food');
         return res.status(422).json({ error: 'ไม่พบรายการอาหารในภาพ กรุณาลองถ่ายใหม่หรือค้นหาอาหารด้วยตนเอง' });
       }
 
@@ -1005,8 +1595,15 @@ app.post('/api/ai/scan', async (req, res) => {
       }
 
       if (items.length === 0) {
+        logScan('failed', { error: 'incomplete item data' });
         return res.status(502).json({ error: 'AI ส่งข้อมูลอาหารไม่ครบถ้วน กรุณาลองใหม่' });
       }
+
+      const topConfidence = Math.max(...items.map((item) => item.confidence));
+      logScan(topConfidence < SCAN_LOW_CONFIDENCE ? 'low_conf' : 'success', {
+        items: items.map(({ name_th, confidence }) => ({ name_th, confidence })),
+        topConfidence,
+      });
 
     return res.json({
       success: true,
@@ -1072,6 +1669,9 @@ const handleUpdateTicket = async (req, res) => {
   try {
     const { status } = req.body;
     const { id } = req.params;
+    if (!['Open', 'In Progress', 'Resolved'].includes(status)) {
+      return res.status(400).json({ error: 'status must be Open, In Progress, or Resolved' });
+    }
     const filter = mongoose.Types.ObjectId.isValid(id) ? { $or: [{ _id: id }, { ticketId: id }] } : { ticketId: id };
     const ticket = await Ticket.findOneAndUpdate(filter, { status }, { new: true });
     if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
@@ -1093,14 +1693,18 @@ const handleDeleteTicket = async (req, res) => {
   }
 };
 
+// Users may list their own tickets by email; listing every ticket is admin-only.
+const requireAdminForAllTickets = (req, res, next) =>
+  (req.query.email ? next() : requireAdmin(req, res, next));
+
 app.post('/tickets', handleCreateTicket);
 app.post('/api/tickets', handleCreateTicket);
-app.get('/tickets', handleGetTickets);
-app.get('/api/tickets', handleGetTickets);
-app.patch('/tickets/:id', handleUpdateTicket);
-app.patch('/api/tickets/:id', handleUpdateTicket);
-app.delete('/tickets/:id', handleDeleteTicket);
-app.delete('/api/tickets/:id', handleDeleteTicket);
+app.get('/tickets', requireAdminForAllTickets, handleGetTickets);
+app.get('/api/tickets', requireAdminForAllTickets, handleGetTickets);
+app.patch('/tickets/:id', requireAdmin, handleUpdateTicket);
+app.patch('/api/tickets/:id', requireAdmin, handleUpdateTicket);
+app.delete('/tickets/:id', requireAdmin, handleDeleteTicket);
+app.delete('/api/tickets/:id', requireAdmin, handleDeleteTicket);
 
 // ---------------------------------------------------------------------------
 // SERVER STARTUP

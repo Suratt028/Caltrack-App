@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { View, Pressable, ScrollView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Pressable, ScrollView, ActivityIndicator } from 'react-native';
 import { Text } from '../components/AppText';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { useApp } from '../context/AppContext';
+import { getNutritionFoodById } from '../services/foodService';
 import Card from '../components/Card';
 import PrimaryButton from '../components/PrimaryButton';
 import ScreenHeader from '../components/ScreenHeader';
@@ -34,12 +35,48 @@ const round1 = (value) => Math.round(value * 10) / 10;
  */
 export default function PortionScreen({ navigation, route }) {
   const { addFoodLog } = useApp();
-  const food = route?.params?.food || null;
+  const [food, setFood] = useState(route?.params?.food || null);
+  const [foodLoading, setFoodLoading] = useState(false);
+  const [foodError, setFoodError] = useState('');
 
   const [meal, setMeal] = useState(route?.params?.meal || defaultMealForNow());
   const [amount, setAmount] = useState(1);
   const [unit, setUnit] = useState('จาน');
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const routeFood = route?.params?.food;
+    const foodId = route?.params?.foodId;
+    if (routeFood) {
+      setFood(routeFood);
+      setFoodError('');
+      return;
+    }
+    if (!foodId) {
+      setFood(null);
+      return;
+    }
+
+    let active = true;
+    setFoodLoading(true);
+    setFoodError('');
+    getNutritionFoodById(foodId)
+      .then((loadedFood) => {
+        if (active) setFood(loadedFood);
+      })
+      .catch((error) => {
+        if (active) {
+          setFood(null);
+          setFoodError(error?.message || 'โหลดข้อมูลอาหารไม่สำเร็จ กรุณาลองใหม่');
+        }
+      })
+      .finally(() => {
+        if (active) setFoodLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [route?.params?.food, route?.params?.foodId]);
 
   const backRight = (
     <Pressable
@@ -119,7 +156,17 @@ export default function PortionScreen({ navigation, route }) {
             subtitle="ตรวจสอบก่อนเพิ่มในบันทึก"
             right={backRight}
           />
-          <Banner tone="warning" message="ไม่พบข้อมูลอาหารนี้ ลองเลือกใหม่อีกครั้ง" />
+          {foodLoading ? (
+            <View style={{ alignItems: 'center', padding: 24 }}>
+              <ActivityIndicator color={colors.primary} />
+              <Text style={{ marginTop: 8, color: colors.inkMuted }}>กำลังโหลดข้อมูลอาหาร</Text>
+            </View>
+          ) : (
+            <Banner
+              tone="warning"
+              message={foodError || 'ไม่พบข้อมูลอาหารนี้ ลองเลือกใหม่อีกครั้ง'}
+            />
+          )}
         </ScrollView>
       </SafeAreaView>
     );

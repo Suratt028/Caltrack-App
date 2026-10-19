@@ -68,7 +68,11 @@ export default function LogScreen({ navigation }) {
   }, [query]);
 
   const goToPortion = (food) => {
-    navigation.navigate('Portion', { food, meal });
+    navigation.navigate('Portion', {
+      food,
+      foodId: String(food.foodId || food.id),
+      meal,
+    });
   };
 
   const saveManual = async () => {

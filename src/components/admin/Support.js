@@ -3,8 +3,8 @@ import { View, Pressable, ActivityIndicator } from 'react-native';
 import { Text } from '../AppText';
 import styles from '../../style/screens/AdminScreenStyles';
 import { colors } from '../../theme/colors';
-import { Title, Card, Badge, formatDate } from './AdminCommon';
-import { fetchTickets, updateTicketStatus, deleteTicket } from '../../services/atlasService';
+import { Title, Card, Badge, formatDate, confirmAction, notify } from './AdminCommon';
+import { fetchAllTickets, updateTicketStatus, deleteTicket } from '../../services/atlasService';
 
 export default function Support({ token }) {
   const [tickets, setTickets] = useState([]);
@@ -15,7 +15,7 @@ export default function Support({ token }) {
     setLoading(true);
     setError('');
     try {
-      const list = await fetchTickets();
+      const list = await fetchAllTickets(token);
       setTickets(list);
     } catch (err) {
       console.error('Failed to load tickets:', err);
@@ -26,29 +26,27 @@ export default function Support({ token }) {
   };
 
   useEffect(() => {
-    loadTickets();
-  }, []);
+    if (token) loadTickets();
+  }, [token]);
 
   const handleCycleStatus = async (ticket) => {
     const statusCycle = { Open: 'In Progress', 'In Progress': 'Resolved', Resolved: 'Open' };
     const nextStatus = statusCycle[ticket.status] || 'Open';
     try {
-      await updateTicketStatus(ticket.ticketId || ticket._id, nextStatus);
+      await updateTicketStatus(ticket.ticketId || ticket._id, nextStatus, token);
       await loadTickets();
     } catch (err) {
-      alert('Error updating status: ' + err.message);
+      notify('เปลี่ยนสถานะไม่สำเร็จ: ' + err.message);
     }
   };
 
   const handleDelete = async (ticketId) => {
-    if (typeof window !== 'undefined' && !window.confirm('คุณต้องการลบตั๋วรายงานนี้ใช่หรือไม่?')) {
-      return;
-    }
+    if (!(await confirmAction('คุณต้องการลบตั๋วรายงานนี้ใช่หรือไม่?'))) return;
     try {
-      await deleteTicket(ticketId);
+      await deleteTicket(ticketId, token);
       await loadTickets();
     } catch (err) {
-      alert('Error deleting ticket: ' + err.message);
+      notify('ลบตั๋วไม่สำเร็จ: ' + err.message);
     }
   };
 

@@ -3,7 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
-import { View } from 'react-native';
+import { Platform, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../theme/colors';
 
@@ -18,6 +18,28 @@ import PortionScreen from '../screens/PortionScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
+
+const WEB_APP_FRAME =
+  Platform.OS === 'web' ? { width: '100%', maxWidth: 1120, alignSelf: 'center' } : undefined;
+
+const WEB_LINKING = {
+  prefixes: [],
+  config: {
+    screens: {
+      Tabs: {
+        path: '',
+        screens: {
+          Home: '',
+          Log: 'log',
+          Scan: 'scan',
+          Trends: 'trends',
+          Profile: 'profile',
+        },
+      },
+      Portion: 'log/portion/:foodId',
+    },
+  },
+};
 
 // Focused / unfocused icon pairs so the active tab always looks active.
 const TAB_ICONS = {
@@ -36,6 +58,7 @@ function Tabs() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
+        sceneStyle: WEB_APP_FRAME,
         tabBarHideOnKeyboard: true,
         tabBarActiveTintColor: colors.primaryDark,
         tabBarInactiveTintColor: colors.inkMuted,
@@ -110,8 +133,13 @@ function Tabs() {
 
 export default function RootNavigator() {
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <NavigationContainer linking={Platform.OS === 'web' ? WEB_LINKING : undefined}>
+      <Stack.Navigator
+        screenOptions={{
+          headerShown: false,
+          contentStyle: WEB_APP_FRAME,
+        }}
+      >
         {/* The tab navigator lives under the "Tabs" route so flow screens can
             be pushed on top and still navigate back into a specific tab. */}
         <Stack.Screen name="Tabs" component={Tabs} />

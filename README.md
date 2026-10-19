@@ -1,10 +1,10 @@
 # CalTrack
 
-แอปนับแคลอรี่และติดตามโภชนาการภาษาไทย สร้างด้วย React Native + Expo โดยมี Node.js/Express เป็น backend และ MongoDB เป็นฐานข้อมูล แอปสามารถใช้งานแบบ local ได้เมื่อ backend หรือเครือข่ายยังไม่พร้อม
+แอปนับแคลอรี่และติดตามโภชนาการภาษาไทย สร้างด้วย React Native + Expo โดยมี Node.js/Express เป็น backend และ MongoDB เป็นฐานข้อมูล การสมัครและเข้าสู่ระบบต้องเชื่อมต่อ backend และ MongoDB เพื่อให้บัญชีใช้งานได้ต่อเนื่องข้ามอุปกรณ์
 
 ## ฟีเจอร์หลัก
 
-- สมัครสมาชิกและเข้าสู่ระบบผ่าน backend หรือใช้ local authentication สำหรับการพัฒนา/ใช้งานออฟไลน์
+- สมัครสมาชิกและเข้าสู่ระบบผ่าน backend โดยบันทึกบัญชีไว้ใน MongoDB
 - กรอกข้อมูลส่วนตัวเพื่อคำนวณ BMR, TDEE และเป้าหมายแคลอรี่รายวัน
 - ค้นหาอาหารจากฐานข้อมูลอาหารไทยและคำนวณสารอาหารตามน้ำหนักเป็นกรัม
 - บันทึกอาหารรายวัน พร้อมแคลอรี่ โปรตีน คาร์โบไฮเดรต และไขมัน
@@ -50,7 +50,6 @@ MONGODB_DB_NAME="caltrack"
 AUTH_SECRET="เปลี่ยนเป็นค่าลับที่แข็งแรง"
 PORT=3001
 EXPO_PUBLIC_API_BASE_URL=http://10.0.2.2:3001/api
-EXPO_PUBLIC_AUTH_MODE=local
 GEMINI_API_KEY="your-gemini-api-key"
 GEMINI_SCAN_MODELS="gemini-3.6-flash,gemini-3.5-flash-lite"
 ADMIN_EMAIL="admin@caltrack.app"
@@ -64,8 +63,13 @@ ADMIN_DISPLAY_NAME="CalTrack Administrator"
 | `MONGODB_DB_NAME` | ชื่อฐานข้อมูล ค่าเริ่มต้นคือ `caltrack` |
 | `AUTH_SECRET` | secret ที่ใช้ hash password ฝั่ง backend |
 | `PORT` | พอร์ต backend ค่าเริ่มต้นคือ `3001` |
-| `EXPO_PUBLIC_API_BASE_URL` | URL ที่ mobile ใช้เรียก API |
-| `EXPO_PUBLIC_AUTH_MODE` | ตั้งเป็น `local`, `mock` หรือ `offline` เพื่อบังคับ local auth |
+| `EXPO_PUBLIC_API_BASE_URL` | URL ที่ mobile และ Expo Web ใช้เรียก API |
+| `EXPO_PUBLIC_GOOGLE_*_CLIENT_ID` | Google OAuth client ID สำหรับ web, Android และ iOS ตามลำดับ |
+| `GOOGLE_OAUTH_CLIENT_IDS` | รายการ Google client IDs ที่ backend อนุญาต คั่นด้วย comma |
+| `APPLE_SERVICE_ID` | Apple Services ID สำหรับ OAuth บน Android/เว็บ |
+| `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY` | Apple credentials สำหรับแลก authorization code ฝั่ง backend; ห้ามใส่ใน Expo/client variables |
+| `APPLE_OAUTH_CLIENT_IDS` | Apple audience IDs ที่ backend ยอมรับ; ใส่ Services ID และ iOS Bundle ID คั่นด้วย comma |
+| `APPLE_REDIRECT_URI` | HTTPS callback URL ที่ลงทะเบียนใน Apple Developer และชี้มายัง `/api/auth/apple/callback` |
 | `GEMINI_API_KEY` | API key ของ Google Gemini ที่ควรเก็บไว้ฝั่ง server เท่านั้น |
 | `GEMINI_SCAN_MODELS` | ลำดับโมเดล Gemini สำหรับสแกนภาพ คั่นด้วย comma; ค่าเริ่มต้นคือ `gemini-3.6-flash,gemini-3.5-flash-lite` ระบบ retry แบบ backoff ก่อนสลับไปโมเดลถัดไป |
 | `ADMIN_EMAIL` | อีเมลสำหรับเข้าสู่ระบบ Admin Web |
@@ -103,6 +107,26 @@ npm run web
 
 ต้องเปิด backend และให้มือถือกับคอมพิวเตอร์อยู่เครือข่ายเดียวกันเมื่อใช้ Expo Go หรือมือถือจริง
 
+### รันเว็บแอป (Expo Web)
+
+```bash
+npm run web
+```
+
+Expo Web ใช้หน้าจอ, components, navigation และ state จาก `App.js` ชุดเดียวกับแอป Android/iOS ผ่าน entry ใน `src/App.web.js` จึงใช้ UX และข้อมูลชุดเดียวกัน รวมถึง onboarding, โปรไฟล์, บันทึกอาหาร, สแกน และแนวโน้ม บน desktop จำกัดความกว้างเนื้อหาไว้ที่ 1,120 px และจัดกึ่งกลางเพื่อให้มีระยะขอบเหมาะกับจอใหญ่ ทั้งเว็บและแอปใช้บัญชีจาก MongoDB ร่วมกัน
+
+ผู้ใช้เว็บที่เคยเข้าสู่ระบบผ่านหน้าเว็บชุดเดิมจะย้าย session เดิมไปยัง storage ที่แอปใช้ให้อัตโนมัติเมื่อเปิดเว็บครั้งแรก
+
+### ตั้งค่า Google / Apple Sign In
+
+- Google: สร้าง OAuth client IDs ใน Google Cloud Console สำหรับ Web, Android และ iOS จากนั้นใส่ client ID ที่ตรงกับแพลตฟอร์มใน `EXPO_PUBLIC_GOOGLE_*_CLIENT_ID` และใส่ชุดเดียวกันใน `GOOGLE_OAUTH_CLIENT_IDS` เพื่อให้ backend ตรวจสอบ ID token ได้ โดย Android ต้องใช้ package name และ SHA-1 ของ signing certificate ที่ตรงกับ build; iOS ต้องใช้ bundle ID จริง
+- Apple บน iOS: เปิด Sign in with Apple capability ให้ App ID และตั้ง `APPLE_OAUTH_CLIENT_IDS` ให้มี iOS Bundle ID (`com.example.caltrack` หรือ bundle ID จริง)
+- Apple บน Android: สร้าง Services ID และ Sign in with Apple key ใน Apple Developer, ตั้งค่าตัวแปร `APPLE_*` ฝั่ง backend และจดทะเบียน `APPLE_REDIRECT_URI` แบบ HTTPS ให้ตรงกับ callback ที่ server ใช้ (`https://<api-host>/api/auth/apple/callback`)
+- Apple private key ต้องอยู่ใน environment ของ backend เท่านั้น ห้ามใช้ prefix `EXPO_PUBLIC_` หรือ commit ลง repository
+- การเข้าสู่ระบบด้วย social ต้องใช้ backend ที่เชื่อม MongoDB
+- หลังเปลี่ยน plugin/config ให้สร้าง native app ใหม่; hot reload อย่างเดียวไม่เพิ่ม capability ของ Apple
+- Expo Web ใช้หน้าจอ `AuthScreen` ชุดเดียวกับ Android/iOS และใช้อีเมล/รหัสผ่านกับ backend ชุดเดียวกัน
+
 ### 5. Android native build
 
 โปรเจกต์นี้ยังไม่เก็บโฟลเดอร์ `android/` และ `ios/` ไว้ใน repository เพราะเป็น Expo managed workflow:
@@ -139,7 +163,10 @@ CalTrackApp/
 │   ├── services/                  # mobile auth, API, AI vision และ nutrition services
 │   ├── style/                     # styles ของ app, screens และ components
 │   ├── theme/colors.js            # design tokens ด้านสี
-│   └── utils/calculations.js      # สูตร BMR/TDEE และเป้าหมายสารอาหาร
+│   ├── utils/calculations.js      # สูตร BMR/TDEE และเป้าหมายสารอาหาร
+│   └── web/                       # ชุดหน้าเว็บเดิม (ไม่ได้ใช้โดย Expo Web entry ปัจจุบัน)
+├── App.web.js                     # Expo Web entry
+├── webpack.config.js              # Expo Web bundler config
 ├── tests/                         # unit tests สำหรับ authentication และ nutrition math
 └── docs/CalTrack_Chapter1-4.md    # เอกสารประกอบโครงงาน
 ```
@@ -176,6 +203,7 @@ DELETE /api/profiles/:userId
 GET    /api/logs/:userId
 POST   /api/logs/:userId
 PATCH  /api/logs/:userId/:logId
+DELETE /api/logs/:userId/:logId   # ลบ log และ mirror ใน userfoods
 GET    /api/foods/search?q=<query>&limit=<number>
 GET    /api/foods/:foodId
 POST   /api/nutrition/calculate
@@ -202,7 +230,7 @@ POST   /api/fatsecret/token
 
 ข้อมูลในฐานอาหารเก็บต่อ 100 กรัม และ endpoint จะคืน `totals`, `breakdown` และ `notFound` โดยรับน้ำหนัก 1–5,000 กรัมต่อรายการ
 
-หมายเหตุ: `src/services/atlasService.js` มี `deleteLog()` แต่ backend ปัจจุบันยังไม่มี `DELETE /api/logs/:userId/:logId`
+`DELETE /api/logs/:userId/:logId` ลบเอกสาร log และ mirror ใน collection `userfoods` ที่มี `logId` ตรงกันในคำสั่งเดียว
 
 ## นำเข้าฐานข้อมูลอาหาร
 
@@ -228,8 +256,8 @@ npx expo export --platform android
 - ห้าม commit `.env`, MongoDB URI, password, Gemini key หรือ FatSecret secret
 - ตัวแปร `EXPO_PUBLIC_*` ถูกส่งไปฝั่ง client และไม่ควรใช้เก็บ secret
 - เก็บ `GEMINI_API_KEY` ไว้ที่ backend เท่านั้น
-- เปลี่ยน `AUTH_SECRET` ก่อนใช้งานจริง และอย่าใช้ค่า fallback `dev-secret-change-me`
-- local auth เก็บข้อมูลบัญชีไว้ใน AsyncStorage เหมาะสำหรับ demo/offline ไม่ใช่ production authentication
+- ตั้ง `AUTH_SECRET` ให้แข็งแรงก่อนเปิดใช้งานจริงและคงค่าเดิมหลังเริ่มมีบัญชี เพราะระบบใช้ค่านี้ตรวจรหัสผ่านที่บันทึกไว้
+- การสมัคร/เข้าสู่ระบบต้องใช้ MongoDB ที่เชื่อมต่อได้ หาก backend หรือฐานข้อมูลไม่พร้อม ระบบจะแจ้งข้อผิดพลาดและจะไม่สร้างบัญชี local แทน
 - backend ยังไม่มี authentication middleware สำหรับตรวจสิทธิ์ตาม `userId`
 - CORS เปิดกว้างด้วยค่าเริ่มต้นของ `cors()` ควรจำกัด origin ก่อน deploy จริง
 - diagnostics, seed demo และ FatSecret ยังไม่มี access control

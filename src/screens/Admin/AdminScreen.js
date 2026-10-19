@@ -9,7 +9,7 @@ import { colors } from '../../theme/colors';
 import styles from '../../style/screens/AdminScreenStyles';
 
 // Import Shared Helpers/Components (ถอย 2 ชั้น)
-import { Title, Stat, Card, Badge, formatDate } from '../../components/admin/AdminCommon';
+import { Title, Stat, Card, Badge, formatDate, confirmAction, notify } from '../../components/admin/AdminCommon';
 
 // Import Sub-pages (ถอย 2 ชั้น)
 import AiScan from '../../components/admin/AiScan';
@@ -38,40 +38,23 @@ async function api(path, token, options = {}) {
     },
   });
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.error || 'Request failed');
+  if (!response.ok) {
+    const error = new Error(data.error || 'Request failed');
+    error.status = response.status;
+    throw error;
+  }
   return data;
 }
 
-async function getOrFetchAdminToken(existingToken) {
-  if (existingToken) return existingToken;
-  try {
-    const saved = await AsyncStorage.getItem(TOKEN_KEY);
-    if (saved) return saved;
-  } catch (err) {}
-
-  try {
-    const response = await fetch(`${API_BASE_URL}/admin/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'admin@caltrack.app', password: 'Admin@1234' }),
-    });
-    const data = await response.json().catch(() => ({}));
-    if (response.ok && data.token) {
-      await AsyncStorage.setItem(TOKEN_KEY, data.token);
-      return data.token;
-    }
-  } catch (err) {
-    console.warn('Auto admin authentication failed:', err);
-  }
-  return null;
-}
-
 export default function AdminScreen() {
-  const { token: userToken, logout: clearAppSession } = useApp();
-  const [token, setToken] = useState(userToken || null);
+  const { logout: clearAppSession } = useApp();
+  const [token, setToken] = useState(null);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [loginNotice, setLoginNotice] = useState('');
   const [page, setPage] = useState('dashboard');
   const [summary, setSummary] = useState(null);
   const [users, setUsers] = useState([]);
+  const [userTotal, setUserTotal] = useState(0);
   const [foods, setFoods] = useState([]);
   const [query, setQuery] = useState('');
   const [foodFormOpen, setFoodFormOpen] = useState(false);
@@ -87,12 +70,16 @@ export default function AdminScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
+  async function signOutAdmin(notice = '') {
+    try {
+      await AsyncStorage.removeItem(TOKEN_KEY);
+    } catch (e) {}
+    setToken(null);
+    setLoginNotice(notice);
+  }
+
   async function refresh(nextToken) {
-    let activeToken = nextToken || token;
-    if (!activeToken) {
-      activeToken = await getOrFetchAdminToken();
-      if (activeToken) setToken(activeToken);
-    }
+    const activeToken = nextToken || token;
     if (!activeToken) return;
 
     setBusy(true);
@@ -106,28 +93,12 @@ export default function AdminScreen() {
       ]);
       setSummary(overview);
       setUsers(userData.users || []);
+      setUserTotal(userData.total ?? (userData.users || []).length);
       setFoods(foodData.foods || []);
     } catch (requestError) {
-      if (requestError.message?.toLowerCase().includes('admin authentication') || requestError.message?.toLowerCase().includes('token')) {
-        try {
-          const freshToken = await getOrFetchAdminToken();
-          if (freshToken) {
-            setToken(freshToken);
-            const foodPath = query ? `/admin/foods?q=${encodeURIComponent(query)}&limit=100` : '/admin/foods?limit=100';
-            const [overview, userData, foodData] = await Promise.all([
-              api('/admin/overview', freshToken),
-              api('/admin/users', freshToken),
-              api(foodPath, freshToken),
-            ]);
-            setSummary(overview);
-            setUsers(userData.users || []);
-            setFoods(foodData.foods || []);
-            setError('');
-            return;
-          }
-        } catch (retryErr) {
-          setError(retryErr.message);
-        }
+      if (requestError.status === 401) {
+        await signOutAdmin('เซสชันแอดมินหมดอายุหรือไม่ถูกต้อง กรุณาเข้าสู่ระบบใหม่');
+        return;
       }
       setError(requestError.message);
     } finally {
@@ -135,21 +106,26 @@ export default function AdminScreen() {
     }
   }
 
+  async function handleAdminLogin(nextToken) {
+    try {
+      await AsyncStorage.setItem(TOKEN_KEY, nextToken);
+    } catch (e) {}
+    setLoginNotice('');
+    setToken(nextToken);
+    refresh(nextToken);
+  }
+
   useEffect(() => {
     (async () => {
-      let activeToken = userToken;
-      if (!activeToken) {
-        activeToken = await AsyncStorage.getItem(TOKEN_KEY);
-      }
-      if (!activeToken) {
-        activeToken = await getOrFetchAdminToken();
-      }
-      if (activeToken) {
-        setToken(activeToken);
-      }
-      refresh(activeToken);
+      let saved = null;
+      try {
+        saved = await AsyncStorage.getItem(TOKEN_KEY);
+      } catch (e) {}
+      setToken(saved);
+      setAuthChecked(true);
+      if (saved) refresh(saved);
     })();
-  }, [userToken]);
+  }, []);
 
   useEffect(() => {
     if (token && page === 'foods') {
@@ -160,7 +136,7 @@ export default function AdminScreen() {
 
   async function logout() {
     try {
-      await AsyncStorage.multiRemove([TOKEN_KEY, '@caltrack/admin-token', '@caltrack/user', '@caltrack/profile', '@caltrack/logs', '@caltrack/weights']);
+      await AsyncStorage.multiRemove([TOKEN_KEY, '@caltrack/token', '@caltrack/user', '@caltrack/profile', '@caltrack/logs', '@caltrack/weights']);
     } catch (e) {}
     await clearAppSession();
     setToken(null);
@@ -170,6 +146,8 @@ export default function AdminScreen() {
   }
 
   async function removeFood(foodId) {
+    if (!foodId) return setError('รายการนี้ไม่มี Food ID จึงลบผ่านหน้านี้ไม่ได้');
+    if (!(await confirmAction(`ลบอาหาร ${foodId} ออกจากฐานข้อมูลใช่หรือไม่?`))) return;
     try {
       await api(`/admin/foods/${encodeURIComponent(foodId)}`, token, { method: 'DELETE' });
       await refresh(token);
@@ -196,6 +174,18 @@ export default function AdminScreen() {
     } catch (requestError) {
       setError(requestError.message);
     }
+  }
+
+  if (!authChecked) {
+    return (
+      <View style={styles.login}>
+        <ActivityIndicator color={colors.primary} />
+      </View>
+    );
+  }
+
+  if (!token) {
+    return <AdminLogin notice={loginNotice} onLoggedIn={handleAdminLogin} onExit={logout} />;
   }
 
   return (
@@ -231,7 +221,7 @@ export default function AdminScreen() {
           {busy ? <ActivityIndicator color={colors.primary} /> : null}
 
           {page === 'dashboard' && <Dashboard summary={summary} users={users} onFoods={() => setPage('foods')} />}
-          {page === 'users' && <Users users={users} token={token} onRefresh={() => refresh(token)} />}
+          {page === 'users' && <Users users={users} userTotal={userTotal} token={token} onRefresh={() => refresh(token)} />}
           {page === 'foods' && (
             <Foods
               foods={foods}
@@ -252,6 +242,73 @@ export default function AdminScreen() {
           {page === 'support' && <Support token={token} />}
         </ScrollView>
       </View>
+    </View>
+  );
+}
+
+function AdminLogin({ notice, onLoggedIn, onExit }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [loginError, setLoginError] = useState('');
+
+  const submit = async () => {
+    if (!email.trim() || !password || submitting) return;
+    setSubmitting(true);
+    setLoginError('');
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim(), password }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.token) throw new Error(data.error || 'เข้าสู่ระบบไม่สำเร็จ');
+      setPassword('');
+      onLoggedIn(data.token);
+    } catch (err) {
+      setLoginError(err.message === 'invalid admin credentials' ? 'อีเมลหรือรหัสผ่านแอดมินไม่ถูกต้อง' : err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <View style={styles.login}>
+      <Card style={styles.loginCard}>
+        <Text style={[styles.eyebrow, { marginTop: 0 }]}>CALTRACK ADMIN</Text>
+        <Text style={styles.loginTitle}>เข้าสู่ระบบผู้ดูแล</Text>
+        {notice ? <Text style={[styles.detail, { marginTop: 8 }]}>{notice}</Text> : null}
+        <View style={{ gap: 10, marginTop: 20 }}>
+          <TextInput
+            value={email}
+            onChangeText={setEmail}
+            placeholder="อีเมลแอดมิน"
+            autoCapitalize="none"
+            keyboardType="email-address"
+            style={styles.formInput}
+          />
+          <TextInput
+            value={password}
+            onChangeText={setPassword}
+            placeholder="รหัสผ่าน"
+            secureTextEntry
+            onSubmitEditing={submit}
+            style={styles.formInput}
+          />
+        </View>
+        {loginError ? <Text style={[styles.error, { marginTop: 12, marginBottom: 0 }]}>{loginError}</Text> : null}
+        <Pressable
+          style={[styles.primary, { opacity: submitting ? 0.6 : 1 }]}
+          onPress={submit}
+          disabled={submitting}
+        >
+          <Text style={styles.primaryText}>{submitting ? 'กำลังเข้าสู่ระบบ…' : 'เข้าสู่ระบบ'}</Text>
+        </Pressable>
+        <Pressable onPress={onExit} style={{ marginTop: 14, alignSelf: 'center' }}>
+          <Text style={styles.link}>กลับไปหน้าแอป</Text>
+        </Pressable>
+      </Card>
     </View>
   );
 }
@@ -294,7 +351,7 @@ function Dashboard({ summary, users, onFoods }) {
   );
 }
 
-function Users({ users, token, onRefresh }) {
+function Users({ users, userTotal, token, onRefresh }) {
   const [userQuery, setUserQuery] = useState('');
   const [addUserOpen, setAddUserOpen] = useState(false);
   const [newUser, setNewUser] = useState({ email: '', password: '', displayName: '', role: 'user' });
@@ -306,10 +363,36 @@ function Users({ users, token, onRefresh }) {
   const [userLogs, setUserLogs] = useState([]);
   const [loadingLogs, setLoadingLogs] = useState(false);
   const [actionError, setActionError] = useState('');
+  // Searching goes to the server so it covers every account, not just the first page.
+  const [searchResult, setSearchResult] = useState(null);
+  const [searching, setSearching] = useState(false);
 
-  const filteredUsers = users.filter((u) =>
-    `${u.displayName || ''} ${u.email || ''}`.toLowerCase().includes(userQuery.toLowerCase())
-  );
+  const trimmedQuery = userQuery.trim();
+  useEffect(() => {
+    if (!trimmedQuery) {
+      setSearchResult(null);
+      return undefined;
+    }
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const data = await api(`/admin/users?q=${encodeURIComponent(trimmedQuery)}&limit=500`, token);
+        if (!cancelled) setSearchResult({ users: data.users || [], total: data.total ?? 0 });
+      } catch (err) {
+        if (!cancelled) setActionError(err.message || 'ค้นหาผู้ใช้ไม่สำเร็จ');
+      } finally {
+        if (!cancelled) setSearching(false);
+      }
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [trimmedQuery, token, users]);
+
+  const filteredUsers = searchResult ? searchResult.users : users;
+  const totalMatching = searchResult ? searchResult.total : userTotal;
   const admins = filteredUsers.filter((user) => user.role === 'admin');
   const regularUsers = filteredUsers.filter((user) => user.role !== 'admin');
 
@@ -350,7 +433,7 @@ function Users({ users, token, onRefresh }) {
   };
 
   const handleDeleteUser = async (userId) => {
-    if (typeof window !== 'undefined' && !window.confirm('คุณต้องการลบผู้ใช้นี้ใช่หรือไม่?')) return;
+    if (!(await confirmAction('ลบผู้ใช้นี้ใช่หรือไม่? ข้อมูลโปรไฟล์ บันทึกอาหาร และน้ำหนักของผู้ใช้จะถูกลบด้วย'))) return;
     setActionError('');
     try {
       await api(`/admin/users/${userId}`, token, { method: 'DELETE' });
@@ -368,7 +451,7 @@ function Users({ users, token, onRefresh }) {
       const data = await api(`/admin/users/${user._id}/logs`, token);
       setUserLogs(data.logs || []);
     } catch (err) {
-      alert('ไม่สามารถดึงบันทึกอาหารได้: ' + err.message);
+      notify('ไม่สามารถดึงบันทึกอาหารได้: ' + err.message);
     } finally {
       setLoadingLogs(false);
     }
@@ -529,6 +612,13 @@ function Users({ users, token, onRefresh }) {
           </View>
         </Card>
       )}
+
+      {searching ? <ActivityIndicator color={colors.primary} style={{ marginBottom: 12 }} /> : null}
+      {totalMatching > filteredUsers.length ? (
+        <Text style={[styles.footnote, { marginTop: 0, marginBottom: 12 }]}>
+          แสดง {filteredUsers.length} จาก {totalMatching} บัญชี{trimmedQuery ? ' ที่ตรงกับคำค้น' : ' (ค้นหาด้วยชื่อหรืออีเมลเพื่อหาบัญชีที่เหลือ)'}
+        </Text>
+      ) : null}
 
       {table('Admin accounts', admins, 'No Admin accounts found.', true)}
       {table('Regular users', regularUsers, 'No regular users found.', false)}

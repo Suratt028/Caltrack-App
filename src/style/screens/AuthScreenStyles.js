@@ -157,11 +157,8 @@ export default StyleSheet.create({
     marginBottom: 4,
     gap: spacing.sm,
   },
-  adminLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    minHeight: 44,
-    paddingRight: spacing.sm,
+  rowEnd: {
+    justifyContent: 'flex-end',
   },
   linkText: {
     color: colors.primary,

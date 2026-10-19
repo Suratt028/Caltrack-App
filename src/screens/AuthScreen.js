@@ -1,26 +1,31 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Pressable, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { Text } from '../components/AppText';
 import { TextInput } from '../components/AppTextInput';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import PrimaryButton from '../components/PrimaryButton';
 import Banner from '../components/Banner';
 import { useApp } from '../context/AppContext';
-import { API_BASE_URL } from '../config';
 import { colors } from '../theme/colors';
 import styles from '../style/screens/AuthScreenStyles';
 
-const ADMIN_TOKEN_KEY = '@caltrack/admin-token';
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const TOAST_DURATION_MS = 2500;
 
 function friendlyAuthError(error) {
   const msg = typeof error === 'string' ? error : error?.message || '';
   if (msg.toLowerCase().includes('invalid credentials')) {
     return 'อีเมลหรือรหัสผ่านไม่ถูกต้อง';
   }
-  if (msg.toLowerCase().includes('failed to fetch') || msg.toLowerCase().includes('network error')) {
+  if (msg.toLowerCase().includes('database is unavailable')) {
+    return 'ฐานข้อมูลยังไม่พร้อม กรุณาลองใหม่ภายหลัง';
+  }
+  if (
+    msg.toLowerCase().includes('failed to fetch') ||
+    msg.toLowerCase().includes('network error') ||
+    msg.toLowerCase().includes('network request failed')
+  ) {
     return 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาตรวจสอบการเชื่อมต่อ';
   }
   return msg || 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง';
@@ -34,6 +39,8 @@ export default function AuthScreen() {
   const [displayName, setDisplayName] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [toast, setToast] = useState('');
+  const toastTimer = useRef(null);
 
   const isSignup = mode === 'signup';
   const trimmedEmail = email.trim();
@@ -46,10 +53,22 @@ export default function AuthScreen() {
     : '';
   const canSubmit = trimmedEmail.length > 3 && password.length >= 6 && !submitting;
 
-  const fillAdminCredentials = () => {
-    setEmail('admin@caltrack.app');
-    setPassword('Admin@1234');
-    setError('');
+  // เคลียร์ timer ตอนออกจากหน้านี้
+  useEffect(() => {
+    return () => {
+      if (toastTimer.current) clearTimeout(toastTimer.current);
+    };
+  }, []);
+
+  // แสดงบับเบิลข้อความสั้น ๆ แล้วหายเอง
+  const showToast = (message) => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast(message);
+    toastTimer.current = setTimeout(() => setToast(''), TOAST_DURATION_MS);
+  };
+
+  const handleSocialLogin = () => {
+    showToast('อยู่ในส่วนที่กำลังพัฒนา');
   };
 
   const submit = async () => {
@@ -62,33 +81,8 @@ export default function AuthScreen() {
       if (isSignup) {
         await register(cleanEmail, password, displayName.trim());
       } else {
-        if (cleanEmail === 'admin@caltrack.app') {
-          const response = await fetch(`${API_BASE_URL}/admin/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: cleanEmail, password }),
-          });
-
-          const data = await response.json().catch(() => ({}));
-          if (!response.ok) {
-            throw new Error(data.error || 'อีเมลหรือรหัสผ่าน Admin ไม่ถูกต้อง');
-          }
-
-          await AsyncStorage.setItem(ADMIN_TOKEN_KEY, data.token);
-          await AsyncStorage.setItem('@caltrack/token', data.token);
-
-          try {
-            await login(cleanEmail, password);
-          } catch (userLoginErr) {
-            try {
-              await register(cleanEmail, password, 'Administrator');
-            } catch (regErr) {
-              await login(cleanEmail, password).catch(() => {});
-            }
-          }
-        } else {
-          await login(cleanEmail, password);
-        }
+        // Admin accounts get their adminToken from /auth/login (stored by AppContext).
+        await login(cleanEmail, password);
       }
     } catch (e) {
       setError(friendlyAuthError(e));
@@ -172,16 +166,7 @@ export default function AuthScreen() {
               {!!passwordError && <Text style={styles.fieldError}>{passwordError}</Text>}
 
               {!isSignup && (
-                <View style={styles.rowBetween}>
-                  <Pressable
-                    onPress={fillAdminCredentials}
-                    accessibilityRole="button"
-                    accessibilityLabel="กรอกข้อมูลบัญชีผู้ดูแลระบบ"
-                    style={({ pressed }) => [styles.adminLink, pressed && { opacity: 0.7 }]}
-                  >
-                    <Ionicons name="key-outline" size={16} color={colors.primary} />
-                    <Text style={styles.linkText}>กรอกข้อมูล Admin</Text>
-                  </Pressable>
+                <View style={[styles.rowBetween, styles.rowEnd]}>
                   <Text style={styles.linkText}>ลืมรหัสผ่าน?</Text>
                 </View>
               )}
@@ -218,11 +203,21 @@ export default function AuthScreen() {
 
             {!isSignup && (
               <View style={styles.socialRow}>
-                <Pressable style={styles.socialButton} accessibilityRole="button" accessibilityLabel="เข้าสู่ระบบด้วย Google">
+                <Pressable
+                  style={styles.socialButton}
+                  onPress={handleSocialLogin}
+                  accessibilityRole="button"
+                  accessibilityLabel="เข้าสู่ระบบด้วย Google"
+                >
                   <Ionicons name="logo-google" size={18} color={colors.ink} />
                   <Text style={styles.socialText}>Google</Text>
                 </Pressable>
-                <Pressable style={styles.socialButton} accessibilityRole="button" accessibilityLabel="เข้าสู่ระบบด้วย Apple">
+                <Pressable
+                  style={styles.socialButton}
+                  onPress={handleSocialLogin}
+                  accessibilityRole="button"
+                  accessibilityLabel="เข้าสู่ระบบด้วย Apple"
+                >
                   <Ionicons name="logo-apple" size={18} color={colors.ink} />
                   <Text style={styles.socialText}>Apple</Text>
                 </Pressable>
@@ -246,6 +241,38 @@ export default function AuthScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {!!toast && (
+        <View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            left: 20,
+            right: 20,
+            bottom: 48,
+            alignItems: 'center',
+            zIndex: 10,
+          }}
+        >
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: colors.ink,
+              borderRadius: 999,
+              paddingHorizontal: 18,
+              paddingVertical: 12,
+              elevation: 6,
+              boxShadow: '0px 6px 14px rgba(0, 0, 0, 0.2)',
+            }}
+          >
+            <Ionicons name="construct-outline" size={16} color={colors.white} />
+            <Text style={{ color: colors.white, fontSize: 14, fontWeight: '600', marginLeft: 8 }}>
+              {toast}
+            </Text>
+          </View>
+        </View>
+      )}
     </SafeAreaView>
   );
 }

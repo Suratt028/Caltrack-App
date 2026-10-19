@@ -38,7 +38,9 @@
         {
           "cameraPermission": "CalTrack ใช้กล้องเพื่อถ่ายรูปอาหารสำหรับให้ AI ช่วยประเมินแคลอรี่"
         }
-      ]
+      ],
+      "expo-apple-authentication",
+      "expo-web-browser"
     ],
     "extra": {
       "eas": {

@@ -31,19 +31,16 @@ function Gate() {
     }
   }, []);
 
-  // Synchronize browser URL on login / logout (ทำเฉพาะบน Web)
+  // Keep direct auth URLs from being interpreted as app tab routes after login.
   useEffect(() => {
-    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.history) {
-      if (user?.role === 'admin' && pathname !== '/admin') {
-        window.history.pushState({}, '', '/admin');
-        setPathname('/admin');
-      } else if (user && user.role !== 'admin' && pathname === '/') {
-        window.history.pushState({}, '', '/user');
-        setPathname('/user');
-      } else if (!user && pathname !== '/') {
-        window.history.pushState({}, '', '/');
-        setPathname('/');
-      }
+    if (
+      Platform.OS === 'web' &&
+      user &&
+      (pathname === '/login' || pathname === '/register') &&
+      typeof window !== 'undefined'
+    ) {
+      window.history.replaceState({}, '', '/');
+      setPathname('/');
     }
   }, [user, pathname]);
 
@@ -57,17 +54,11 @@ function Gate() {
 
   // Web Path-based Routing
   if (Platform.OS === 'web') {
-    if (pathname.startsWith('/admin')) {
+    if (pathname.startsWith('/admin') || user?.role === 'admin') {
       return <AdminScreen />;
     }
-    if (pathname.startsWith('/user')) {
-      if (!user) {
-        return <AuthScreen />;
-      }
-      return profile ? <RootNavigator /> : <OnboardingScreen />;
-    }
-    // '/' path -> AuthScreen
-    return <AuthScreen />;
+    if (!user) return <AuthScreen />;
+    return profile ? <RootNavigator /> : <OnboardingScreen />;
   }
 
   // Native Mobile App Routing (Android & iOS)

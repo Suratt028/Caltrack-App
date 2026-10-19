@@ -103,7 +103,7 @@ export default function TrendsScreen({ navigation }) {
   const [weightError, setWeightError] = useState('');
 
   const today = todayKey();
-  const goal = Number(profile?.calorieGoal) > 0 ? Number(profile.calorieGoal) : 2000;
+  const goal = Number(profile?.calorieGoal) > 0 ? Number(profile.calorieGoal) : null;
   const windowLength = range === '30' ? 30 : 7;
 
   // Selected window: last 7 / 30 days (optionally shifted back) or a custom range.
@@ -128,6 +128,7 @@ export default function TrendsScreen({ navigation }) {
   const dayData = useMemo(
     () =>
       days.map((date) => {
+        if (!logsByDay[date]?.length) return null;
         const totals = getDayTotals(date) || {};
         return {
           date,
@@ -136,18 +137,20 @@ export default function TrendsScreen({ navigation }) {
           carbs: Number(totals.carbs) || 0,
           fat: Number(totals.fat) || 0,
         };
-      }),
+      }).filter(
+        (day) => day && (day.kcal > 0 || day.protein + day.carbs + day.fat > 0)
+      ),
     [days, getDayTotals, logsByDay]
   );
 
-  const loggedDays = useMemo(() => dayData.filter((day) => day.kcal > 0), [dayData]);
+  const loggedDays = dayData;
   const enough = loggedDays.length >= 3;
-  const avgKcal = dayData.length
-    ? Math.round(dayData.reduce((sum, day) => sum + day.kcal, 0) / dayData.length)
+  const avgKcal = loggedDays.length
+    ? Math.round(loggedDays.reduce((sum, day) => sum + day.kcal, 0) / loggedDays.length)
     : 0;
   const completeDays = useMemo(
-    () => dayData.filter((day) => day.date !== today && day.kcal > 0),
-    [dayData, today]
+    () => loggedDays.filter((day) => day.date !== today),
+    [loggedDays, today]
   );
   const prevAvgKcal = completeDays.length
     ? Math.round(completeDays.reduce((sum, day) => sum + day.kcal, 0) / completeDays.length)
@@ -393,9 +396,9 @@ export default function TrendsScreen({ navigation }) {
                 style={isLgUp ? styles.statCardWide : styles.statCard}
               />
               <TrendStatCard
-                title="เฉลี่ย 6 วันก่อนหน้า"
+                title="เฉลี่ยวันที่บันทึกก่อนหน้า"
                 value={`${formatNumber(prevAvgKcal)} kcal`}
-                body="แยกวันนี้ที่ยังบันทึกไม่ครบออก"
+                body="เฉลี่ยเฉพาะวันที่มีข้อมูล และไม่รวมวันนี้"
                 style={isLgUp ? styles.statCardWide : styles.statCard}
               />
             </View>
@@ -405,8 +408,8 @@ export default function TrendsScreen({ navigation }) {
               <Text style={styles.cardTitle}>พลังงานในแต่ละวัน</Text>
               <TrendBarChart
                 data={energyData}
-                goalValue={goal}
-                goalLabel={`เป้าหมายตัวอย่าง ${formatNumber(goal)}`}
+                goalValue={goal || undefined}
+                goalLabel={goal ? `เป้าหมายโปรไฟล์ ${formatNumber(goal)}` : ''}
                 axisUnit="กิโลแคลอรี"
                 caption={monthCaption}
                 title="พลังงานในแต่ละวัน"
@@ -439,14 +442,14 @@ export default function TrendsScreen({ navigation }) {
             <Card style={styles.mintCard}>
               <Text style={styles.reminderTitle}>แต่ละวันไม่จำเป็นต้องเหมือนกัน</Text>
               <Text style={styles.reminderBody}>
-                {`6 วันก่อนเฉลี่ย ${formatNumber(prevAvgKcal)} kcal ส่วนวันนี้ยังไม่ครบ ความต่างอาจมาจากมื้อที่ยังไม่ได้บันทึก ใช้ภาพรวมนี้ค่อย ๆ ทำความรู้จักตัวเองนะ`}
+                {`วันที่บันทึกก่อนหน้าเฉลี่ย ${formatNumber(prevAvgKcal)} kcal โดยนับเฉพาะวันที่มีข้อมูล วันที่ไม่มีรายการจะไม่ถูกนับ`}
               </Text>
             </Card>
 
             {/* Data table (accessible alternative) */}
             <Card style={styles.tableCard}>
               <TrendDataTable
-                title={`เป้าหมายโปรไฟล์ตัวอย่าง ${formatNumber(goal)} kcal`}
+                title={goal ? `เป้าหมายโปรไฟล์ ${formatNumber(goal)} kcal` : 'ข้อมูลที่บันทึก'}
                 rows={tableRows}
                 showYear={showYear}
               />
