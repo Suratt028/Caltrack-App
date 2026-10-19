@@ -45,8 +45,11 @@ const adminPassword = process.env.ADMIN_PASSWORD || 'Admin@1234';
 const adminDisplayName = process.env.ADMIN_DISPLAY_NAME || 'CalTrack Administrator';
 // The fallbacks above are public (they are in the repo), so anyone could sign
 // admin tokens or log in as admin. Fine for local dev only.
-if (!process.env.AUTH_SECRET) {
-  console.warn('⚠️  AUTH_SECRET is not set; admin tokens are signed with a public default. Set it before deploying.');
+const PLACEHOLDER_SECRETS = ['dev-secret-change-me', 'change-me-in-production'];
+if (!process.env.AUTH_SECRET || PLACEHOLDER_SECRETS.includes(process.env.AUTH_SECRET)) {
+  console.warn('⚠️  AUTH_SECRET is not set or is a placeholder; anyone could forge sign-in tokens. Set a random value before deploying.');
+} else if (Buffer.byteLength(process.env.AUTH_SECRET) < 32) {
+  console.warn('⚠️  AUTH_SECRET is shorter than 32 characters; use a longer random value (e.g. `openssl rand -hex 32`).');
 }
 if (!process.env.ADMIN_PASSWORD) {
   console.warn('⚠️  ADMIN_PASSWORD is not set; the admin account uses a public default password. Set it before deploying.');
@@ -66,7 +69,8 @@ const appleOAuthClientIds = (process.env.APPLE_OAUTH_CLIENT_IDS || '')
 const appleServiceId = process.env.APPLE_SERVICE_ID;
 const appleRedirectUri = process.env.APPLE_REDIRECT_URI;
 const googleOAuthClient = new OAuth2Client();
-const geminiApiKey = process.env.GEMINI_API_KEY || process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
+// Server-only. Never read an EXPO_PUBLIC_* key here: those are bundled into the app.
+const geminiApiKey = process.env.GEMINI_API_KEY || '';
 const configuredGeminiScanModels = [...new Set(
   (process.env.GEMINI_SCAN_MODELS || 'gemini-3.6-flash,gemini-3.5-flash-lite')
     .split(',')
@@ -334,12 +338,53 @@ function normalizeFoodLog(log) {
 }
 
 // Helper Functions
+// Passwords: salted scrypt, stored as "scrypt$<salt hex>$<hash hex>".
+// Older accounts hold an unsalted HMAC-SHA256 (keyed with AUTH_SECRET); those
+// still verify and are rehashed on the next successful login.
+const SCRYPT_KEYLEN = 64;
+
 function hashPassword(password) {
-  return crypto.createHmac('sha256', authSecret).update(password).digest('hex');
+  const salt = crypto.randomBytes(16);
+  const hash = crypto.scryptSync(String(password), salt, SCRYPT_KEYLEN);
+  return `scrypt$${salt.toString('hex')}$${hash.toString('hex')}`;
+}
+
+function isLegacyPasswordHash(storedPassword) {
+  return typeof storedPassword === 'string' && !storedPassword.startsWith('scrypt$');
+}
+
+function safeEqualHex(a, b) {
+  const left = Buffer.from(String(a), 'hex');
+  const right = Buffer.from(String(b), 'hex');
+  return left.length > 0 && left.length === right.length && crypto.timingSafeEqual(left, right);
 }
 
 function verifyPassword(inputPassword, storedPassword) {
-  return Boolean(storedPassword) && hashPassword(inputPassword) === storedPassword;
+  if (!storedPassword) return false;
+  if (isLegacyPasswordHash(storedPassword)) {
+    const legacy = crypto.createHmac('sha256', authSecret).update(String(inputPassword)).digest('hex');
+    return safeEqualHex(legacy, storedPassword);
+  }
+  const [, saltHex, hashHex] = storedPassword.split('$');
+  if (!saltHex || !hashHex) return false;
+  const hash = crypto.scryptSync(String(inputPassword), Buffer.from(saltHex, 'hex'), SCRYPT_KEYLEN);
+  return safeEqualHex(hash.toString('hex'), hashHex);
+}
+
+// Constant-time string comparison (for the ADMIN_PASSWORD from .env).
+function safeEqualText(a, b) {
+  const digest = (value) => crypto.createHash('sha256').update(String(value)).digest();
+  return crypto.timingSafeEqual(digest(a), digest(b)) && String(a) === String(b);
+}
+
+// Call after a successful verifyPassword: moves legacy hashes to scrypt.
+async function upgradePasswordHashIfNeeded(user, password) {
+  if (!isLegacyPasswordHash(user.password)) return;
+  try {
+    await User.updateOne({ _id: user._id }, { $set: { password: hashPassword(password) } });
+  } catch (error) {
+    console.warn('Password hash upgrade failed:', error.message);
+  }
 }
 
 function parseAppleOAuthState(state) {
@@ -637,6 +682,50 @@ async function seedDemoData() {
   return { user, profile, logs };
 }
 
+// In-memory fixed-window rate limiter for sign-in/sign-up (per server process).
+// Counts every attempt; keyed by IP, plus the email for login so one account
+// can't be brute-forced from many addresses without hitting the IP limit too.
+function rateLimit({ name, windowMs, max, keyFn }) {
+  const hits = new Map();
+  setInterval(() => {
+    const now = Date.now();
+    for (const [key, entry] of hits) if (entry.resetAt <= now) hits.delete(key);
+  }, windowMs).unref();
+
+  return (req, res, next) => {
+    const key = `${name}:${keyFn(req)}`;
+    const now = Date.now();
+    const entry = hits.get(key);
+    if (!entry || entry.resetAt <= now) {
+      hits.set(key, { count: 1, resetAt: now + windowMs });
+      return next();
+    }
+    entry.count += 1;
+    if (entry.count > max) {
+      const retryAfterSec = Math.ceil((entry.resetAt - now) / 1000);
+      res.set('Retry-After', String(retryAfterSec));
+      return res.status(429).json({
+        error: `พยายามบ่อยเกินไป กรุณารอ ${Math.ceil(retryAfterSec / 60)} นาทีแล้วลองใหม่`,
+        code: 'RATE_LIMITED',
+      });
+    }
+    return next();
+  };
+}
+
+const MINUTE_MS = 60 * 1000;
+const clientIp = (req) => req.ip || req.socket?.remoteAddress || 'unknown';
+const loginEmail = (req) => String(req.body?.email || '').trim().toLowerCase();
+const loginIpLimit = rateLimit({ name: 'login-ip', windowMs: 15 * MINUTE_MS, max: 30, keyFn: clientIp });
+const loginAccountLimit = rateLimit({
+  name: 'login-account', windowMs: 15 * MINUTE_MS, max: 10, keyFn: (req) => `${clientIp(req)}:${loginEmail(req)}`,
+});
+const adminLoginLimit = rateLimit({
+  name: 'admin-login', windowMs: 15 * MINUTE_MS, max: 5, keyFn: (req) => `${clientIp(req)}:${loginEmail(req)}`,
+});
+const registerLimit = rateLimit({ name: 'register', windowMs: 60 * MINUTE_MS, max: 5, keyFn: clientIp });
+const oauthLimit = rateLimit({ name: 'oauth', windowMs: 15 * MINUTE_MS, max: 30, keyFn: clientIp });
+
 // API Routes
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', mongo: isMongoReady });
@@ -737,7 +826,7 @@ app.post('/api/seed-demo', requireAdmin, async (req, res) => {
   }
 });
 
-app.post('/api/auth/oauth/:provider', async (req, res) => {
+app.post('/api/auth/oauth/:provider', oauthLimit, async (req, res) => {
   try {
     const { provider } = req.params;
     if (!['google', 'apple'].includes(provider)) {
@@ -839,7 +928,7 @@ app.post('/api/auth/apple/callback', async (req, res) => {
   }
 });
 
-app.post('/api/auth/apple/exchange', async (req, res) => {
+app.post('/api/auth/apple/exchange', oauthLimit, async (req, res) => {
   try {
     const ticket = String(req.body.ticket || '');
     if (!ticket || ticket.length > 200) {
@@ -869,7 +958,7 @@ app.post('/api/auth/apple/exchange', async (req, res) => {
   }
 });
 
-app.post('/api/auth/register', async (req, res) => {
+app.post('/api/auth/register', registerLimit, async (req, res) => {
   try {
     const email = String(req.body.email || '').trim().toLowerCase();
     const password = String(req.body.password || '');
@@ -894,11 +983,11 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', loginIpLimit, loginAccountLimit, async (req, res) => {
   try {
     const email = String(req.body.email || '').trim().toLowerCase();
     const password = String(req.body.password || '');
-    const configuredAdmin = email === adminEmail && password === adminPassword;
+    const configuredAdmin = email === adminEmail && safeEqualText(password, adminPassword);
 
     if (configuredAdmin) {
       const user = isMongoReady && mongoose.connection.readyState === 1
@@ -922,6 +1011,7 @@ app.post('/api/auth/login', async (req, res) => {
     if (!user || !verifyPassword(password, user.password)) {
       return res.status(401).json({ error: 'invalid credentials' });
     }
+    await upgradePasswordHashIfNeeded(user, password);
 
     const signedInUser = {
       id: user._id.toString(),
@@ -938,16 +1028,18 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-app.post('/api/admin/login', async (req, res) => {
+app.post('/api/admin/login', adminLoginLimit, async (req, res) => {
   try {
     const email = String(req.body.email || '').trim().toLowerCase();
     const password = String(req.body.password || '');
-    const configuredAdmin = email === adminEmail && password === adminPassword;
+    const configuredAdmin = email === adminEmail && safeEqualText(password, adminPassword);
     const databaseAdmin = await User.findOne({ email, role: 'admin' });
 
-    if (!configuredAdmin && (!databaseAdmin || !verifyPassword(password, databaseAdmin.password))) {
+    const databaseAdminOk = Boolean(databaseAdmin) && verifyPassword(password, databaseAdmin.password);
+    if (!configuredAdmin && !databaseAdminOk) {
       return res.status(401).json({ error: 'invalid admin credentials' });
     }
+    if (databaseAdminOk) await upgradePasswordHashIfNeeded(databaseAdmin, password);
 
     return res.json({
       token: createAdminToken(email),
@@ -2007,8 +2099,8 @@ async function startServer() {
 
   server.on('error', (err) => {
     if (err.code === 'EADDRINUSE') {
-      console.error(`⚠️ Port ${port} is currently in use.`);
-      console.error('👉 Please run "taskkill /f /im node.exe" in CMD or change PORT in .env file.');
+      console.error(`⚠️ Port ${port} is currently in use (another server is probably still running).`);
+      console.error(`👉 Stop that server, or find it with "netstat -ano | findstr :${port}" and end only that PID, or change PORT in .env.`);
     } else {
       console.error('❌ Server error:', err);
     }
