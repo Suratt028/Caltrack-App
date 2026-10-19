@@ -17,6 +17,22 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: false }));
 
+// Maintenance mode (Admin → Settings): block the app's API while keeping the
+// admin console, health checks and sign-in reachable.
+const MAINTENANCE_ALLOWED = ['/health', '/api/health', '/api/admin', '/api/auth/login', '/api/diagnostics'];
+app.use(async (req, res, next) => {
+  if (MAINTENANCE_ALLOWED.some((prefix) => req.path === prefix || req.path.startsWith(`${prefix}/`))) return next();
+  try {
+    const { maintenanceMode } = await getSystemSettings();
+    if (maintenanceMode) {
+      return res.status(503).json({ error: 'ระบบปิดปรับปรุงชั่วคราว กรุณาลองใหม่ภายหลัง', code: 'MAINTENANCE' });
+    }
+  } catch (error) {
+    console.warn('System settings check failed:', error.message);
+  }
+  return next();
+});
+
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
 const dbName = process.env.MONGODB_DB_NAME || 'caltrack';
@@ -235,6 +251,43 @@ const WeightLog = mongoose.model('WeightLog', weightLogSchema, 'weightLogs');
 const ScanImage = mongoose.model('ScanImage', scanImageSchema, 'scanImages');
 const ScanLog = mongoose.model('ScanLog', scanLogSchema, 'scanLogs');
 const AppSetting = mongoose.model('AppSetting', appSettingSchema, 'appSettings');
+
+// Admin → Settings. maxFreeScansPerDay: 0 means unlimited.
+const DEFAULT_SYSTEM_SETTINGS = { maxFreeScansPerDay: 0, maintenanceMode: false };
+const SYSTEM_SETTINGS_TTL_MS = 15 * 1000;
+let systemSettingsCache = { value: DEFAULT_SYSTEM_SETTINGS, loadedAt: 0 };
+
+// Cached briefly because the maintenance check runs on every request.
+async function getSystemSettings({ fresh = false } = {}) {
+  if (!isMongoReady) return systemSettingsCache.value;
+  if (!fresh && Date.now() - systemSettingsCache.loadedAt < SYSTEM_SETTINGS_TTL_MS) {
+    return systemSettingsCache.value;
+  }
+  const saved = (await AppSetting.findOne({ key: 'system' }).lean())?.value || {};
+  const value = {
+    maxFreeScansPerDay: Number.isInteger(saved.maxFreeScansPerDay) && saved.maxFreeScansPerDay >= 0
+      ? saved.maxFreeScansPerDay
+      : DEFAULT_SYSTEM_SETTINGS.maxFreeScansPerDay,
+    maintenanceMode: saved.maintenanceMode === true,
+  };
+  systemSettingsCache = { value, loadedAt: Date.now() };
+  return value;
+}
+
+// Admin reports and daily quotas are bucketed by the app's local day.
+const REPORT_TIMEZONE = process.env.REPORT_TIMEZONE || 'Asia/Bangkok';
+
+function startOfLocalDay(date = new Date()) {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-US', {
+      timeZone: REPORT_TIMEZONE, year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23',
+    }).formatToParts(date).map((p) => [p.type, p.value])
+  );
+  const asUtc = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second);
+  const offsetMs = asUtc - Math.floor(date.getTime() / 1000) * 1000;
+  return new Date(Date.UTC(parts.year, parts.month - 1, parts.day) - offsetMs);
+}
 const Ticket = mongoose.model('Ticket', ticketSchema, 'tickets');
 const OAuthTicket = mongoose.model('OAuthTicket', oauthTicketSchema, 'oauthTickets');
 const UserFood = mongoose.model('UserFood', userFoodSchema, 'user.foods');
@@ -856,8 +909,118 @@ app.post('/api/admin/login', async (req, res) => {
 
 app.get('/api/admin/overview', requireAdmin, async (req, res) => {
   try {
-    const [users, foods, logs] = await Promise.all([User.countDocuments(), Food.countDocuments(), Log.countDocuments()]);
-    return res.json({ users, foods, logs });
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    const todayStart = startOfLocalDay();
+    const weekStart = new Date(todayStart.getTime() - 6 * DAY_MS);
+    const [users, foods, logs, newUsers7d, dailyRows] = await Promise.all([
+      User.countDocuments(),
+      Food.countDocuments(),
+      Log.countDocuments(),
+      User.countDocuments({ createdAt: { $gte: weekStart } }),
+      UserFood.aggregate([
+        { $match: { createdAt: { $gte: weekStart } } },
+        {
+          $group: {
+            _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt', timezone: REPORT_TIMEZONE } },
+            logs: { $sum: 1 },
+            users: { $addToSet: '$userId' },
+          },
+        },
+      ]),
+    ]);
+
+    // One entry per day, oldest first, including days with no activity.
+    const byDay = new Map(dailyRows.map((row) => [row._id, row]));
+    const dayKey = new Intl.DateTimeFormat('en-CA', { timeZone: REPORT_TIMEZONE });
+    const daily = Array.from({ length: 7 }, (_, index) => {
+      const date = dayKey.format(new Date(weekStart.getTime() + index * DAY_MS + 12 * 60 * 60 * 1000));
+      const row = byDay.get(date);
+      return { date, logs: row?.logs || 0, activeUsers: row?.users.length || 0 };
+    });
+
+    return res.json({ users, foods, logs, newUsers7d, daily });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/admin/reports', requireAdmin, async (req, res) => {
+  try {
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    const last24h = new Date(now - DAY_MS);
+    const last30d = new Date(now - 30 * DAY_MS);
+    const prev30d = new Date(now - 60 * DAY_MS);
+
+    const [activeUsers, [intake], topFoods, newUsers30d, newUsersPrev30d] = await Promise.all([
+      UserFood.distinct('userId', { createdAt: { $gte: last24h } }),
+      // Average kcal per user per logged day over the last 30 days.
+      UserFood.aggregate([
+        { $match: { createdAt: { $gte: last30d } } },
+        { $group: { _id: { userId: '$userId', day: '$dateKey' }, kcal: { $sum: '$kcal' } } },
+        { $group: { _id: null, avgKcal: { $avg: '$kcal' }, userDays: { $sum: 1 } } },
+      ]),
+      UserFood.aggregate([
+        { $match: { createdAt: { $gte: last30d }, foodName: { $nin: [null, ''] } } },
+        { $group: { _id: '$foodName', count: { $sum: 1 } } },
+        { $sort: { count: -1, _id: 1 } },
+        { $limit: 5 },
+      ]),
+      User.countDocuments({ createdAt: { $gte: last30d } }),
+      User.countDocuments({ createdAt: { $gte: prev30d, $lt: last30d } }),
+    ]);
+
+    return res.json({
+      activeUsers24h: activeUsers.length,
+      avgDailyIntakeKcal: intake?.avgKcal == null ? null : Math.round(intake.avgKcal),
+      userDays30d: intake?.userDays || 0,
+      newUsers30d,
+      newUsersPrev30d,
+      // null when there is nothing to compare against.
+      userGrowthPct: newUsersPrev30d > 0 ? ((newUsers30d - newUsersPrev30d) / newUsersPrev30d) * 100 : null,
+      topFoods: topFoods.map((row) => ({ name: row._id, count: row.count })),
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// Spreadsheet apps execute cells starting with = + - @ as formulas.
+function csvCell(value) {
+  if (typeof value === 'number') return Number.isFinite(value) ? String(value) : '';
+  let text = value == null ? '' : value instanceof Date ? value.toISOString() : String(value);
+  if (/^[=+\-@\t\r]/.test(text)) text = `'${text}`;
+  return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+}
+
+app.get('/api/admin/export/user-foods.csv', requireAdmin, async (req, res) => {
+  try {
+    const emails = new Map(
+      (await User.find({}, { email: 1 }).lean()).map((user) => [user._id.toString(), user.email])
+    );
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="caltrack-user-logs-${new Date().toISOString().slice(0, 10)}.csv"`);
+    // BOM so Excel opens Thai text as UTF-8.
+    res.write('﻿');
+    const columns = ['userId', 'email', 'dateKey', 'foodName', 'kcal', 'protein', 'carbs', 'fat', 'fiber', 'sugar', 'sodium', 'source', 'createdAt'];
+    res.write(`${columns.join(',')}\r\n`);
+    const cursor = UserFood.find({}, { entry: 0 }).sort({ createdAt: 1 }).lean().cursor();
+    for await (const row of cursor) {
+      const record = { ...row, email: emails.get(String(row.userId)) || '' };
+      res.write(`${columns.map((column) => csvCell(record[column])).join(',')}\r\n`);
+    }
+    return res.end();
+  } catch (error) {
+    if (res.headersSent) return res.end();
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/admin/export/foods.json', requireAdmin, async (req, res) => {
+  try {
+    const foods = await Food.find({}, { _id: 0, __v: 0 }).sort({ foodId: 1 }).lean();
+    res.setHeader('Content-Disposition', `attachment; filename="caltrack-foods-${new Date().toISOString().slice(0, 10)}.json"`);
+    return res.json(foods);
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
@@ -1343,6 +1506,37 @@ async function getAiScanConfig() {
   };
 }
 
+app.get('/api/admin/system-settings', requireAdmin, async (req, res) => {
+  try {
+    return res.json(await getSystemSettings({ fresh: true }));
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/admin/system-settings', requireAdmin, async (req, res) => {
+  try {
+    const maxFreeScansPerDay = Number(req.body?.maxFreeScansPerDay);
+    const { maintenanceMode } = req.body || {};
+    if (!Number.isInteger(maxFreeScansPerDay) || maxFreeScansPerDay < 0 || maxFreeScansPerDay > 1000) {
+      return res.status(400).json({ error: 'maxFreeScansPerDay must be a whole number from 0 to 1000' });
+    }
+    if (typeof maintenanceMode !== 'boolean') {
+      return res.status(400).json({ error: 'maintenanceMode must be true or false' });
+    }
+    if (!isMongoReady) return res.status(503).json({ error: 'database is not connected' });
+
+    await AppSetting.findOneAndUpdate(
+      { key: 'system' },
+      { value: { maxFreeScansPerDay, maintenanceMode }, updatedBy: req.admin?.email, updatedAt: new Date() },
+      { upsert: true }
+    );
+    return res.json(await getSystemSettings({ fresh: true }));
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
 app.get('/api/admin/ai-scan-config', requireAdmin, async (req, res) => {
   const config = await getAiScanConfig();
   return res.json({ ...config, models: geminiScanModels, defaultPrompt: DEFAULT_SCAN_PROMPT });
@@ -1386,6 +1580,23 @@ app.post('/api/ai/scan', async (req, res) => {
     const apiKey = geminiApiKey;
     if (!apiKey) {
       return res.status(503).json({ error: 'บริการวิเคราะห์ภาพยังไม่พร้อมใช้งาน กรุณาตั้งค่า GEMINI_API_KEY หรือค้นหาอาหารด้วยตนเอง' });
+    }
+
+    // Daily free-scan quota (Admin → Settings). Failed scans don't count.
+    // Scans sent without a userId can't be attributed, so they aren't limited.
+    const { maxFreeScansPerDay } = await getSystemSettings();
+    if (maxFreeScansPerDay > 0 && userId && isMongoReady) {
+      const usedToday = await ScanLog.countDocuments({
+        userId,
+        status: { $ne: 'failed' },
+        createdAt: { $gte: startOfLocalDay() },
+      });
+      if (usedToday >= maxFreeScansPerDay) {
+        return res.status(429).json({
+          error: `วันนี้ใช้สแกนครบ ${maxFreeScansPerDay} ครั้งแล้ว กรุณาลองใหม่พรุ่งนี้ หรือค้นหาอาหารด้วยตนเอง`,
+          code: 'SCAN_QUOTA_EXCEEDED',
+        });
+      }
     }
 
     const cleanBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, '');

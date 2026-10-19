@@ -26,8 +26,9 @@ export async function analyzeFoodImage(
 
       // 1. ตรวจสอบสถานะ HTTP Response
       if (!response.ok) {
+        // Maintenance mode is also a 503, but retrying won't help and its message is already user-facing.
         const isUnavailable =
-          response.status === 503 ||
+          (response.status === 503 && data.code !== 'MAINTENANCE') ||
           data.code === 'UNAVAILABLE' ||
           data.error?.includes('high demand');
 

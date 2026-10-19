@@ -55,6 +55,8 @@ export default function AdminScreen() {
   const [summary, setSummary] = useState(null);
   const [users, setUsers] = useState([]);
   const [userTotal, setUserTotal] = useState(0);
+  const [globalSearch, setGlobalSearch] = useState('');
+  const [userSearch, setUserSearch] = useState({ text: '', id: 0 });
   const [foods, setFoods] = useState([]);
   const [query, setQuery] = useState('');
   const [foodFormOpen, setFoodFormOpen] = useState(false);
@@ -69,6 +71,21 @@ export default function AdminScreen() {
   });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+
+  // Top bar search: "food: ..." searches the food database, anything else searches users.
+  function runGlobalSearch() {
+    const text = globalSearch.trim();
+    if (!text) return;
+    const foodMatch = text.match(/^(food|อาหาร)\s*:\s*(.*)$/i);
+    if (foodMatch) {
+      setQuery(foodMatch[2].trim());
+      setPage('foods');
+    } else {
+      setUserSearch({ text, id: Date.now() });
+      setPage('users');
+    }
+    setGlobalSearch('');
+  }
 
   async function signOutAdmin(notice = '') {
     try {
@@ -208,7 +225,14 @@ export default function AdminScreen() {
 
       <View style={styles.main}>
         <View style={styles.topbar}>
-          <TextInput placeholder="Search users, food or commands..." style={styles.search} />
+          <TextInput
+            value={globalSearch}
+            onChangeText={setGlobalSearch}
+            onSubmitEditing={runGlobalSearch}
+            returnKeyType="search"
+            placeholder="ค้นหาผู้ใช้ (ชื่อ/อีเมล) หรือ food: ชื่ออาหาร แล้วกด Enter"
+            style={styles.search}
+          />
           <View style={styles.admin}>
             <Text style={styles.avatar}>A</Text>
             <Text style={styles.adminName}>Administrator</Text>
@@ -220,8 +244,17 @@ export default function AdminScreen() {
           {error ? <Text style={styles.error}>{error}</Text> : null}
           {busy ? <ActivityIndicator color={colors.primary} /> : null}
 
-          {page === 'dashboard' && <Dashboard summary={summary} users={users} onFoods={() => setPage('foods')} />}
-          {page === 'users' && <Users users={users} userTotal={userTotal} token={token} onRefresh={() => refresh(token)} />}
+          {page === 'dashboard' && <Dashboard summary={summary} onFoods={() => setPage('foods')} />}
+          {page === 'users' && (
+            <Users
+              key={userSearch.id}
+              initialQuery={userSearch.text}
+              users={users}
+              userTotal={userTotal}
+              token={token}
+              onRefresh={() => refresh(token)}
+            />
+          )}
           {page === 'foods' && (
             <Foods
               foods={foods}
@@ -286,7 +319,7 @@ function AdminLogin({ notice, onLoggedIn, onExit }) {
             placeholder="อีเมลแอดมิน"
             autoCapitalize="none"
             keyboardType="email-address"
-            style={styles.formInput}
+            style={[styles.formInput, styles.formInputStacked]}
           />
           <TextInput
             value={password}
@@ -294,7 +327,7 @@ function AdminLogin({ notice, onLoggedIn, onExit }) {
             placeholder="รหัสผ่าน"
             secureTextEntry
             onSubmitEditing={submit}
-            style={styles.formInput}
+            style={[styles.formInput, styles.formInputStacked]}
           />
         </View>
         {loginError ? <Text style={[styles.error, { marginTop: 12, marginBottom: 0 }]}>{loginError}</Text> : null}
@@ -313,7 +346,11 @@ function AdminLogin({ notice, onLoggedIn, onExit }) {
   );
 }
 
-function Dashboard({ summary, users, onFoods }) {
+const WEEKDAY_LABELS = ['Su', 'M', 'T', 'W', 'Th', 'F', 'Sa'];
+
+function Dashboard({ summary, onFoods }) {
+  const daily = summary?.daily || [];
+  const maxLogs = Math.max(1, ...daily.map((day) => day.logs));
   return (
     <>
       <Title name="System overview" detail={`CalTrack activity as of ${formatDate(new Date())}`} />
@@ -325,19 +362,34 @@ function Dashboard({ summary, users, onFoods }) {
         <Stat key="users" icon="U" value={summary?.users} label="Total users" tone="green" />
         <Stat key="logs" icon="F" value={summary?.logs} label="Food logs" tone="tan" />
         <Stat key="foods" icon="D" value={summary?.foods} label="Food records" tone="blue" />
-        <Stat key="recent" icon="N" value={users.length} label="Recent users" tone="coral" />
+        <Stat key="recent" icon="N" value={summary?.newUsers7d} label="New users (7 days)" tone="coral" />
       </View>
       <View style={styles.columns}>
         <Card>
-          <Text style={styles.sectionTitle}>Usage in the last 7 days</Text>
-          <View style={styles.bars}>
-            {[52, 64, 70, 58, 80, 92, 74].map((height, index) => (
-              <View style={styles.barColumn} key={index}>
-                <View style={[styles.bar, index === 6 && styles.barActive, { height: `${height}%` }]} />
-                <Text style={styles.barLabel}>{['M', 'T', 'W', 'Th', 'F', 'Sa', 'Su'][index]}</Text>
-              </View>
-            ))}
-          </View>
+          <Text style={styles.sectionTitle}>Food logs in the last 7 days</Text>
+          {daily.length === 0 ? (
+            <Text style={styles.emptyText}>ยังไม่มีข้อมูล</Text>
+          ) : (
+            <View style={styles.bars}>
+              {daily.map((day, index) => (
+                <View style={styles.barColumn} key={day.date}>
+                  <Text style={styles.barLabel}>{day.logs}</Text>
+                  <View
+                    style={[
+                      styles.bar,
+                      index === daily.length - 1 && styles.barActive,
+                      // Keep empty days visible as a thin stub.
+                      { height: `${Math.max((day.logs / maxLogs) * 80, 2)}%` },
+                    ]}
+                  />
+                  <Text style={styles.barLabel}>{WEEKDAY_LABELS[new Date(`${day.date}T12:00:00`).getDay()]}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+          <Text style={styles.footnote}>
+            ผู้ใช้ที่บันทึกอาหารวันนี้: {daily.length ? daily[daily.length - 1].activeUsers : '-'} คน
+          </Text>
         </Card>
         <Card>
           <Text style={styles.sectionTitle}>Recent activity</Text>
@@ -351,8 +403,8 @@ function Dashboard({ summary, users, onFoods }) {
   );
 }
 
-function Users({ users, userTotal, token, onRefresh }) {
-  const [userQuery, setUserQuery] = useState('');
+function Users({ initialQuery = '', users, userTotal, token, onRefresh }) {
+  const [userQuery, setUserQuery] = useState(initialQuery);
   const [addUserOpen, setAddUserOpen] = useState(false);
   const [newUser, setNewUser] = useState({ email: '', password: '', displayName: '', role: 'user' });
 

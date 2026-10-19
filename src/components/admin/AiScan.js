@@ -4,8 +4,7 @@ import { Text } from '../AppText';
 import { TextInput } from '../AppTextInput';
 import styles from '../../style/screens/AdminScreenStyles';
 import { colors } from '../../theme/colors';
-import { API_BASE_URL } from '../../config';
-import { Title, Stat, Card, Badge, formatDate } from './AdminCommon';
+import { Title, Stat, Card, Badge, formatDate, adminRequest } from './AdminCommon';
 
 const SCAN_STATUS = {
   success: { label: 'Success', color: 'green' },
@@ -13,16 +12,6 @@ const SCAN_STATUS = {
   no_food: { label: 'No Food', color: 'blue' },
   failed: { label: 'Failed', color: 'red' },
 };
-
-async function adminRequest(path, token, options = {}) {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-  });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.error || 'Request failed');
-  return data;
-}
 
 function formatDateTime(value) {
   const d = new Date(value);
@@ -142,7 +131,7 @@ export default function AiScan({ token }) {
               multiline
               numberOfLines={6}
               maxLength={4000}
-              style={[styles.formInput, { height: 140, marginTop: 8, textAlignVertical: 'top' }]}
+              style={[styles.formInput, styles.formInputStacked, { height: 140, marginTop: 8, textAlignVertical: 'top' }]}
             />
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 10 }}>
               <Pressable

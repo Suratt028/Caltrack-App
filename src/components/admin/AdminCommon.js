@@ -2,6 +2,22 @@
 import { Alert, Platform, View } from 'react-native';
 import { Text } from '../AppText';
 import styles from '../../style/screens/AdminScreenStyles';
+import { API_BASE_URL } from '../../config';
+
+// Authenticated JSON request for admin sub-pages.
+export async function adminRequest(path, token, options = {}) {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...options,
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(data.error || 'Request failed');
+    error.status = response.status;
+    throw error;
+  }
+  return data;
+}
 
 // window.confirm / alert only exist on web; native needs Alert.alert.
 export function confirmAction(message, confirmLabel = 'ลบ') {

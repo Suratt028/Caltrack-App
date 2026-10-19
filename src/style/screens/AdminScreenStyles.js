@@ -49,6 +49,8 @@ const styles = StyleSheet.create({
   filter: { flex: 1, minWidth: 220, borderWidth: 1, borderColor: colors.border, borderRadius: radius.sm, backgroundColor: colors.card, padding: 10 },
   formGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 14 },
   formInput: { flexGrow: 1, flexBasis: 220, borderWidth: 1, borderColor: colors.border, borderRadius: radius.sm, padding: 10, backgroundColor: colors.surfaceMuted },
+  // formInput's flexBasis sizes width inside row grids; in a column it would become height.
+  formInputStacked: { flexGrow: 0, flexBasis: 'auto' },
   primary: { backgroundColor: colors.primary, borderRadius: radius.button, alignItems: 'center', padding: 15, marginTop: 16 },
   primarySmall: { backgroundColor: colors.primary, borderRadius: radius.button, paddingHorizontal: 16, justifyContent: 'center' },
   primaryText: { color: colors.white, fontWeight: '700' },
@@ -67,7 +69,7 @@ const styles = StyleSheet.create({
   placeholder: { color: colors.primary, fontSize: 22, fontWeight: '800' },
   error: { color: colors.danger, marginBottom: 12 },
   login: { flex: 1, minHeight: '100vh', backgroundColor: colors.bg, justifyContent: 'center', alignItems: 'center', padding: 24 },
-  loginCard: { width: '100%', maxWidth: 440, padding: 32 },
+  loginCard: { width: '100%', maxWidth: 440, padding: 32, flexGrow: 0, flexBasis: 'auto' },
   eyebrow: { color: colors.primary, fontSize: 12, fontWeight: '800', marginTop: 18 },
   loginTitle: { color: colors.ink, fontSize: 28, fontWeight: '800', marginTop: 8 },
   input: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.sm, padding: 14, marginTop: 14, backgroundColor: colors.surfaceMuted },
