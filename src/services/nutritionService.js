@@ -41,25 +41,3 @@ export async function calculateNutrition(items) {
 
   return response.json();
 }
-
-/**
- * Convenience helper for the common single-food case.
- */
-export async function calculateSingleFoodMacros(foodId, grams) {
-  const { totals, notFound } = await calculateNutrition([{ foodId, grams }]);
-  if (notFound.includes(String(foodId))) {
-    throw new Error('ไม่พบอาหารนี้ในฐานข้อมูล');
-  }
-  return {
-    kcal: totals.kcal ?? 0,
-    protein: totals.protein_g ?? 0,
-    carbs: totals.carbAvailable_g ?? 0,
-    fat: totals.fat_g ?? 0,
-    fiber: totals.fiber_g ?? 0,
-    sugar: totals.sugar_g ?? 0,
-    sodium: totals.sodium_mg ?? 0,
-    calcium: totals.calcium_mg ?? 0,
-    iron: totals.iron_mg ?? 0,
-    vitaminC: totals.vitaminC_mg ?? 0,
-  };
-}

@@ -9,7 +9,8 @@ import { colors } from '../../theme/colors';
 import styles from '../../style/screens/AdminScreenStyles';
 
 // Import Shared Helpers/Components (ถอย 2 ชั้น)
-import { Title, Stat, Card, Badge, formatDate, confirmAction, notify } from '../../components/admin/AdminCommon';
+import { Title, Stat, Card, Badge, formatDate, notify } from '../../components/admin/AdminCommon';
+import { confirmAsync } from '../../utils/confirm';
 
 // Import Sub-pages (ถอย 2 ชั้น)
 import AiScan from '../../components/admin/AiScan';
@@ -164,7 +165,7 @@ export default function AdminScreen() {
 
   async function removeFood(foodId) {
     if (!foodId) return setError('รายการนี้ไม่มี Food ID จึงลบผ่านหน้านี้ไม่ได้');
-    if (!(await confirmAction(`ลบอาหาร ${foodId} ออกจากฐานข้อมูลใช่หรือไม่?`))) return;
+    if (!(await confirmAsync({ title: `ลบอาหาร ${foodId} ออกจากฐานข้อมูลใช่หรือไม่?`, confirmLabel: 'ลบ' }))) return;
     try {
       await api(`/admin/foods/${encodeURIComponent(foodId)}`, token, { method: 'DELETE' });
       await refresh(token);
@@ -485,7 +486,11 @@ function Users({ initialQuery = '', users, userTotal, token, onRefresh }) {
   };
 
   const handleDeleteUser = async (userId) => {
-    if (!(await confirmAction('ลบผู้ใช้นี้ใช่หรือไม่? ข้อมูลโปรไฟล์ บันทึกอาหาร และน้ำหนักของผู้ใช้จะถูกลบด้วย'))) return;
+    if (!(await confirmAsync({
+      title: 'ลบผู้ใช้นี้ใช่หรือไม่?',
+      message: 'ข้อมูลโปรไฟล์ บันทึกอาหาร และน้ำหนักของผู้ใช้จะถูกลบด้วย',
+      confirmLabel: 'ลบ',
+    }))) return;
     setActionError('');
     try {
       await api(`/admin/users/${userId}`, token, { method: 'DELETE' });

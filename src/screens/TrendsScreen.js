@@ -341,7 +341,7 @@ export default function TrendsScreen({ navigation }) {
                 />
               </View>
             </View>
-            <Text style={styles.customHint}>(ต้นแบบ: ใช้ข้อมูลสาธิต 7 วันล่าสุด)</Text>
+            <Text style={styles.customHint}>กรอกวันที่แบบ ปี-เดือน-วัน (ค.ศ.) แสดงได้สูงสุด 60 วันต่อครั้ง</Text>
           </Card>
         )}
 

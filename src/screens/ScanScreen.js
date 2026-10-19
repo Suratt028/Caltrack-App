@@ -9,22 +9,13 @@ import { colors, spacing } from '../theme/colors';
 import PrimaryButton from '../components/PrimaryButton';
 import Card from '../components/Card';
 import FoodScanReview from '../components/FoodScanReview';
-import MealChips from '../components/MealChips';
+import MealChips, { defaultMealForNow } from '../components/MealChips';
 import Banner from '../components/Banner';
 import ScreenHeader from '../components/ScreenHeader';
 import { useApp } from '../context/AppContext';
 import { searchNutritionFoods } from '../services/foodService';
 import { analyzeFoodImage } from '../services/aiVisionService';
 import styles from '../style/screens/ScanScreenStyles';
-
-const FOOD_CATEGORIES = [
-  ['ข้าว / แป้ง', 'restaurant-outline'],
-  ['เนื้อสัตว์', 'fish-outline'],
-  ['ผัก / ผลไม้', 'leaf-outline'],
-  ['นม / ไข่', 'egg-outline'],
-  ['เครื่องดื่ม', 'cafe-outline'],
-  ['อื่น ๆ', 'grid-outline'],
-];
 
 function FoodBoxOverlays({ items = [] }) {
   if (!Array.isArray(items) || items.length === 0) return null;
@@ -66,7 +57,7 @@ export default function ScanScreen({ navigation }) {
   const [result, setResult] = useState(null);
   const [analysisError, setAnalysisError] = useState('');
   const [notice, setNotice] = useState('');
-  const [meal, setMeal] = useState('lunch');
+  const [meal, setMeal] = useState(defaultMealForNow);
   const [saved, setSaved] = useState(false);
   const [foodQuery, setFoodQuery] = useState('');
   const [foodResults, setFoodResults] = useState([]);
@@ -328,20 +319,6 @@ export default function ScanScreen({ navigation }) {
             />
 
             <Text style={styles.sectionTitle}>หรือเลือกรูปจากคลังภาพ</Text>
-            <View style={styles.categoryGrid}>
-              {FOOD_CATEGORIES.map(([label, icon]) => (
-                <Pressable
-                  key={label}
-                  style={({ pressed }) => [styles.categoryItem, pressed && styles.categoryItemPressed]}
-                  onPress={() => pickFrom('library')}
-                  accessibilityRole="button"
-                  accessibilityLabel={`เลือกรูปจากคลังภาพ หมวด ${label}`}
-                >
-                  <Ionicons name={icon} size={22} color={colors.primary} />
-                  <Text style={styles.categoryText}>{label}</Text>
-                </Pressable>
-              ))}
-            </View>
             <View style={styles.actionsRow}>
               <PrimaryButton title="เลือกจากคลังภาพ" variant="outline" icon="images-outline" onPress={() => pickFrom('library')} style={{ flex: 1 }} />
             </View>

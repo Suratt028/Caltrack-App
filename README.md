@@ -16,7 +16,7 @@
 ## เทคโนโลยี
 
 - **Mobile:** React Native 0.86, Expo 57, React Navigation
-- **Backend:** Node.js, Express, Mongoose, Multer
+- **Backend:** Node.js, Express, Mongoose
 - **Database:** MongoDB / MongoDB Atlas
 - **AI:** Gemini Vision ผ่าน backend
 - **Storage ฝั่ง mobile:** AsyncStorage
@@ -78,7 +78,7 @@ REPORT_TIMEZONE="Asia/Bangkok"
 | `ADMIN_DISPLAY_NAME` | ชื่อแสดงของ Admin ค่าเริ่มต้นคือ `CalTrack Administrator` |
 | `REPORT_TIMEZONE` | โซนเวลาที่ใช้แบ่งวันในรายงานแอดมินและโควตาสแกนรายวัน ค่าเริ่มต้นคือ `Asia/Bangkok` |
 
-Backend ยังรองรับตัวแปรทางเลือก `MONGODB_USERNAME`, `MONGODB_PASSWORD`, `MONGODB_HOST`, `FATSECRET_CLIENT_ID`, `FATSECRET_CLIENT_SECRET`, `FATSECRET_CUSTOMER_KEY` และ `FATSECRET_OAUTH_URL`
+Backend ยังรองรับตัวแปรทางเลือก `MONGODB_USERNAME`, `MONGODB_PASSWORD` และ `MONGODB_HOST` (ใช้แทน `MONGODB_URI` ได้)
 
 ### 3. รัน backend
 
@@ -97,9 +97,9 @@ npm run ios
 npm run web
 ```
 
-หน้า Admin ใช้งานผ่านหน้า Login หลักที่ `http://localhost:8081/` โดยกรอก `ADMIN_EMAIL` และ `ADMIN_PASSWORD` ระบบจะเปิด Dashboard Admin อัตโนมัติ โดยต้องเปิด backend ควบคู่กันด้วย `npm run server`
+หน้า Admin เปิดได้ที่ `http://localhost:8081/admin` (มีหน้าเข้าสู่ระบบของแอดมินเอง) หรือเข้าสู่ระบบด้วยบัญชีแอดมินจากหน้า Login หลักก็ได้ โดยต้องเปิด backend ควบคู่กันด้วย `npm run server`
 
-เมื่อ backend เชื่อมต่อ MongoDB สำเร็จ ระบบจะสร้างบัญชี Admin เริ่มต้นใน collection `users` อัตโนมัติด้วยค่าเริ่มต้น `admin@caltrack.app` / `Admin@1234` และกำหนด `role: "admin"` หากมีบัญชีอีเมลนี้อยู่แล้ว ระบบจะปรับ role เป็น Admin โดยไม่เขียนทับรหัสผ่านเดิม ควรเปลี่ยนค่าทั้งสองใน `.env` ก่อนใช้งานจริง
+เมื่อ backend เชื่อมต่อ MongoDB สำเร็จ ระบบจะสร้างบัญชี Admin ใน collection `users` จาก `ADMIN_EMAIL` / `ADMIN_PASSWORD` และกำหนด `role: "admin"` หากมีบัญชีอีเมลนี้อยู่แล้ว ระบบจะปรับ role เป็น Admin โดยไม่เขียนทับรหัสผ่านเดิม ถ้าไม่ได้ตั้ง `ADMIN_PASSWORD` จะใช้รหัสเริ่มต้นสำหรับพัฒนาเท่านั้นและ server จะแสดงคำเตือน ต้องตั้งค่าก่อนใช้งานจริง
 
 ค่า API URL ตามอุปกรณ์:
 
@@ -115,9 +115,7 @@ npm run web
 npm run web
 ```
 
-Expo Web ใช้หน้าจอ, components, navigation และ state จาก `App.js` ชุดเดียวกับแอป Android/iOS ผ่าน entry ใน `src/App.web.js` จึงใช้ UX และข้อมูลชุดเดียวกัน รวมถึง onboarding, โปรไฟล์, บันทึกอาหาร, สแกน และแนวโน้ม บน desktop จำกัดความกว้างเนื้อหาไว้ที่ 1,120 px และจัดกึ่งกลางเพื่อให้มีระยะขอบเหมาะกับจอใหญ่ ทั้งเว็บและแอปใช้บัญชีจาก MongoDB ร่วมกัน
-
-ผู้ใช้เว็บที่เคยเข้าสู่ระบบผ่านหน้าเว็บชุดเดิมจะย้าย session เดิมไปยัง storage ที่แอปใช้ให้อัตโนมัติเมื่อเปิดเว็บครั้งแรก
+Expo Web ใช้หน้าจอ, components, navigation และ state จาก `App.js` ชุดเดียวกับแอป Android/iOS ผ่าน entry `index.web.js` (เพิ่มเฉพาะ CSS ระดับหน้าเว็บใน `src/global.css`) จึงใช้ UX และข้อมูลชุดเดียวกัน รวมถึง onboarding, โปรไฟล์, บันทึกอาหาร, สแกน และแนวโน้ม บน desktop จำกัดความกว้างเนื้อหาไว้ที่ 1,120 px และจัดกึ่งกลางเพื่อให้มีระยะขอบเหมาะกับจอใหญ่ ทั้งเว็บและแอปใช้บัญชีจาก MongoDB ร่วมกัน
 
 ### ตั้งค่า Google / Apple Sign In
 
@@ -143,33 +141,28 @@ npx expo run:android
 ```text
 CalTrackApp/
 ├── App.js                         # จุดเริ่มต้นของแอปและหน้าตรวจสถานะผู้ใช้
-├── index.js                       # register root component
+├── index.js                       # register root component (Android/iOS)
+├── index.web.js                   # entry ของ Expo Web + src/global.css
 ├── app.json                       # Expo metadata, icon และ permissions
 ├── package.json                   # dependencies และ scripts
 ├── server.js                      # Express server, models และ API routes
-├── server/nutritionMath.js        # pure helpers สำหรับคำนวณสารอาหารต่อกรัม
+├── server/                        # pure helpers: nutritionMath, Gemini fallback/error mapping
 ├── seed-foods.js                  # นำเข้า thaiFoods_full.json ลง collection foods
 ├── thaiFoods_full.json            # dataset อาหารไทยฉบับเต็ม
-├── controllers/                   # controller สำหรับ food upload/scan
-├── models/                        # Mongoose models
-├── services/                      # backend services เช่น Gemini และ FatSecret
-├── scripts/                       # scripts เสริม
 ├── src/
-│   ├── config.js                  # API URL และ MongoDB Data API settings
-│   ├── context/AppContext.js      # state กลางและ AsyncStorage persistence
+│   ├── config.js                  # API URL ที่แอปใช้เรียก backend
+│   ├── global.css                 # CSS ระดับหน้าเว็บ (Expo Web เท่านั้น)
+│   ├── context/AppContext.js      # state กลาง, token ผู้ใช้ และ AsyncStorage persistence
 │   ├── components/                # UI components รวมถึงหน้าทบทวนผลสแกนอาหาร
-│   ├── data/foodDatabase.js       # local food database/fallback
+│   ├── components/admin/          # หน้าย่อยของ Admin (AI Scan, Reports, Settings, Support)
 │   ├── navigation/RootNavigator.js# bottom tab navigation
 │   ├── screens/                   # Auth, onboarding, dashboard, log, scan, trends, profile
 │   ├── screens/Admin/AdminScreen.js # Admin dashboard สำหรับผู้ดูแลระบบ
-│   ├── services/                  # mobile auth, API, AI vision และ nutrition services
+│   ├── services/                  # API, AI vision, food และ nutrition services
 │   ├── style/                     # styles ของ app, screens และ components
 │   ├── theme/colors.js            # design tokens ด้านสี
-│   ├── utils/calculations.js      # สูตร BMR/TDEE และเป้าหมายสารอาหาร
-│   └── web/                       # ชุดหน้าเว็บเดิม (ไม่ได้ใช้โดย Expo Web entry ปัจจุบัน)
-├── App.web.js                     # Expo Web entry
-├── webpack.config.js              # Expo Web bundler config
-├── tests/                         # unit tests สำหรับ authentication และ nutrition math
+│   └── utils/                     # สูตร BMR/TDEE และ helper ยืนยันการกระทำ
+├── tests/                         # unit tests สำหรับ nutrition math และ Gemini helpers
 └── docs/CalTrack_Chapter1-4.md    # เอกสารประกอบโครงงาน
 ```
 
@@ -186,38 +179,61 @@ CalTrackApp/
 
 ## Backend API
 
+การยืนยันตัวตน: `/api/auth/login`, `/api/auth/register` และ OAuth คืน `user.token` (อายุ 30 วัน) ให้ส่งเป็น `Authorization: Bearer <token>` ส่วน route แอดมินใช้ token จาก `/api/admin/login` (อายุ 8 ชั่วโมง) route ล็อกอินและสมัครมี rate limit
+
 ```text
+# สาธารณะ
 GET    /health
 GET    /api/health
 GET    /api/diagnostics
 POST   /api/auth/register
 POST   /api/auth/login
 POST   /api/admin/login
-GET    /api/admin/overview        # ต้องใช้ Admin Bearer token
-GET    /api/admin/users           # ต้องใช้ Admin Bearer token
-GET    /api/admin/foods           # ต้องใช้ Admin Bearer token
-POST   /api/admin/foods           # ต้องใช้ Admin Bearer token
-PATCH  /api/admin/foods/:foodId   # ต้องใช้ Admin Bearer token
-DELETE /api/admin/foods/:foodId   # ต้องใช้ Admin Bearer token
-GET    /api/profiles/:userId
-PUT    /api/profiles/:userId
-DELETE /api/profiles/:userId
-GET    /api/logs/:userId
-POST   /api/logs/:userId
-PATCH  /api/logs/:userId/:logId
-DELETE /api/logs/:userId/:logId   # ลบ log และ mirror ใน userfoods
 GET    /api/foods/search?q=<query>&limit=<number>
 GET    /api/foods/:foodId
 POST   /api/nutrition/calculate
-POST   /api/food/scan
-POST   /api/food/upload
+
+# ต้องใช้ user token (และ :userId ต้องเป็นของเจ้าของ token, แอดมินเข้าถึงได้ทุกคน)
+GET    /api/profiles/:userId
+PUT    /api/profiles/:userId
+DELETE /api/profiles/:userId
+GET    /api/weights/:userId
+PUT    /api/weights/:userId/:dateKey
+DELETE /api/users/:userId/data
+GET    /api/logs/:userId
+POST   /api/logs/:userId
+PATCH  /api/logs/:userId/:logId
+DELETE /api/logs/:userId/:logId   # ลบ log และ mirror ใน user.foods
 POST   /api/ai/scan
-GET    /api/scan-images/:scanId
+GET    /api/scan-images/:scanId   # เฉพาะรูปของตัวเอง
+GET    /api/tickets               # ผู้ใช้เห็นเฉพาะของตัวเอง แอดมินเห็นทั้งหมด
+POST   /api/tickets
+
+# ต้องใช้ admin token
+GET    /api/admin/overview
+GET    /api/admin/reports
+GET    /api/admin/export/user-foods.csv
+GET    /api/admin/export/foods.json
+GET    /api/admin/scan-logs
+GET    /api/admin/users?q=<query>&limit=<number>
+POST   /api/admin/users
+PATCH  /api/admin/users/:userId
+DELETE /api/admin/users/:userId
+GET    /api/admin/users/:userId/logs
+GET    /api/admin/foods
+POST   /api/admin/foods
+PATCH  /api/admin/foods/:foodId
+DELETE /api/admin/foods/:foodId
+GET    /api/admin/ai-scan-config
+PUT    /api/admin/ai-scan-config
+GET    /api/admin/system-settings
+PUT    /api/admin/system-settings
+PATCH  /api/tickets/:id
+DELETE /api/tickets/:id
 GET/POST /api/seed-demo
-POST   /api/fatsecret/token
 ```
 
-`/api/ai/scan` เป็น endpoint ที่ mobile ใช้จริง รับ JSON `imageBase64`, `mimeType`, `userId` และ `storeImage` (ต้องเป็น `true` เมื่อผู้ใช้ยินยอมให้เก็บรูป) ผลวิเคราะห์คืน `result.items` ซึ่งมีชื่ออาหาร กรอบภาพ ปริมาณโดยประมาณเป็นช่วง สารอาหารที่ AI ประเมิน และตัวเลือกอาหารจากฐานข้อมูล ผู้ใช้ต้องยืนยันชื่อและกรัมก่อนบันทึก หาก Gemini ใช้งานไม่ได้ API จะแจ้ง error แทนการคืนค่าอาหารตัวอย่าง ส่วน `/api/food/scan` และ `/api/food/upload` รับ multipart field ชื่อ `image` ขนาดสูงสุด 5 MB
+`/api/ai/scan` เป็น endpoint ที่แอปใช้สแกนอาหาร รับ JSON `imageBase64`, `mimeType` และ `storeImage` (ต้องเป็น `true` เมื่อผู้ใช้ยินยอมให้เก็บรูป) ผู้ใช้ระบุจาก token ซึ่งใช้นับโควตาสแกนรายวันที่ตั้งในหน้า Admin ด้วย ผลวิเคราะห์คืน `result.items` ซึ่งมีชื่ออาหาร กรอบภาพ ปริมาณโดยประมาณเป็นช่วง สารอาหารที่ AI ประเมิน และตัวเลือกอาหารจากฐานข้อมูล ผู้ใช้ต้องยืนยันชื่อและกรัมก่อนบันทึก หาก Gemini ใช้งานไม่ได้ API จะแจ้ง error แทนการคืนค่าอาหารตัวอย่าง
 
 สำหรับการคำนวณโภชนาการ ส่ง `POST /api/nutrition/calculate` ด้วย body เช่น:
 
@@ -232,7 +248,7 @@ POST   /api/fatsecret/token
 
 ข้อมูลในฐานอาหารเก็บต่อ 100 กรัม และ endpoint จะคืน `totals`, `breakdown` และ `notFound` โดยรับน้ำหนัก 1–5,000 กรัมต่อรายการ
 
-`DELETE /api/logs/:userId/:logId` ลบเอกสาร log และ mirror ใน collection `userfoods` ที่มี `logId` ตรงกันในคำสั่งเดียว
+`DELETE /api/logs/:userId/:logId` ลบเอกสาร log และ mirror ใน collection `user.foods` ที่มี `logId` ตรงกันในคำสั่งเดียว
 
 ## นำเข้าฐานข้อมูลอาหาร
 
@@ -259,19 +275,20 @@ npx expo export --platform android
 
 ## ความปลอดภัยและข้อจำกัด
 
-- ห้าม commit `.env`, MongoDB URI, password, Gemini key หรือ FatSecret secret
+- ห้าม commit `.env`, MongoDB URI, password หรือ Gemini key
 - ตัวแปร `EXPO_PUBLIC_*` ถูกส่งไปฝั่ง client และไม่ควรใช้เก็บ secret
 - เก็บ `GEMINI_API_KEY` ไว้ที่ backend เท่านั้น
 - ตั้ง `AUTH_SECRET` เป็นค่าสุ่มยาวอย่างน้อย 32 ตัวอักษรก่อนเปิดใช้งานจริง ค่านี้ใช้เซ็น token การล็อกอิน ถ้าเปลี่ยนค่า ผู้ใช้ทุกคนต้องล็อกอินใหม่ (รหัสผ่านเก็บด้วย scrypt แบบมี salt จึงไม่ขึ้นกับค่านี้ ยกเว้นบัญชีเก่าที่ยังไม่เคยล็อกอินหลังอัปเกรด)
 - การสมัคร/เข้าสู่ระบบต้องใช้ MongoDB ที่เชื่อมต่อได้ หาก backend หรือฐานข้อมูลไม่พร้อม ระบบจะแจ้งข้อผิดพลาดและจะไม่สร้างบัญชี local แทน
-- backend ยังไม่มี authentication middleware สำหรับตรวจสิทธิ์ตาม `userId`
+- route ข้อมูลผู้ใช้ตรวจ user token และอนุญาตเฉพาะเจ้าของ `userId` (หรือแอดมิน); seed demo ใช้ได้เฉพาะแอดมิน
+- rate limit ของการล็อกอิน/สมัครเก็บในหน่วยความจำของ server process เดียว ถ้ารันหลาย instance ต้องย้ายไปเก็บร่วมกัน (เช่น Redis)
 - CORS เปิดกว้างด้วยค่าเริ่มต้นของ `cors()` ควรจำกัด origin ก่อน deploy จริง
-- diagnostics, seed demo และ FatSecret ยังไม่มี access control
+- `/api/diagnostics` เปิดสาธารณะ บอกเพียงว่าตั้ง Gemini key แล้วหรือยัง
 - Admin Web ต้องตั้งค่า `ADMIN_EMAIL` และ `ADMIN_PASSWORD` ใน backend และควรใช้ HTTPS เมื่อ deploy จริง
 - Admin token มีอายุ 8 ชั่วโมง และห้ามนำค่า credential ไปใส่ใน `EXPO_PUBLIC_*`
 - ผลวิเคราะห์จากภาพเป็นค่าประมาณ ไม่ใช่ผลตรวจทางห้องปฏิบัติการ
-- หาก Gemini หรือ backend ใช้งานไม่ได้ แอปจะใช้ sample fallback เพื่อให้หน้าสแกนยังทำงานต่อได้
-- backend รับ JSON body สูงสุด 10 MB และรูปภาพผ่าน Multer สูงสุด 5 MB
+- หาก Gemini ใช้งานไม่ได้ หน้าสแกนจะแจ้ง error และให้ผู้ใช้ค้นหาอาหารจากฐานข้อมูลแทน ไม่มีการแสดงค่าตัวอย่าง
+- backend รับ JSON body สูงสุด 10 MB (รูปสแกนส่งเป็น base64 ใน JSON)
 
 ## License
 

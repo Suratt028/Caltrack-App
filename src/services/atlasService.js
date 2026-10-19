@@ -134,11 +134,6 @@ export function mapRemoteProfile(profile) {
   };
 }
 
-export async function deleteProfile(userId) {
-  const payload = await requestJson(`/profiles/${userId}`, { method: 'DELETE' });
-  return payload.profile;
-}
-
 export async function fetchLogs(userId) {
   const payload = await requestJson(`/logs/${userId}`);
   return payload.logs || [];
@@ -167,14 +162,6 @@ export async function saveWeight(userId, dateKey, weightKg) {
 
 export async function clearUserData(userId) {
   return requestJson(`/users/${userId}/data`, { method: 'DELETE' });
-}
-
-export async function updateLog(userId, logId, updates) {
-  const payload = await requestJson(`/logs/${userId}/${logId}`, {
-    method: 'PATCH',
-    body: JSON.stringify(updates),
-  });
-  return payload.log;
 }
 
 export async function deleteLog(userId, logId) {
