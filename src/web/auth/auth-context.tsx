@@ -52,6 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         id: signedIn.id,
         email: signedIn.email,
         displayName: signedIn.displayName || email,
+        token: signedIn.token,
       }
       saveSession(session)
       setUser(session)
@@ -72,6 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         id: created.id,
         email: created.email,
         displayName: created.displayName || displayName,
+        token: created.token,
       }
       saveSession(session)
       setUser(session)

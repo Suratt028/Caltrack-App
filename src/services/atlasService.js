@@ -1,14 +1,37 @@
 import { API_BASE_URL } from '../config';
 
+// The signed-in user's token, set by AppContext. Sent on every request that
+// doesn't bring its own Authorization header (admin calls do).
+let authToken = null;
+let onUnauthorized = null;
+
+export function setAuthToken(token) {
+  authToken = token || null;
+}
+
+export function getAuthToken() {
+  return authToken;
+}
+
+// Called when the server rejects the user's token (expired or invalid).
+export function setUnauthorizedHandler(handler) {
+  onUnauthorized = handler;
+}
+
+export function authHeaders(extra = {}) {
+  return authToken ? { ...extra, Authorization: `Bearer ${authToken}` } : extra;
+}
+
 async function requestJson(path, options = {}) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000);
+  const usesUserToken = !options.headers?.Authorization && Boolean(authToken);
 
   let response;
   try {
     response = await fetch(`${API_BASE_URL}${path}`, {
-      headers: { 'Content-Type': 'application/json' },
       ...options,
+      headers: options.headers || authHeaders({ 'Content-Type': 'application/json' }),
       signal: controller.signal,
     });
   } catch (error) {
@@ -22,7 +45,12 @@ async function requestJson(path, options = {}) {
 
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error(payload.error || 'Request failed');
+    if (response.status === 401 && usesUserToken && onUnauthorized) onUnauthorized();
+    const error = new Error(
+      response.status === 401 ? 'เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่' : payload.error || 'Request failed'
+    );
+    error.status = response.status;
+    throw error;
   }
 
   return payload;
@@ -167,8 +195,9 @@ const adminHeaders = (adminToken) => ({
   Authorization: `Bearer ${adminToken}`,
 });
 
-export async function fetchTickets(userEmail) {
-  const payload = await requestJson(`/tickets?email=${encodeURIComponent(userEmail)}`);
+// The server returns the signed-in user's own tickets.
+export async function fetchTickets() {
+  const payload = await requestJson('/tickets');
   return payload.tickets || [];
 }
 

@@ -9,6 +9,8 @@ export interface SessionUser {
   id: string
   email: string
   displayName: string
+  /** Signed API token from /auth/login or /auth/register. */
+  token?: string
 }
 
 const STORAGE_KEY = 'caltrack_session'
@@ -26,6 +28,7 @@ export function getSession(): SessionUser | null {
         typeof parsed.displayName === 'string' && parsed.displayName
           ? parsed.displayName
           : 'ผู้ใช้ CalTrack',
+      token: typeof parsed.token === 'string' ? parsed.token : undefined,
     }
   } catch {
     return null

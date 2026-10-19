@@ -6,6 +6,7 @@
  * fall back to their recovery/empty states instead of hanging.
  */
 import { API_BASE_URL } from '../../config'
+import { getSession } from '../auth/session'
 
 export const API_BASE = API_BASE_URL.replace(/\/+$/, '')
 
@@ -27,6 +28,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   const { body, headers, ...rest } = options
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), 10_000)
+  const token = getSession()?.token
 
   let response: Response
   try {
@@ -36,6 +38,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
       headers: {
         Accept: 'application/json',
         ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...(headers as Record<string, string> | undefined),
       },
       body: body !== undefined ? JSON.stringify(body) : undefined,

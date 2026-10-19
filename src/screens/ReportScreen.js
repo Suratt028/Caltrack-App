@@ -27,7 +27,7 @@ export default function ReportScreen({ onClose }) {
     }
     setLoadingTickets(true);
     try {
-      const userTickets = await fetchTickets(user.email);
+      const userTickets = await fetchTickets();
       setTickets(userTickets);
     } catch (err) {
       console.warn('Failed to load tickets:', err);

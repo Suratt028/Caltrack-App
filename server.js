@@ -504,32 +504,73 @@ async function ensureAdminAccount() {
   return admin;
 }
 
-function createAdminToken(email) {
-  const payload = Buffer.from(JSON.stringify({ email, role: 'admin', exp: Date.now() + 8 * 60 * 60 * 1000 })).toString('base64url');
+function signToken(claims) {
+  const payload = Buffer.from(JSON.stringify(claims)).toString('base64url');
   const signature = crypto.createHmac('sha256', authSecret).update(payload).digest('base64url');
   return `${payload}.${signature}`;
 }
 
-function requireAdmin(req, res, next) {
+// Returns the claims of a validly signed, unexpired Bearer token, or null.
+function readBearerToken(req) {
   const token = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
   const [payload, signature] = token.split('.');
-  if (!payload || !signature) return res.status(401).json({ error: 'admin authentication required' });
+  if (!payload || !signature) return null;
 
   const expected = crypto.createHmac('sha256', authSecret).update(payload).digest('base64url');
   if (signature.length !== expected.length || !crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) {
-    return res.status(401).json({ error: 'invalid admin token' });
+    return null;
   }
-
   try {
     const claims = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
-    if (claims.role !== 'admin' || !claims.email || claims.exp < Date.now()) {
-      return res.status(401).json({ error: 'expired admin token' });
-    }
+    return claims && claims.exp > Date.now() ? claims : null;
+  } catch {
+    return null;
+  }
+}
+
+function createAdminToken(email) {
+  return signToken({ email, role: 'admin', exp: Date.now() + 8 * 60 * 60 * 1000 });
+}
+
+const USER_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+
+function createUserToken(user) {
+  return signToken({
+    sub: String(user.id || user._id),
+    email: user.email,
+    role: 'user',
+    exp: Date.now() + USER_TOKEN_TTL_MS,
+  });
+}
+
+function requireAdmin(req, res, next) {
+  const claims = readBearerToken(req);
+  if (!claims) return res.status(401).json({ error: 'admin authentication required' });
+  if (claims.role !== 'admin' || !claims.email) return res.status(401).json({ error: 'invalid admin token' });
+  req.admin = claims;
+  return next();
+}
+
+// Any signed-in user (or admin). Sets req.user = { id, email } for users.
+function requireUser(req, res, next) {
+  const claims = readBearerToken(req);
+  if (claims?.role === 'user' && claims.sub) {
+    req.user = { id: claims.sub, email: String(claims.email || '').toLowerCase() };
+    return next();
+  }
+  if (claims?.role === 'admin' && claims.email) {
     req.admin = claims;
     return next();
-  } catch {
-    return res.status(401).json({ error: 'invalid admin token' });
   }
+  return res.status(401).json({ error: 'authentication required', code: 'AUTH_REQUIRED' });
+}
+
+// For /:userId routes: only that user, or an admin, may access the data.
+function requireSelf(req, res, next) {
+  return requireUser(req, res, () => {
+    if (req.admin || req.user.id === req.params.userId) return next();
+    return res.status(403).json({ error: 'you can only access your own data' });
+  });
 }
 
 async function seedDemoData() {
@@ -628,16 +669,16 @@ app.get('/api/diagnostics', (req, res) => {
   });
 });
 
-app.post('/api/food/scan', upload.single('image'), processAndSaveFood);
+app.post('/api/food/scan', requireUser, upload.single('image'), processAndSaveFood);
 
-app.post('/api/food/upload', upload.single('image'), async (req, res) => {
+app.post('/api/food/upload', requireUser, upload.single('image'), async (req, res) => {
   if (!req.file || !req.file.buffer) {
     return res.status(400).json({ success: false, message: 'Image file is required' });
   }
 
   try {
     const savedLog = await processFoodUpload(req.file.buffer, req.file.mimetype, {
-      userId: req.body.userId,
+      userId: req.user?.id || req.body.userId,
       imageUrl: req.body.imageUrl,
     });
 
@@ -648,7 +689,7 @@ app.post('/api/food/upload', upload.single('image'), async (req, res) => {
   }
 });
 
-app.post('/api/fatsecret/token', async (req, res) => {
+app.post('/api/fatsecret/token', requireUser, async (req, res) => {
   if (!fatSecretClientId || !fatSecretClientSecret) {
     return res.status(500).json({ error: 'FatSecret credentials are not configured' });
   }
@@ -677,7 +718,8 @@ app.post('/api/fatsecret/token', async (req, res) => {
   }
 });
 
-app.get('/api/seed-demo', async (req, res) => {
+// Seeding writes to the database, so it is admin-only.
+app.get('/api/seed-demo', requireAdmin, async (req, res) => {
   try {
     const data = await seedDemoData();
     res.json({ message: 'Demo data created successfully', data });
@@ -686,7 +728,7 @@ app.get('/api/seed-demo', async (req, res) => {
   }
 });
 
-app.post('/api/seed-demo', async (req, res) => {
+app.post('/api/seed-demo', requireAdmin, async (req, res) => {
   try {
     const data = await seedDemoData();
     res.json({ message: 'Demo data created successfully', data });
@@ -709,7 +751,7 @@ app.post('/api/auth/oauth/:provider', async (req, res) => {
       ? await verifyGoogleIdentityToken(idToken)
       : await verifyAppleIdentityToken(idToken);
     const user = await findOrCreateOAuthUser(identity);
-    return res.json({ user });
+    return res.json({ user: { ...user, token: createUserToken(user) } });
   } catch (error) {
     console.error('OAuth sign-in failed:', error.message);
     return res.status(error.status || 401).json({ error: error.message || 'OAuth sign-in failed' });
@@ -818,6 +860,7 @@ app.post('/api/auth/apple/exchange', async (req, res) => {
         email: user.email,
         displayName: user.displayName,
         role: user.role || 'user',
+        token: createUserToken(user),
       },
     });
   } catch (error) {
@@ -841,7 +884,9 @@ app.post('/api/auth/register', async (req, res) => {
     if (existing) return res.status(409).json({ error: 'email already exists' });
 
     const user = await User.create({ email, password: hashPassword(password), displayName });
-    return res.json({ user: { id: user._id.toString(), email: user.email, displayName: user.displayName } });
+    return res.json({
+      user: { id: user._id.toString(), email: user.email, displayName: user.displayName, token: createUserToken(user) },
+    });
   } catch (error) {
     if (error?.code === 11000) return res.status(409).json({ error: 'email already exists' });
     console.error('Account registration failed:', error.message);
@@ -878,7 +923,13 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(401).json({ error: 'invalid credentials' });
     }
 
-    const signedInUser = { id: user._id.toString(), email: user.email, displayName: user.displayName, role: user.role || 'user' };
+    const signedInUser = {
+      id: user._id.toString(),
+      email: user.email,
+      displayName: user.displayName,
+      role: user.role || 'user',
+      token: createUserToken(user),
+    };
     if (user.role === 'admin') signedInUser.adminToken = createAdminToken(user.email);
     return res.json({ user: signedInUser });
   } catch (error) {
@@ -1213,7 +1264,7 @@ app.delete('/api/admin/foods/:foodId', requireAdmin, async (req, res) => {
   }
 });
 
-app.get('/api/profiles/:userId', async (req, res) => {
+app.get('/api/profiles/:userId', requireSelf, async (req, res) => {
   try {
     const profile = await Profile.findOne({ userId: req.params.userId });
     res.json({ profile });
@@ -1222,7 +1273,7 @@ app.get('/api/profiles/:userId', async (req, res) => {
   }
 });
 
-app.put('/api/profiles/:userId', async (req, res) => {
+app.put('/api/profiles/:userId', requireSelf, async (req, res) => {
   try {
     const payload = { ...req.body, userId: req.params.userId, updatedAt: new Date() };
     const profile = await Profile.findOneAndUpdate({ userId: req.params.userId }, payload, { upsert: true, new: true, setDefaultsOnInsert: true });
@@ -1232,7 +1283,7 @@ app.put('/api/profiles/:userId', async (req, res) => {
   }
 });
 
-app.delete('/api/profiles/:userId', async (req, res) => {
+app.delete('/api/profiles/:userId', requireSelf, async (req, res) => {
   try {
     const profile = await Profile.findOneAndDelete({ userId: req.params.userId });
     res.json({ profile });
@@ -1241,7 +1292,7 @@ app.delete('/api/profiles/:userId', async (req, res) => {
   }
 });
 
-app.get('/api/weights/:userId', async (req, res) => {
+app.get('/api/weights/:userId', requireSelf, async (req, res) => {
   try {
     const weights = await WeightLog.find({ userId: req.params.userId }).sort({ dateKey: 1 });
     return res.json({ weights });
@@ -1250,7 +1301,7 @@ app.get('/api/weights/:userId', async (req, res) => {
   }
 });
 
-app.put('/api/weights/:userId/:dateKey', async (req, res) => {
+app.put('/api/weights/:userId/:dateKey', requireSelf, async (req, res) => {
   try {
     const weightKg = Number(req.body.weightKg);
     if (!Number.isFinite(weightKg) || weightKg < 20 || weightKg > 400) {
@@ -1267,7 +1318,7 @@ app.put('/api/weights/:userId/:dateKey', async (req, res) => {
   }
 });
 
-app.delete('/api/users/:userId/data', async (req, res) => {
+app.delete('/api/users/:userId/data', requireSelf, async (req, res) => {
   try {
     const { userId } = req.params;
     await Promise.all([
@@ -1282,7 +1333,7 @@ app.delete('/api/users/:userId/data', async (req, res) => {
   }
 });
 
-app.get('/api/logs/:userId', async (req, res) => {
+app.get('/api/logs/:userId', requireSelf, async (req, res) => {
   try {
     const logs = await Log.find({ userId: req.params.userId }).sort({ createdAt: -1 });
     res.json({ logs: logs.map(normalizeFoodLog) });
@@ -1291,7 +1342,7 @@ app.get('/api/logs/:userId', async (req, res) => {
   }
 });
 
-app.post('/api/logs/:userId', async (req, res) => {
+app.post('/api/logs/:userId', requireSelf, async (req, res) => {
   try {
     const { userId } = req.params;
     const dateKey = String(req.body.dateKey || req.body.entry?.date || new Date().toISOString().slice(0, 10));
@@ -1348,16 +1399,17 @@ app.post('/api/logs/:userId', async (req, res) => {
   }
 });
 
-app.patch('/api/logs/:userId/:logId', async (req, res) => {
+app.patch('/api/logs/:userId/:logId', requireSelf, async (req, res) => {
   try {
-    const log = await Log.findOneAndUpdate({ userId: req.params.userId, _id: req.params.logId }, req.body, { new: true });
+    const { userId: _ignoredUserId, _id: _ignoredId, ...updates } = req.body || {};
+    const log = await Log.findOneAndUpdate({ userId: req.params.userId, _id: req.params.logId }, updates, { new: true });
     res.json({ log });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-app.delete('/api/logs/:userId/:logId', async (req, res) => {
+app.delete('/api/logs/:userId/:logId', requireSelf, async (req, res) => {
   try {
     const { userId, logId } = req.params;
     const log = await Log.findOneAndDelete({ userId, _id: logId });
@@ -1567,9 +1619,11 @@ app.put('/api/admin/ai-scan-config', requireAdmin, async (req, res) => {
   }
 });
 
-app.post('/api/ai/scan', async (req, res) => {
+app.post('/api/ai/scan', requireUser, async (req, res) => {
   try {
-    const { imageBase64, mimeType = 'image/jpeg', userId = null, storeImage = false } = req.body || {};
+    const { imageBase64, mimeType = 'image/jpeg', storeImage = false } = req.body || {};
+    // From the token, not the body, so the daily quota can't be dodged. Admin scans have no user.
+    const userId = req.user?.id || null;
     if (typeof imageBase64 !== 'string' || !imageBase64.trim()) {
       return res.status(400).json({ error: 'imageBase64 is required' });
     }
@@ -1583,7 +1637,6 @@ app.post('/api/ai/scan', async (req, res) => {
     }
 
     // Daily free-scan quota (Admin → Settings). Failed scans don't count.
-    // Scans sent without a userId can't be attributed, so they aren't limited.
     const { maxFreeScansPerDay } = await getSystemSettings();
     if (maxFreeScansPerDay > 0 && userId && isMongoReady) {
       const usedToday = await ScanLog.countDocuments({
@@ -1831,10 +1884,13 @@ app.post('/api/ai/scan', async (req, res) => {
   }
 });
 
-app.get('/api/scan-images/:scanId', async (req, res) => {
+app.get('/api/scan-images/:scanId', requireUser, async (req, res) => {
   try {
     const scan = await ScanImage.findById(req.params.scanId).lean();
-    if (!scan) return res.status(404).json({ error: 'scan image not found' });
+    // Same 404 for "not yours" so scan ids can't be probed.
+    if (!scan || (!req.admin && scan.userId !== req.user.id)) {
+      return res.status(404).json({ error: 'scan image not found' });
+    }
     res.json({ scan });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -1846,17 +1902,20 @@ app.get('/api/scan-images/:scanId', async (req, res) => {
 // ---------------------------------------------------------------------------
 const handleCreateTicket = async (req, res) => {
   try {
-    const { userId, userEmail, topic, detail } = req.body;
-    if (!userEmail || !topic) {
+    const { topic, detail } = req.body;
+    // Signed-in users file tickets as themselves; only an admin may name another email.
+    const userId = req.user ? req.user.id : String(req.body.userId || '');
+    const userEmail = req.user ? req.user.email : String(req.body.userEmail || '');
+    if (!userEmail || typeof topic !== 'string' || !topic.trim()) {
       return res.status(400).json({ error: 'userEmail and topic are required' });
     }
     const ticketId = `TK-${Math.floor(1000 + Math.random() * 9000)}`;
     const ticket = await Ticket.create({
       ticketId,
-      userId: userId || '',
+      userId,
       userEmail: userEmail.trim().toLowerCase(),
       topic: topic.trim(),
-      detail: (detail || '').trim(),
+      detail: String(detail || '').trim(),
       status: 'Open',
     });
     res.status(201).json({ ticket });
@@ -1867,8 +1926,9 @@ const handleCreateTicket = async (req, res) => {
 
 const handleGetTickets = async (req, res) => {
   try {
-    const { email } = req.query;
-    const filter = email ? { userEmail: email.trim().toLowerCase() } : {};
+    // Users always get their own tickets; admins get all, or one email via ?email=.
+    const email = req.user ? req.user.email : String(req.query.email || '').trim().toLowerCase();
+    const filter = email ? { userEmail: email } : {};
     const tickets = await Ticket.find(filter).sort({ createdAt: -1 }).lean();
     res.json({ tickets });
   } catch (error) {
@@ -1904,14 +1964,10 @@ const handleDeleteTicket = async (req, res) => {
   }
 };
 
-// Users may list their own tickets by email; listing every ticket is admin-only.
-const requireAdminForAllTickets = (req, res, next) =>
-  (req.query.email ? next() : requireAdmin(req, res, next));
-
-app.post('/tickets', handleCreateTicket);
-app.post('/api/tickets', handleCreateTicket);
-app.get('/tickets', requireAdminForAllTickets, handleGetTickets);
-app.get('/api/tickets', requireAdminForAllTickets, handleGetTickets);
+app.post('/tickets', requireUser, handleCreateTicket);
+app.post('/api/tickets', requireUser, handleCreateTicket);
+app.get('/tickets', requireUser, handleGetTickets);
+app.get('/api/tickets', requireUser, handleGetTickets);
 app.patch('/tickets/:id', requireAdmin, handleUpdateTicket);
 app.patch('/api/tickets/:id', requireAdmin, handleUpdateTicket);
 app.delete('/tickets/:id', requireAdmin, handleDeleteTicket);
