@@ -2083,4 +2083,10 @@ async function startServer() {
   });
 }
 
-startServer();
+// Start only when run directly (`node server.js`); tests require the app
+// and connect it to their own database.
+if (require.main === module) {
+  startServer();
+}
+
+module.exports = { app };
