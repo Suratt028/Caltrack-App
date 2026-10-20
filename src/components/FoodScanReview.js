@@ -54,6 +54,8 @@ function toCandidate(candidate) {
     foodId: String(candidate.foodId),
     name: candidate.nameTh || candidate.nameEn || 'อาหารไม่ทราบชื่อ',
     nameEn: candidate.nameEn || '',
+    confident: Boolean(candidate.confident),
+    estimated: Array.isArray(candidate.estimated) ? candidate.estimated : [],
     per100g: {
       kcal: per100g.kcal ?? null,
       protein: per100g.protein_g ?? null,
@@ -70,22 +72,37 @@ function toCandidate(candidate) {
 }
 
 export default function FoodScanReview({ analysis, onConfirm, onReset }) {
+  // When the server marks the top database candidate as a confident match
+  // (exact dish name or a listed variant, complete nutrition, not raw), start
+  // from database values; the AI name is kept so the user can switch back.
   const [initialItems] = useState(() =>
-    (analysis.items || []).map((item, index) => ({
-      ...item,
-      id: item.id || `${Date.now()}_${index}`,
-      name: item.name_th || item.nameTh || item.name || '',
-      grams: String(item.estimated_grams?.likely ?? item.estimatedGrams ?? ''),
-      estimatedGrams: Number(item.estimated_grams?.likely ?? item.estimatedGrams) || 0,
-      estimatedNutrition: item.estimated_nutrition || item.estimatedNutrition || null,
-      foodId: item.foodId || '',
-      per100g: item.per100g || null,
-    }))
+    (analysis.items || []).map((item, index) => {
+      const aiName = item.name_th || item.nameTh || item.name || '';
+      const candidates = (item.candidates || []).map(toCandidate);
+      const best = !item.foodId && candidates[0]?.confident ? candidates[0] : null;
+      return {
+        ...item,
+        id: item.id || `${Date.now()}_${index}`,
+        name: best ? best.name : aiName,
+        aiName,
+        grams: String(item.estimated_grams?.likely ?? item.estimatedGrams ?? ''),
+        estimatedGrams: Number(item.estimated_grams?.likely ?? item.estimatedGrams) || 0,
+        estimatedNutrition: item.estimated_nutrition || item.estimatedNutrition || null,
+        foodId: best ? best.foodId : item.foodId || '',
+        per100g: best ? best.per100g : item.per100g || null,
+        estimatedFields: best ? best.estimated : [],
+        autoMatched: Boolean(best),
+        candidateList: candidates,
+      };
+    })
   );
   const [items, setItems] = useState(initialItems);
   const [queries, setQueries] = useState({});
   const [searchResults, setSearchResults] = useState(() =>
-    Object.fromEntries(initialItems.map((item) => [item.id, (item.candidates || []).map(toCandidate)]))
+    Object.fromEntries(initialItems.map((item) => [
+      item.id,
+      item.candidateList.filter((candidate) => candidate.foodId !== item.foodId),
+    ]))
   );
   const [searching, setSearching] = useState({});
   const [searchErrors, setSearchErrors] = useState({});
@@ -172,10 +189,26 @@ export default function FoodScanReview({ analysis, onConfirm, onReset }) {
       name: food.name,
       nameEn: food.nameEn,
       per100g: food.per100g,
+      estimatedFields: food.estimated || [],
+      autoMatched: false,
       source: 'nutrition_database',
     });
     setQueries((previous) => ({ ...previous, [item.id]: food.name }));
     setSearchResults((previous) => ({ ...previous, [item.id]: [] }));
+  };
+
+  // Back to the AI's own name and nutrition estimate.
+  const switchToAiEstimate = (item) => {
+    updateItem(item.id, {
+      foodId: '',
+      name: item.aiName,
+      per100g: null,
+      estimatedFields: [],
+      autoMatched: false,
+      source: 'ai_estimate',
+    });
+    setQueries((previous) => ({ ...previous, [item.id]: item.aiName }));
+    setSearchResults((previous) => ({ ...previous, [item.id]: item.candidateList || [] }));
   };
 
   const getItemNutrition = (item) => {
@@ -222,7 +255,8 @@ export default function FoodScanReview({ analysis, onConfirm, onReset }) {
 
   const confirm = async () => {
     if (saving) return;
-    const reviewItems = items.map((item) => ({
+    // Drop the candidate lists before saving; they are only needed on this screen.
+    const reviewItems = items.map(({ candidates: _candidates, candidateList: _candidateList, ...item }) => ({
       ...item,
       grams: Number(item.grams),
       nutrition: getItemNutrition(item),
@@ -276,7 +310,7 @@ export default function FoodScanReview({ analysis, onConfirm, onReset }) {
             <TextInput
               value={item.name}
               onChangeText={(value) => {
-                updateItem(item.id, { name: value, foodId: '', per100g: null, source: 'ai_estimate' });
+                updateItem(item.id, { name: value, foodId: '', per100g: null, estimatedFields: [], autoMatched: false, source: 'ai_estimate' });
                 setQueries((previous) => ({ ...previous, [item.id]: value }));
               }}
               style={styles.input}
@@ -343,6 +377,7 @@ export default function FoodScanReview({ analysis, onConfirm, onReset }) {
                 <Text style={styles.searchResultName}>{food.name}</Text>
                 <Text style={styles.searchResultMeta}>
                   {food.nameEn ? `${food.nameEn} · ` : ''}
+                  {food.estimated?.includes('kcal') ? '≈' : ''}
                   {food.per100g.kcal ?? '-'} kcal / 100 g
                 </Text>
               </Pressable>
@@ -361,7 +396,9 @@ export default function FoodScanReview({ analysis, onConfirm, onReset }) {
                     item.foodId ? styles.sourceChipTextDb : styles.sourceChipTextAi,
                   ]}
                 >
-                  {item.foodId ? 'ฐานข้อมูลโภชนาการ' : 'ค่าประมาณจาก AI'}
+                  {item.foodId
+                    ? `ฐานข้อมูลโภชนาการ${item.autoMatched ? ' (จับคู่อัตโนมัติ)' : ''}${item.estimatedFields?.length ? ' · บางค่าเป็นค่าประมาณ' : ''}`
+                    : 'ค่าประมาณจาก AI'}
                 </Text>
               </View>
               {!!nutrition && (
@@ -374,6 +411,19 @@ export default function FoodScanReview({ analysis, onConfirm, onReset }) {
             </View>
             {Boolean(item.foodId) && Boolean(calculating) ? (
               <Text style={styles.estimateText}>กำลังคำนวณจากฐานข้อมูล...</Text>
+            ) : null}
+            {Boolean(item.foodId) && Boolean(item.aiName) && item.aiName !== item.name ? (
+              <Pressable
+                onPress={() => switchToAiEstimate(item)}
+                accessibilityRole="button"
+                accessibilityLabel={`ใช้ชื่อและค่าประมาณจาก AI: ${item.aiName}`}
+                hitSlop={6}
+                style={({ pressed }) => [{ marginTop: 6, alignSelf: 'flex-start' }, pressed && { opacity: 0.7 }]}
+              >
+                <Text style={[styles.estimateText, { color: colors.primary, fontWeight: '700' }]}>
+                  ไม่ใช่เมนูนี้? ใช้ค่าประมาณจาก AI ({item.aiName})
+                </Text>
+              </Pressable>
             ) : null}
           </View>
         );

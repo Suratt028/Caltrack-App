@@ -186,7 +186,10 @@ export default function ScanScreen({ navigation }) {
       iron: totals.iron,
       vitaminC: totals.vitaminC,
       items,
-      aiPredictions: result?.source === 'gemini_vision' ? result.items : undefined,
+      // What the AI said, kept for feedback; the database candidate lists aren't needed in the log.
+      aiPredictions: result?.source === 'gemini_vision'
+        ? result.items.map(({ candidates: _candidates, ...prediction }) => prediction)
+        : undefined,
       feedbackCapturedAt: result?.source === 'gemini_vision' ? new Date().toISOString() : undefined,
       servings: 1,
       source: result?.source || 'ai_scan',
@@ -263,7 +266,8 @@ export default function ScanScreen({ navigation }) {
                       <View style={{ flex: 1 }}>
                         <Text style={styles.searchResultName} numberOfLines={1}>{food.name}</Text>
                         <Text style={styles.searchResultMeta}>
-                          {food.serving ? `${food.serving} · ` : ''}{food.per100g?.kcal ?? '-'} kcal / 100 g
+                          {food.serving ? `${food.serving} · ` : ''}
+                          {food.estimated?.includes('kcal') ? '≈' : ''}{food.per100g?.kcal ?? '—'} kcal / 100 g
                         </Text>
                       </View>
                       <Ionicons name="chevron-forward" size={18} color={colors.inkFaint} />

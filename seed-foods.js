@@ -3,18 +3,28 @@ const fs = require('fs');
 const path = require('path');
 const mongoose = require('mongoose');
 
-// Imports thaiFoods_full.json into the "foods" collection.
+// Imports a food dataset (default thaiFoods_full.json) into the "foods" collection.
 //
-//   node seed-foods.js                    upsert by foodId: updates dataset rows,
-//                                         keeps foods added from the admin console
-//   node seed-foods.js --replace --yes    delete EVERY food first, then insert
+//   node seed-foods.js                              upsert by foodId: updates dataset rows,
+//                                                   keeps foods added from the admin console
+//   node seed-foods.js --file thaiFoods_clean.json  same, from another file
+//                                                   (e.g. the output of scripts/clean-foods.js)
+//   node seed-foods.js --replace --yes              delete EVERY food first, then insert
 //
 // --replace also removes admin-added foods, so it refuses to run without --yes.
 
-const SOURCE_FILE = path.join(__dirname, 'thaiFoods_full.json');
+const argv = process.argv.slice(2);
+const fileFlag = argv.indexOf('--file');
+if (fileFlag !== -1 && !argv[fileFlag + 1]) {
+  console.error('❌ --file needs a path, e.g. --file thaiFoods_clean.json');
+  process.exit(1);
+}
+const SOURCE_FILE = fileFlag === -1
+  ? path.join(__dirname, 'thaiFoods_full.json')
+  : path.resolve(process.cwd(), argv[fileFlag + 1]);
 const COLLECTION_NAME = 'foods';
 
-const args = new Set(process.argv.slice(2));
+const args = new Set(argv);
 const replaceAll = args.has('--replace');
 
 const foodSchema = new mongoose.Schema({}, { strict: false }); // accept any shape
@@ -26,7 +36,7 @@ const Food = mongoose.model('Food', foodSchema, COLLECTION_NAME);
       throw new Error('--replace deletes every food, including ones added in the admin console. Re-run with --replace --yes to confirm.');
     }
 
-    console.log('--- Reading dataset file ---');
+    console.log(`--- Reading dataset file: ${path.relative(process.cwd(), SOURCE_FILE) || SOURCE_FILE} ---`);
     const data = JSON.parse(fs.readFileSync(SOURCE_FILE, 'utf-8'));
     if (!Array.isArray(data)) {
       throw new Error('Dataset file must contain a JSON array of objects');

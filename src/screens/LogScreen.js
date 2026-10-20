@@ -190,6 +190,7 @@ export default function LogScreen({ navigation }) {
                 name={food.name}
                 subtitle={[food.nameEn, 'ต่อ 100 กรัม'].filter(Boolean).join(' · ')}
                 kcal={food.per100g?.kcal}
+                kcalEstimated={food.estimated?.includes('kcal')}
                 onPress={() => goToPortion(food)}
               />
             ))}

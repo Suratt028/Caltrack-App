@@ -8,6 +8,7 @@ const { OAuth2Client } = require('google-auth-library');
 const { addNutritionTotals, scaleNutrition } = require('./server/nutritionMath');
 const { getGeminiScanError } = require('./server/geminiScanError');
 const { requestWithGeminiFallback } = require('./server/geminiScanRequest');
+const { searchTerms, englishWords, rankFoodCandidates, isConfidentMatch } = require('./server/foodMatching');
 
 const app = express();
 app.use(cors());
@@ -1586,6 +1587,18 @@ app.post('/api/nutrition/calculate', async (req, res) => {
 // AI VISION FOOD SCAN ENDPOINT
 // ---------------------------------------------------------------------------
 const SCAN_LOW_CONFIDENCE = 0.7;
+
+// Database candidates for one AI-detected dish: pre-filter in MongoDB on any
+// Thai word/word-pair or whole English word, then rank in server/foodMatching.
+async function findFoodCandidates(nameTh, nameEn, limit = 5) {
+  const conditions = [
+    ...searchTerms(nameTh).map((term) => ({ nameTh: new RegExp(escapeRegex(term)) })),
+    ...englishWords(nameEn).map((word) => ({ nameEn: new RegExp(`\\b${escapeRegex(word)}\\b`, 'i') })),
+  ];
+  if (!conditions.length) return [];
+  const pool = await Food.find({ $or: conditions }).limit(1500).lean();
+  return rankFoodCandidates(pool, nameTh, nameEn, limit);
+}
 const SCAN_PROMPT_MAX_LENGTH = 4000;
 // The JSON response schema is fixed in code; admins only edit the instructions.
 const DEFAULT_SCAN_PROMPT = `
@@ -1865,19 +1878,17 @@ app.post('/api/ai/scan', requireUser, async (req, res) => {
           rawItem.box_2d.every((value) => Number.isFinite(Number(value)))
           ? rawItem.box_2d.map(Number)
           : null;
-        const regex = new RegExp(escapeRegex(nameTh), 'i');
+        const nameEn = String(rawItem.name_en || '').trim();
         let candidates = [];
         try {
-          candidates = await Food.find({
-            $or: [{ nameTh: regex }, { nameEn: regex }],
-          }).limit(5).lean();
+          candidates = await findFoodCandidates(nameTh, nameEn);
         } catch (matchError) {
           console.warn('Food candidate lookup failed:', matchError.message);
         }
 
         items.push({
           name_th: nameTh,
-          name_en: String(rawItem.name_en || ''),
+          name_en: nameEn,
           box_2d: box,
           cooking_method: String(rawItem.cooking_method || ''),
           estimated_grams: {
@@ -1897,6 +1908,11 @@ app.post('/api/ai/scan', requireUser, async (req, res) => {
             foodId: String(food.foodId),
             nameTh: food.nameTh,
             nameEn: food.nameEn,
+            matchType: food.matchType,
+            matchScore: food.matchScore,
+            // The app pre-selects this candidate instead of the AI's own estimate.
+            confident: isConfidentMatch(food),
+            estimated: Array.isArray(food.estimated) ? food.estimated : [],
             per100g: {
               kcal: food.kcal,
               protein_g: food.protein_g,

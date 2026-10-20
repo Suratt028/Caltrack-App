@@ -123,6 +123,12 @@ export default function PortionScreen({ navigation, route }) {
     carbs: round1(base.carbs * multiplier),
     fat: round1(base.fat * multiplier),
   };
+  // Missing values are saved as 0 but shown as "—" with a notice, so nobody mistakes them for real zeros.
+  const isMissing = (key) => per100[key] == null || !Number.isFinite(Number(per100[key]));
+  const missingNutrients = ['kcal', 'protein', 'carbs', 'fat'].filter(isMissing);
+  const shown = (key, value, unitLabel = '') => (isMissing(key) ? '—' : `${value}${unitLabel}`);
+  const estimatedFields = Array.isArray(food?.estimated) ? food.estimated : [];
+  const NUTRIENT_LABELS = { kcal: 'พลังงาน', protein: 'โปรตีน', carbs: 'คาร์บ', fat: 'ไขมัน' };
 
   // Keep the same total weight when switching units.
   const changeUnit = (nextUnit) => {
@@ -187,7 +193,7 @@ export default function PortionScreen({ navigation, route }) {
     );
   }
 
-  const referenceKcal = Math.round(base.kcal);
+  const referenceKcal = isMissing('kcal') ? '—' : `${estimatedFields.includes('kcal') ? '≈' : ''}${Math.round(base.kcal)}`;
   const servingLine = food.per100g ? 'ต่อ 100 กรัม' : food.serving || 'ต่อ 1 หน่วย';
   const kcalLine = food.per100g ? `${referenceKcal} kcal / 100 กรัม` : `${referenceKcal} kcal`;
 
@@ -211,7 +217,17 @@ export default function PortionScreen({ navigation, route }) {
           </Text>
           <Text style={styles.identityMeta}>{servingLine}</Text>
           <Text style={styles.identityKcal}>{kcalLine}</Text>
+          {estimatedFields.length > 0 && missingNutrients.length === 0 ? (
+            <Text style={styles.identityMeta}>≈ บางค่าคำนวณจากสารอาหารอื่น เพราะตารางข้อมูลต้นทางไม่ได้ระบุไว้</Text>
+          ) : null}
         </Card>
+
+        {missingNutrients.length > 0 ? (
+          <Banner
+            tone="warning"
+            message={`เมนูนี้ไม่มีข้อมูล${missingNutrients.map((key) => NUTRIENT_LABELS[key]).join(' ')} ค่าที่ขาดจะนับเป็น 0 ในบันทึก ลองเลือกเมนูใกล้เคียงอื่นถ้ามี`}
+          />
+        ) : null}
 
         {/* Meal + portion controls */}
         <Card style={styles.sectionCard}>
@@ -239,11 +255,11 @@ export default function PortionScreen({ navigation, route }) {
         <View style={styles.calcCard} accessibilityRole="alert" accessibilityLiveRegion="polite">
           <Text style={styles.calcLabel}>ประมาณการ · {grams} กรัม</Text>
           <View style={styles.calcKcalRow}>
-            <Text style={styles.calcKcal}>{scaled.kcal}</Text>
+            <Text style={styles.calcKcal}>{shown('kcal', scaled.kcal)}</Text>
             <Text style={styles.calcKcalUnit}>kcal</Text>
           </View>
           <Text style={styles.calcMacros}>
-            P {scaled.protein}g · C {scaled.carbs}g · F {scaled.fat}g
+            P {shown('protein', scaled.protein, 'g')} · C {shown('carbs', scaled.carbs, 'g')} · F {shown('fat', scaled.fat, 'g')}
           </Text>
           <Text style={styles.calcNote}>ค่าตามปริมาณที่เลือก</Text>
         </View>
@@ -255,7 +271,7 @@ export default function PortionScreen({ navigation, route }) {
         {!!saveError && <Banner tone="error" message={saveError} onDismiss={() => setSaveError('')} />}
 
         <PrimaryButton
-          title={`บันทึก ${amount} ${unit} · ${scaled.kcal} kcal`}
+          title={`บันทึก ${amount} ${unit} · ${shown('kcal', scaled.kcal)} kcal`}
           icon="checkmark"
           onPress={confirmSave}
           loading={saving}

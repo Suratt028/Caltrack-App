@@ -26,6 +26,8 @@ function normalizeNutritionFood(food) {
     nameEn: food.nameEn || '',
     serving: food.servingSize || 'ต่อ 100 กรัม',
     per100g,
+    // Fields calculated by scripts/clean-foods.js rather than measured (e.g. ['kcal']).
+    estimated: Array.isArray(food.estimated) ? food.estimated : [],
   };
 }
 

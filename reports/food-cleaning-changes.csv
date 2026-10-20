@@ -1,0 +1,952 @@
+﻿foodId,nameTh,field,before,after,rule
+1001,"ก๋วยเตี๋ยว, เส้นจันท์, แห้ง",carbTotal_g,0.6,,carbTotal < carbAvailable (shifted column)
+1001,"ก๋วยเตี๋ยว, เส้นจันท์, แห้ง",ash_g,29,,ash impossible (mass balance or cap)
+1002,"ก๋วยเตี๋ยว, เส้นเล็ก, เส้นสด",carbTotal_g,0.2,,carbTotal < carbAvailable (shifted column)
+1002,"ก๋วยเตี๋ยว, เส้นเล็ก, เส้นสด",ash_g,12,,ash impossible (mass balance or cap)
+1003,"ก๋วยเตี๋ยว, เส้นใหญ่, เส้นสด",carbTotal_g,0.1,,carbTotal < carbAvailable (shifted column)
+1003,"ก๋วยเตี๋ยว, เส้นใหญ่, เส้นสด",ash_g,10,,ash impossible (mass balance or cap)
+1004,"ขนมจีน, แป้งสด",carbTotal_g,0.1,,carbTotal < carbAvailable (shifted column)
+1004,"ขนมจีน, แป้งสด",ash_g,7,,ash impossible (mass balance or cap)
+1005,"ขนมจีน, แป้งหมัก",carbTotal_g,0.1,,carbTotal < carbAvailable (shifted column)
+1005,"ขนมจีน, แป้งหมัก",ash_g,7,,ash impossible (mass balance or cap)
+1006,ขนมปังปอนด์,carbTotal_g,0.3,,carbTotal < carbAvailable (shifted column)
+1006,ขนมปังปอนด์,ash_g,22,,ash impossible (mass balance or cap)
+1007,"ข้าวกล้อง, งอก, ดิบ",carbTotal_g,2.9,,carbTotal < carbAvailable (shifted column)
+1008,"ข้าวกล้อง, ดอย, ดิบ",carbTotal_g,3,,carbTotal < carbAvailable (shifted column)
+1008,"ข้าวกล้อง, ดอย, ดิบ",ash_g,164,,ash impossible (mass balance or cap)
+1009,"ข้าวกล้อง, ดอย, สีแดง, ดิบ",carbTotal_g,4.1,,carbTotal < carbAvailable (shifted column)
+1009,"ข้าวกล้อง, ดอย, สีแดง, ดิบ",ash_g,174,,ash impossible (mass balance or cap)
+1010,"ข้าวกล้อง, หอมนิล, ดิบ",carbTotal_g,3.2,,carbTotal < carbAvailable (shifted column)
+1010,"ข้าวกล้อง, หอมนิล, ดิบ",ash_g,9,,ash impossible (mass balance or cap)
+1011,"ข้าวกล้อง, หอมมะลิ, ดิบ",carbTotal_g,3.3,,carbTotal < carbAvailable (shifted column)
+1011,"ข้าวกล้อง, หอมมะลิ, ดิบ",ash_g,16,,ash impossible (mass balance or cap)
+1012,"ข้าวเจ้า, 5%, ดิบ",carbTotal_g,0.2,,carbTotal < carbAvailable (shifted column)
+1013,"ข้าวเจ้า, 10%, ดิบ",carbTotal_g,0.2,,carbTotal < carbAvailable (shifted column)
+1014,"ข้าวเจ้า, 100%, ดิบ",carbTotal_g,0.2,,carbTotal < carbAvailable (shifted column)
+1015,"ข้าวเจ้า, เคลือบ วิตามินบี, ดิบ",carbTotal_g,0.8,,carbTotal < carbAvailable (shifted column)
+1015,"ข้าวเจ้า, เคลือบ วิตามินบี, ดิบ",ash_g,10,,ash impossible (mass balance or cap)
+1016,"ข้าวเจ้า, ซ้อมมือ, ดิบ",carbTotal_g,1.7,,carbTotal < carbAvailable (shifted column)
+1017,"ข้าวเจ้า, นึ่ง",carbTotal_g,0.1,,carbTotal < carbAvailable (shifted column)
+1018,"ข้าวเจ้า, ปลายข้าว, ดิบ",carbTotal_g,0.2,,carbTotal < carbAvailable (shifted column)
+1018,"ข้าวเจ้า, ปลายข้าว, ดิบ",ash_g,55,,ash impossible (mass balance or cap)
+1019,"ข้าวเจ้า, ชุมแสง, ดิบ",carbTotal_g,0.4,,carbTotal < carbAvailable (shifted column)
+1020,"ข้าวเจ้า, ชัยนาท 1, ดิบ",carbTotal_g,0.7,,carbTotal < carbAvailable (shifted column)
+1021,"ข้าวเจ้า, มันปู, ดิบ",carbTotal_g,3.8,,carbTotal < carbAvailable (shifted column)
+1021,"ข้าวเจ้า, มันปู, ดิบ",ash_g,14,,ash impossible (mass balance or cap)
+1022,"ข้าวเจ้า, ไรซ์เบอรี่, ดิบ",carbTotal_g,4.2,,carbTotal < carbAvailable (shifted column)
+1022,"ข้าวเจ้า, ไรซ์เบอรี่, ดิบ",ash_g,16,,ash impossible (mass balance or cap)
+1023,"ข้าวเจ้า, สังข์หยด, ดิบ",carbTotal_g,3.8,,carbTotal < carbAvailable (shifted column)
+1023,"ข้าวเจ้า, สังข์หยด, ดิบ",ash_g,11,,ash impossible (mass balance or cap)
+1024,"ข้าวเจ้า, เสาไห้, ดิบ",carbTotal_g,0.8,,carbTotal < carbAvailable (shifted column)
+1025,"ข้าวเจ้า, หอมนิล, ดิบ",carbTotal_g,3.3,,carbTotal < carbAvailable (shifted column)
+1026,"ข้าวเจ้า, หอมมะลิ, ดิบ",carbTotal_g,0.6,,carbTotal < carbAvailable (shifted column)
+1027,"ข้าวบัสมาตี, ดิบ",carbTotal_g,6,,carbTotal < carbAvailable (shifted column)
+1027,"ข้าวบัสมาตี, ดิบ",ash_g,14,,ash impossible (mass balance or cap)
+1028,"ข้าวบาเลย์, ดิบ",carbTotal_g,9.4,,carbTotal < carbAvailable (shifted column)
+1028,"ข้าวบาเลย์, ดิบ",ash_g,41,,ash impossible (mass balance or cap)
+1029,"ข้าวโพด, เหลือง, ต้ม",carbTotal_g,1.3,,carbTotal < carbAvailable (shifted column)
+1029,"ข้าวโพด, เหลือง, ต้ม",ash_g,11,,ash impossible (mass balance or cap)
+1030,"ข้าวโพด, เหลือง, ดิบ",carbTotal_g,0.7,,carbTotal < carbAvailable (shifted column)
+1030,"ข้าวโพด, เหลือง, ดิบ",ash_g,10,,ash impossible (mass balance or cap)
+1031,"ข้าวโพดข้าวเหนียว, ขาวสลับม่วง, ดิบ",carbTotal_g,0.9,,carbTotal < carbAvailable (shifted column)
+1032,"ข้าวฟ่าง, ดิบ",carbTotal_g,9.1,,carbTotal < carbAvailable (shifted column)
+1032,"ข้าวฟ่าง, ดิบ",ash_g,24,,ash impossible (mass balance or cap)
+1033,"ข้าวสาลี, ดิบ",carbTotal_g,11.7,,carbTotal < carbAvailable (shifted column)
+1033,"ข้าวสาลี, ดิบ",ash_g,42,,ash impossible (mass balance or cap)
+1034,"ข้าวสาลี, จมูกข้าว, อบ",carbTotal_g,11,,carbTotal < carbAvailable (shifted column)
+1034,"ข้าวสาลี, จมูกข้าว, อบ",ash_g,54,,ash impossible (mass balance or cap)
+1036,"ข้าวเหนียว, ดิบ",carbTotal_g,0.9,,carbTotal < carbAvailable (shifted column)
+1036,"ข้าวเหนียว, ดิบ",ash_g,7,,ash impossible (mass balance or cap)
+1037,"ข้าวเหนียวดำ, ดิบ",carbTotal_g,4.9,,carbTotal < carbAvailable (shifted column)
+1037,"ข้าวเหนียวดำ, ดิบ",ash_g,26,,ash impossible (mass balance or cap)
+1038,"ข้าวเหนียวดำ, ข้าวลืมผัว, ดิบ",carbTotal_g,3.7,,carbTotal < carbAvailable (shifted column)
+1038,"ข้าวเหนียวดำ, ข้าวลืมผัว, ดิบ",ash_g,16,,ash impossible (mass balance or cap)
+1039,"ข้าวเหนียว, นึ่ง",carbTotal_g,0.5,,carbTotal < carbAvailable (shifted column)
+1039,"ข้าวเหนียว, นึ่ง",ash_g,18,,ash impossible (mass balance or cap)
+1040,"ข้าวเหนียวกล้อง, ดิบ",carbTotal_g,3,,carbTotal < carbAvailable (shifted column)
+1040,"ข้าวเหนียวกล้อง, ดิบ",ash_g,18,,ash impossible (mass balance or cap)
+1041,"ข้าวโอ๊ต, ดิบ",carbTotal_g,12.3,,carbTotal < carbAvailable (shifted column)
+1041,"ข้าวโอ๊ต, ดิบ",ash_g,43,,ash impossible (mass balance or cap)
+1043,น้ำนมข้าวโพด,carbTotal_g,1,,carbTotal < carbAvailable (shifted column)
+1044,น้ำนมข้าว,carbTotal_g,0.2,,carbTotal < carbAvailable (shifted column)
+1045,"น้ำนมข้าวยาคู, ผง",ash_g,27,,ash impossible (mass balance or cap)
+1046,"บะหมี่, สด",carbTotal_g,0.2,,carbTotal < carbAvailable (shifted column)
+1046,"บะหมี่, สด",ash_g,78,,ash impossible (mass balance or cap)
+1047,บะหมี่กึ่งสำเร็จรูปพร้อมเครื่องปรุงรสหมู,carbTotal_g,0.2,,carbTotal < carbAvailable (shifted column)
+1047,บะหมี่กึ่งสำเร็จรูปพร้อมเครื่องปรุงรสหมู,ash_g,5.4,,ash impossible (mass balance or cap)
+1048,แป้งข้าวเจ้า,ash_g,12,,ash impossible (mass balance or cap)
+1049,"ลูกเดือย, ดิบ",carbTotal_g,3.4,,carbTotal < carbAvailable (shifted column)
+1049,"ลูกเดือย, ดิบ",ash_g,19,,ash impossible (mass balance or cap)
+1050,"เส้นหมี่, แห้ง",carbTotal_g,0.4,,carbTotal < carbAvailable (shifted column)
+1050,"เส้นหมี่, แห้ง",ash_g,21,,ash impossible (mass balance or cap)
+2001,"กลอย, ดิบ",carbTotal_g,0.9,,carbTotal < carbAvailable (shifted column)
+2001,"กลอย, ดิบ",ash_g,22,,ash impossible (mass balance or cap)
+2002,"แก่นตะวัน, ดิบ",carbTotal_g,2.3,,carbTotal < carbAvailable (shifted column)
+2002,"แก่นตะวัน, ดิบ",ash_g,11,,ash impossible (mass balance or cap)
+2003,"ผักกาดแดง/ผักกาดฝรั่ง, ดิบ",carbTotal_g,2.5,,carbTotal < carbAvailable (shifted column)
+2004,"เผือก, ดิบ",carbTotal_g,2.8,,carbTotal < carbAvailable (shifted column)
+2004,"เผือก, ดิบ",ash_g,62,,ash impossible (mass balance or cap)
+2005,"มันแกว, ดิบ",carbTotal_g,1.4,,carbTotal < carbAvailable (shifted column)
+2005,"มันแกว, ดิบ",ash_g,9,,ash impossible (mass balance or cap)
+2006,"มันขี้หนู, หัวเล็ก, ดิบ",carbTotal_g,0.7,,carbTotal < carbAvailable (shifted column)
+2006,"มันขี้หนู, หัวเล็ก, ดิบ",ash_g,19,,ash impossible (mass balance or cap)
+2007,"มันขี้หนู, หัวใหญ่, ดิบ",carbTotal_g,1.8,,carbTotal < carbAvailable (shifted column)
+2007,"มันขี้หนู, หัวใหญ่, ดิบ",ash_g,36,,ash impossible (mass balance or cap)
+2008,"มันตีนแรด, ดิบ",carbTotal_g,2.2,,carbTotal < carbAvailable (shifted column)
+2009,"มันเทศ/มันต่อเผือก, ดิบ",carbTotal_g,2.6,,carbTotal < carbAvailable (shifted column)
+2009,"มันเทศ/มันต่อเผือก, ดิบ",ash_g,9,,ash impossible (mass balance or cap)
+2010,"มันเทศ, เนื้อสีส้ม, ดิบ",carbTotal_g,2.4,,carbTotal < carbAvailable (shifted column)
+2011,"มันเทศ, เนื้อสีม่วงแดง, ดิบ",carbTotal_g,2.4,,carbTotal < carbAvailable (shifted column)
+2011,"มันเทศ, เนื้อสีม่วงแดง, ดิบ",ash_g,9,,ash impossible (mass balance or cap)
+2012,"มันเทศ, เนื้อสีเหลือง, ดิบ",carbTotal_g,2.5,,carbTotal < carbAvailable (shifted column)
+2012,"มันเทศ, เนื้อสีเหลือง, ดิบ",ash_g,98,,ash impossible (mass balance or cap)
+2013,"มันฝรั่ง, ดิบ",carbTotal_g,1.4,,carbTotal < carbAvailable (shifted column)
+2013,"มันฝรั่ง, ดิบ",ash_g,16,,ash impossible (mass balance or cap)
+2018,"สาคู/สาคูไทย, หัวสีขาว, ดิบ",carbAvailable_g,,18.6,carb by difference
+2018,"สาคู/สาคูไทย, หัวสีขาว, ดิบ",kcal,,84,kcal from Atwater factors
+2019,"สาคู/สาคูจีน, หัวสีแดง, ดิบ",carbAvailable_g,,22.3,carb by difference
+2019,"สาคู/สาคูจีน, หัวสีแดง, ดิบ",kcal,,98,kcal from Atwater factors
+2021,"หัวผักกาด, หัวไชเท้า, ดิบ",carbAvailable_g,,4.8,carb by difference
+2021,"หัวผักกาด, หัวไชเท้า, ดิบ",kcal,,22,kcal from Atwater factors
+2022,"หัวผักกาดแห้ง, เค็ม",carbAvailable_g,,9.8,carb by difference
+2022,"หัวผักกาดแห้ง, เค็ม",kcal,,47,kcal from Atwater factors
+2023,"หัวผักกาดแห้ง, หวาน",carbAvailable_g,,31.1,carb by difference
+2023,"หัวผักกาดแห้ง, หวาน",kcal,,131,kcal from Atwater factors
+3001,"กระจับ, ดิบ",carbAvailable_g,,19.3,carb by difference
+3001,"กระจับ, ดิบ",kcal,,93,kcal from Atwater factors
+3002,"กระจับ, ต้ม",carbAvailable_g,,36.1,carb by difference
+3002,"กระจับ, ต้ม",kcal,,165,kcal from Atwater factors
+3003,"ก่อ/ลูกก่อ, ดิบ",carbAvailable_g,,57.3,carb by difference
+3003,"ก่อ/ลูกก่อ, ดิบ",kcal,,262,kcal from Atwater factors
+3004,"กะ/ลูกกะ/ลูกประ, คั่ว",carbAvailable_g,,33,carb by difference
+3004,"กะ/ลูกกะ/ลูกประ, คั่ว",kcal,,605,kcal from Atwater factors
+3006,"งาขาว, คั่ว",carbAvailable_g,,3.6,carb by difference
+3006,"งาขาว, คั่ว",kcal,,697,kcal from Atwater factors
+3007,"งาขาว, ดิบ",carbAvailable_g,,15,carb by difference
+3007,"งาขาว, ดิบ",kcal,,658,kcal from Atwater factors
+3008,"งาขี้ม้อน, ดิบ",carbAvailable_g,,31.7,carb by difference
+3008,"งาขี้ม้อน, ดิบ",kcal,,569,kcal from Atwater factors
+3010,"เต้าเจี้ยว, ขาว",carbAvailable_g,,12,carb by difference
+3010,"เต้าเจี้ยว, ขาว",kcal,,126,kcal from Atwater factors
+3011,"เต้าหู้ขาว, อ่อน",carbAvailable_g,,3,carb by difference
+3011,"เต้าหู้ขาว, อ่อน",kcal,,46,kcal from Atwater factors
+3012,เต้าหู้ทอด/เต้าหู้พอง,carbAvailable_g,,1.9,carb by difference
+3012,เต้าหู้ทอด/เต้าหู้พอง,kcal,,354,kcal from Atwater factors
+3013,"เต้าหู้ยี้, กระป๋อง",carbAvailable_g,,17.3,carb by difference
+3013,"เต้าหู้ยี้, กระป๋อง",kcal,,141,kcal from Atwater factors
+3014,"เต้าหู้ยี้, แบ่งขาย",carbAvailable_g,,10.3,carb by difference
+3014,"เต้าหู้ยี้, แบ่งขาย",kcal,,143,kcal from Atwater factors
+3015,เต้าหู้เหลือง,carbAvailable_g,,8.8,carb by difference
+3015,เต้าหู้เหลือง,kcal,,150,kcal from Atwater factors
+3016,"ถั่วขาว, ดิบ",carbAvailable_g,,61.1,carb by difference
+3016,"ถั่วขาว, ดิบ",kcal,,359,kcal from Atwater factors
+3018,"ถั่วเขียว, แป้ง",carbAvailable_g,,70,carb by difference
+3018,"ถั่วเขียว, แป้ง",kcal,,284,kcal from Atwater factors
+3019,"ถั่วดำ, คั่ว",carbAvailable_g,,65,carb by difference
+3019,"ถั่วดำ, คั่ว",kcal,,383,kcal from Atwater factors
+3021,"ถั่วแดง, คั่ว",carbAvailable_g,,68.6,carb by difference
+3021,"ถั่วแดง, คั่ว",kcal,,385,kcal from Atwater factors
+3024,"ถั่วนางหอม, ทั้งเปลือก, ดิบ",carbAvailable_g,,62.7,carb by difference
+3024,"ถั่วนางหอม, ทั้งเปลือก, ดิบ",kcal,,354,kcal from Atwater factors
+3025,"ถั่วนางหอม, แยกเปลือก, ดิบ",carbAvailable_g,,62.2,carb by difference
+3025,"ถั่วนางหอม, แยกเปลือก, ดิบ",kcal,,352,kcal from Atwater factors
+3026,"ถั่วเน่า, เปียก",carbAvailable_g,,9.1,carb by difference
+3026,"ถั่วเน่า, เปียก",kcal,,167,kcal from Atwater factors
+3028,"ถั่วแปะยี, คั่ว",carbAvailable_g,,56.8,carb by difference
+3028,"ถั่วแปะยี, คั่ว",kcal,,370,kcal from Atwater factors
+3029,"ถั่วแปะยี, ดิบ",carbAvailable_g,,54.5,carb by difference
+3029,"ถั่วแปะยี, ดิบ",kcal,,350,kcal from Atwater factors
+3031,"ถั่วพุ่ม, ทั้งเปลือก, ดิบ",carbAvailable_g,,59.2,carb by difference
+3031,"ถั่วพุ่ม, ทั้งเปลือก, ดิบ",kcal,,355,kcal from Atwater factors
+3032,"ถั่วพุ่ม, แยกเปลือก, ดิบ",carbAvailable_g,,57.9,carb by difference
+3032,"ถั่วพุ่ม, แยกเปลือก, ดิบ",kcal,,360,kcal from Atwater factors
+3034,"ถั่วแระ, ต้ม",carbAvailable_g,,17.6,carb by difference
+3034,"ถั่วแระ, ต้ม",kcal,,184,kcal from Atwater factors
+3035,"ถั่วลาย, ทั้งเปลือก, ดิบ",carbAvailable_g,,58.9,carb by difference
+3035,"ถั่วลาย, ทั้งเปลือก, ดิบ",kcal,,358,kcal from Atwater factors
+3036,"ถั่วลาย, แยกเปลือก, ดิบ",carbAvailable_g,,56.6,carb by difference
+3036,"ถั่วลาย, แยกเปลือก, ดิบ",kcal,,353,kcal from Atwater factors
+3040,"ถั่วเล็บมือนาง, คั่ว",carbAvailable_g,,66.4,carb by difference
+3040,"ถั่วเล็บมือนาง, คั่ว",kcal,,359,kcal from Atwater factors
+3041,"ถั่วเล็บมือนาง, ดิบ",carbAvailable_g,,66.2,carb by difference
+3041,"ถั่วเล็บมือนาง, ดิบ",kcal,,355,kcal from Atwater factors
+3042,"ถั่วหรั่ง, ดิบ",carbAvailable_g,,28.1,carb by difference
+3042,"ถั่วหรั่ง, ดิบ",kcal,,180,kcal from Atwater factors
+3043,"ถั่วหรั่ง, ต้ม",carbAvailable_g,,26.5,carb by difference
+3043,"ถั่วหรั่ง, ต้ม",kcal,,160,kcal from Atwater factors
+3044,"ถั่วเหลือง, คั่ว",carbAvailable_g,,28.8,carb by difference
+3044,"ถั่วเหลือง, คั่ว",kcal,,435,kcal from Atwater factors
+3045,"ถั่วเหลือง, ดิบ",carbAvailable_g,,31.4,carb by difference
+3045,"ถั่วเหลือง, ดิบ",kcal,,430,kcal from Atwater factors
+3048,"มะพร้าว, ขูด, กาก",carbAvailable_g,,16,carb by difference
+3048,"มะพร้าว, ขูด, กาก",kcal,,154,kcal from Atwater factors
+3049,"มะพร้าว, ขูด, เนื้อ",carbAvailable_g,,13.3,carb by difference
+3049,"มะพร้าว, ขูด, เนื้อ",kcal,,326,kcal from Atwater factors
+3052,"มะพร้าวอ่อน, เนื้อ",carbAvailable_g,,12.2,carb by difference
+3052,"มะพร้าวอ่อน, เนื้อ",kcal,,73,kcal from Atwater factors
+3053,"เมล็ดกระถิน, แห้ง, คั่ว",carbAvailable_g,,47.2,carb by difference
+3053,"เมล็ดกระถิน, แห้ง, คั่ว",kcal,,415,kcal from Atwater factors
+3055,"เมล็ดเงาะ, ดิบ",carbAvailable_g,,31.8,carb by difference
+3055,"เมล็ดเงาะ, ดิบ",kcal,,374,kcal from Atwater factors
+3056,"เมล็ดถั่วแขก, ดิบ",carbAvailable_g,,63,carb by difference
+3056,"เมล็ดถั่วแขก, ดิบ",kcal,,380,kcal from Atwater factors
+3057,"เมล็ดถั่วพู, ปอกเปลือก, ลวก",carbAvailable_g,,17.3,carb by difference
+3057,"เมล็ดถั่วพู, ปอกเปลือก, ลวก",kcal,,309,kcal from Atwater factors
+3058,"เมล็ดบัว, นึ่ง",carbAvailable_g,,27.9,carb by difference
+3058,"เมล็ดบัว, นึ่ง",kcal,,157,kcal from Atwater factors
+3061,"เมล็ดมะขาม, คั่ว",carbAvailable_g,,66.6,carb by difference
+3061,"เมล็ดมะขาม, คั่ว",kcal,,393,kcal from Atwater factors
+3062,"เมล็ดมะม่วงหิมพานต์, คั่ว",carbAvailable_g,,29,carb by difference
+3062,"เมล็ดมะม่วงหิมพานต์, คั่ว",kcal,,597,kcal from Atwater factors
+3065,วุ้นเส้น,carbAvailable_g,,82.5,carb by difference
+3065,วุ้นเส้น,kcal,,337,kcal from Atwater factors
+4004,"กระโดน, ยอดอ่อน",carbAvailable_g,,18.8,carb by difference
+4004,"กระโดน, ยอดอ่อน",kcal,,90,kcal from Atwater factors
+4008,"กระเทียม, ต้น",carbAvailable_g,,5.1,carb by difference
+4008,"กระเทียม, ต้น",kcal,,40,kcal from Atwater factors
+4017,"กะหล่ำ, ดอก",carbAvailable_g,,2.1,carb by difference
+4017,"กะหล่ำ, ดอก",kcal,,13,kcal from Atwater factors
+4023,"ขจร, ดอก",carbAvailable_g,,12.1,carb by difference
+4023,"ขจร, ดอก",kcal,,78,kcal from Atwater factors
+4027,"ข้าวสาร, ดอก",carbAvailable_g,,6.2,carb by difference
+4027,"ข้าวสาร, ดอก",kcal,,39,kcal from Atwater factors
+4028,"ข่าอ่อน, หน่อ",carbAvailable_g,,8.6,carb by difference
+4028,"ข่าอ่อน, หน่อ",kcal,,43,kcal from Atwater factors
+4029,"ข่าอ่อน, หัว",carbAvailable_g,,4.4,carb by difference
+4029,"ข่าอ่อน, หัว",kcal,,26,kcal from Atwater factors
+4030,"ขิง, แก่",carbAvailable_g,,5.2,carb by difference
+4030,"ขิง, แก่",kcal,,28,kcal from Atwater factors
+4035,คูน,carbAvailable_g,,2.3,carb by difference
+4035,คูน,kcal,,12,kcal from Atwater factors
+4038,แครอท,carbAvailable_g,,7.9,carb by difference
+4038,แครอท,kcal,,42,kcal from Atwater factors
+4039,"งิ้วแดง, ดอก, แห้ง",carbAvailable_g,,69.4,carb by difference
+4039,"งิ้วแดง, ดอก, แห้ง",kcal,,317,kcal from Atwater factors
+4042,จำปานา,carbAvailable_g,,5.3,carb by difference
+4042,จำปานา,kcal,,37,kcal from Atwater factors
+4043,"จิก/จิกน้ำ/จิกนา, ยอด",carbAvailable_g,,9.6,carb by difference
+4043,"จิก/จิกน้ำ/จิกนา, ยอด",kcal,,56,kcal from Atwater factors
+4045,จุมปา/กุมปลา,carbAvailable_g,,5.8,carb by difference
+4045,จุมปา/กุมปลา,kcal,,44,kcal from Atwater factors
+4046,"เจียงดา/เชียงดา, ใบ",carbAvailable_g,,8.6,carb by difference
+4046,"เจียงดา/เชียงดา, ใบ",kcal,,70,kcal from Atwater factors
+4055,"ตะลิงปลิง, ผล",carbAvailable_g,,2.5,carb by difference
+4055,"ตะลิงปลิง, ผล",kcal,,11,kcal from Atwater factors
+4057,"ต้างป่า/ต้างหลวง, ดอก",carbAvailable_g,,10.2,carb by difference
+4057,"ต้างป่า/ต้างหลวง, ดอก",kcal,,60,kcal from Atwater factors
+4058,ตาลปัตรฤาษี,carbAvailable_g,,2.4,carb by difference
+4058,ตาลปัตรฤาษี,kcal,,17,kcal from Atwater factors
+4059,"ตำลึง, ใบ, ยอดอ่อน",carbAvailable_g,,5.5,carb by difference
+4059,"ตำลึง, ใบ, ยอดอ่อน",kcal,,39,kcal from Atwater factors
+4060,"เตียน/กระท้อนป่า, ผล",carbAvailable_g,,13.9,carb by difference
+4063,แตงไทยอ่อน,carbAvailable_g,,2.7,carb by difference
+4063,แตงไทยอ่อน,kcal,,13,kcal from Atwater factors
+4064,แตงโมอ่อน,carbAvailable_g,,2.4,carb by difference
+4064,แตงโมอ่อน,kcal,,12,kcal from Atwater factors
+4067,ถั่วงอก,carbAvailable_g,,6.6,carb by difference
+4067,ถั่วงอก,kcal,,38,kcal from Atwater factors
+4068,"ถั่วงอก, หัวโต",carbAvailable_g,,3,carb by difference
+4068,"ถั่วงอก, หัวโต",kcal,,79,kcal from Atwater factors
+4069,ถั่วปี,carbAvailable_g,,7.1,carb by difference
+4069,ถั่วปี,kcal,,39,kcal from Atwater factors
+4071,"ถั่วฝักยาว, แดง",carbAvailable_g,,5.3,carb by difference
+4071,"ถั่วฝักยาว, แดง",kcal,,35,kcal from Atwater factors
+4074,ถั่วลันเตา,carbAvailable_g,,9.9,carb by difference
+4074,ถั่วลันเตา,kcal,,58,kcal from Atwater factors
+4075,"เถาคัน/ส้มเขาคัน, ผล",carbAvailable_g,,5.5,carb by difference
+4075,"เถาคัน/ส้มเขาคัน, ผล",kcal,,27,kcal from Atwater factors
+4076,"ทองหลาง, ใบ",carbAvailable_g,,11.7,carb by difference
+4076,"ทองหลาง, ใบ",kcal,,72,kcal from Atwater factors
+4079,"น้ำเต้า, เนื้อ",carbAvailable_g,,2.6,carb by difference
+4079,"น้ำเต้า, เนื้อ",kcal,,12,kcal from Atwater factors
+4080,"น้ำเต้า, ผล",carbAvailable_g,,3.4,carb by difference
+4080,"น้ำเต้า, ผล",kcal,,17,kcal from Atwater factors
+4081,"น้ำเต้า, ไส้",carbAvailable_g,,1.8,carb by difference
+4081,"น้ำเต้า, ไส้",kcal,,10,kcal from Atwater factors
+4085,บวบเหลี่ยม,carbAvailable_g,,3.3,carb by difference
+4085,บวบเหลี่ยม,kcal,,18,kcal from Atwater factors
+4086,บอนส้ม,carbAvailable_g,,3.3,carb by difference
+4086,บอนส้ม,kcal,,18,kcal from Atwater factors
+4088,"บุกเกียง, ยอดอ่อน",carbAvailable_g,,4.7,carb by difference
+4088,"บุกเกียง, ยอดอ่อน",kcal,,21,kcal from Atwater factors
+4090,ใบเตย,carbAvailable_g,,10.1,carb by difference
+4090,ใบเตย,kcal,,55,kcal from Atwater factors
+4092,ใบปอ,carbAvailable_g,,9.7,carb by difference
+4092,ใบปอ,kcal,,77,kcal from Atwater factors
+4095,ปวยเล้ง,carbAvailable_g,,1.6,carb by difference
+4095,ปวยเล้ง,kcal,,25,kcal from Atwater factors
+4096,"เปราะ, ใบ",carbAvailable_g,,2.7,carb by difference
+4096,"เปราะ, ใบ",kcal,,18,kcal from Atwater factors
+4098,ผักกะสัง,carbAvailable_g,,2.1,carb by difference
+4098,ผักกะสัง,kcal,,13,kcal from Atwater factors
+4099,ผักกาดขาว,carbAvailable_g,,1.1,carb by difference
+4099,ผักกาดขาว,kcal,,11,kcal from Atwater factors
+4100,ผักกาดเขียว,carbAvailable_g,,2.7,carb by difference
+4100,ผักกาดเขียว,kcal,,22,kcal from Atwater factors
+4101,ผักกาดนกเขา,carbAvailable_g,,3.4,carb by difference
+4101,ผักกาดนกเขา,kcal,,24,kcal from Atwater factors
+4102,ผักกาดหอม,carbAvailable_g,,3.8,carb by difference
+4102,ผักกาดหอม,kcal,,27,kcal from Atwater factors
+4105,"ผักกุ่ม, ดอง",carbAvailable_g,,20.6,carb by difference
+4105,"ผักกุ่ม, ดอง",kcal,,108,kcal from Atwater factors
+4106,ผักกูด,carbAvailable_g,,3.6,carb by difference
+4106,ผักกูด,kcal,,25,kcal from Atwater factors
+4108,ผักขี้ขวง,carbAvailable_g,,4.4,carb by difference
+4108,ผักขี้ขวง,kcal,,34,kcal from Atwater factors
+4109,ผักขี้หูด,carbAvailable_g,,0,carb by difference
+4109,ผักขี้หูด,kcal,,15,kcal from Atwater factors
+4110,ผักโขม/ผักโหม/ผักหม,carbAvailable_g,,1.7,carb by difference
+4110,ผักโขม/ผักโหม/ผักหม,kcal,,17,kcal from Atwater factors
+4111,ผักคะน้า,carbAvailable_g,,3.8,carb by difference
+4111,ผักคะน้า,kcal,,31,kcal from Atwater factors
+4119,ผักบ่อ,carbAvailable_g,,2.3,carb by difference
+4119,ผักบ่อ,kcal,,15,kcal from Atwater factors
+4123,ผักปลัง/ผักปิ้ง,carbAvailable_g,,3.5,carb by difference
+4123,ผักปลัง/ผักปิ้ง,kcal,,24,kcal from Atwater factors
+4124,ผักผ้า/ไข่น้ำ,carbAvailable_g,,1.5,carb by difference
+4124,ผักผ้า/ไข่น้ำ,kcal,,9,kcal from Atwater factors
+4127,ผักเม็ก,carbAvailable_g,,15.8,carb by difference
+4127,ผักเม็ก,kcal,,84,kcal from Atwater factors
+4129,ผักแว่น,carbAvailable_g,,6.7,carb by difference
+4129,ผักแว่น,kcal,,44,kcal from Atwater factors
+4130,"ผักเสี้ยว (ชงโค), ยอด",carbAvailable_g,,7,carb by difference
+4130,"ผักเสี้ยว (ชงโค), ยอด",kcal,,60,kcal from Atwater factors
+4131,"ผักแล้ว, ยอด",carbAvailable_g,,6.4,carb by difference
+4131,"ผักแล้ว, ยอด",kcal,,52,kcal from Atwater factors
+4132,ผักหนาม,carbAvailable_g,,2.8,carb by difference
+4132,ผักหนาม,kcal,,21,kcal from Atwater factors
+4135,"ผักฮ้วน/ฮ้วนหมู, ดอก",carbAvailable_g,,8.3,carb by difference
+4135,"ผักฮ้วน/ฮ้วนหมู, ดอก",kcal,,50,kcal from Atwater factors
+4136,"ผักฮ้วน/ฮ้วนหมู, ยอด",carbAvailable_g,,9.2,carb by difference
+4136,"ผักฮ้วน/ฮ้วนหมู, ยอด",kcal,,68,kcal from Atwater factors
+4137,"ผักชี้/ผักเฮียด, ยอด",carbAvailable_g,,8.6,carb by difference
+4137,"ผักชี้/ผักเฮียด, ยอด",kcal,,53,kcal from Atwater factors
+4139,"พริกขี้หนู, ยอด",carbAvailable_g,,6.5,carb by difference
+4139,"พริกขี้หนู, ยอด",kcal,,50,kcal from Atwater factors
+4142,"พริกชี้ฟ้า, แดง",carbAvailable_g,,8.5,carb by difference
+4142,"พริกชี้ฟ้า, แดง",kcal,,62,kcal from Atwater factors
+4143,"พริกชี้ฟ้า, เขียว",carbAvailable_g,,10.6,carb by difference
+4143,"พริกชี้ฟ้า, เขียว",kcal,,53,kcal from Atwater factors
+4144,"พริกไทย, อ่อน, เมล็ด",carbAvailable_g,,19.3,carb by difference
+4144,"พริกไทย, อ่อน, เมล็ด",kcal,,118,kcal from Atwater factors
+4147,พริกหวาน/พริกยักษ์,carbAvailable_g,,13.8,carb by difference
+4147,พริกหวาน/พริกยักษ์,kcal,,82,kcal from Atwater factors
+4148,พริกเหลือง,carbAvailable_g,,14.3,carb by difference
+4148,พริกเหลือง,kcal,,106,kcal from Atwater factors
+4151,"ฟักข้าว, ผล",carbAvailable_g,,6.6,carb by difference
+4151,"ฟักข้าว, ผล",kcal,,31,kcal from Atwater factors
+4152,"ฟักข้าว, ยอด",carbAvailable_g,,4.1,carb by difference
+4152,"ฟักข้าว, ยอด",kcal,,48,kcal from Atwater factors
+4153,ฟักเขียว,carbAvailable_g,,2.9,carb by difference
+4153,ฟักเขียว,kcal,,13,kcal from Atwater factors
+4156,"ฟักทอง, ยอดอ่อน",carbAvailable_g,,2.4,carb by difference
+4156,"ฟักทอง, ยอดอ่อน",kcal,,19,kcal from Atwater factors
+4160,"มะกอกไทย, ผล",carbAvailable_g,,20.8,carb by difference
+4160,"มะกอกไทย, ผล",kcal,,88,kcal from Atwater factors
+4162,"มะขาม, ฝักอ่อน",carbAvailable_g,,21,carb by difference
+4162,"มะขาม, ฝักอ่อน",kcal,,95,kcal from Atwater factors
+4163,"มะขาม, ใบอ่อน",carbAvailable_g,,10.4,carb by difference
+4163,"มะขาม, ใบอ่อน",kcal,,59,kcal from Atwater factors
+4164,มะขามเปียก,carbAvailable_g,,75.6,carb by difference
+4164,มะขามเปียก,kcal,,318,kcal from Atwater factors
+4165,มะเขือกรอบ/มะเขือเปราะ,carbAvailable_g,,8.8,carb by difference
+4165,มะเขือกรอบ/มะเขือเปราะ,kcal,,50,kcal from Atwater factors
+4166,"มะเขือขาว, ดอง",carbAvailable_g,,5.9,carb by difference
+4166,"มะเขือขาว, ดอง",kcal,,34,kcal from Atwater factors
+4167,มะเขือขื่น,carbAvailable_g,,10.5,carb by difference
+4167,มะเขือขื่น,kcal,,68,kcal from Atwater factors
+4178,มะเขือเสวย,carbAvailable_g,,7.1,carb by difference
+4178,มะเขือเสวย,kcal,,39,kcal from Atwater factors
+4179,"มะดัน, ผล",carbAvailable_g,,7.9,carb by difference
+4179,"มะดัน, ผล",kcal,,34,kcal from Atwater factors
+4182,"มะตูม, ยอดอ่อน",carbAvailable_g,,15.3,carb by difference
+4182,"มะตูม, ยอดอ่อน",kcal,,101,kcal from Atwater factors
+4184,"มะระ, ยอดอ่อน",carbAvailable_g,,15.2,carb by difference
+4184,"มะระ, ยอดอ่อน",kcal,,87,kcal from Atwater factors
+4188,"มะละกอดิบ, ผลป้อม",carbAvailable_g,,8.1,carb by difference
+4188,"มะละกอดิบ, ผลป้อม",kcal,,37,kcal from Atwater factors
+4189,"มะละกอดิบ, ผลยาว",carbAvailable_g,,5.5,carb by difference
+4189,"มะละกอดิบ, ผลยาว",kcal,,25,kcal from Atwater factors
+4190,มะแว้ง,carbAvailable_g,,13.2,carb by difference
+4190,มะแว้ง,kcal,,72,kcal from Atwater factors
+4191,มะอึก,carbAvailable_g,,12.7,carb by difference
+4191,มะอึก,kcal,,66,kcal from Atwater factors
+4192,"มันเทศ, ใบอ่อน",carbAvailable_g,,9.2,carb by difference
+4192,"มันเทศ, ใบอ่อน",kcal,,58,kcal from Atwater factors
+4195,"แมงลัก, ใบ",carbAvailable_g,,5,carb by difference
+4195,"แมงลัก, ใบ",kcal,,41,kcal from Atwater factors
+4196,"ยอ, ใบ",carbAvailable_g,,14.5,carb by difference
+4196,"ยอ, ใบ",kcal,,89,kcal from Atwater factors
+4197,"ยอ, ลูกสด, ไม่รวมเมล็ด",carbAvailable_g,,10,carb by difference
+4197,"ยอ, ลูกสด, ไม่รวมเมล็ด",kcal,,47,kcal from Atwater factors
+4198,ยอดมะพร้าวอ่อน,carbAvailable_g,,7.1,carb by difference
+4198,ยอดมะพร้าวอ่อน,kcal,,41,kcal from Atwater factors
+4199,"ย่านาง, ใบ",carbAvailable_g,,24,carb by difference
+4199,"ย่านาง, ใบ",kcal,,127,kcal from Atwater factors
+4201,"ลิ้นฟ้า/เพกา, ใบ",carbAvailable_g,,17.8,carb by difference
+4201,"ลิ้นฟ้า/เพกา, ใบ",kcal,,135,kcal from Atwater factors
+4202,"ลิ้นฟ้า/เพกา, ยอด",carbAvailable_g,,13,carb by difference
+4202,"ลิ้นฟ้า/เพกา, ยอด",kcal,,101,kcal from Atwater factors
+4203,ลูกเนียง/ซะเนียง,carbAvailable_g,,30.7,carb by difference
+4203,ลูกเนียง/ซะเนียง,kcal,,162,kcal from Atwater factors
+4204,ลูกเนียงนก,carbAvailable_g,,28.1,carb by difference
+4204,ลูกเนียงนก,kcal,,153,kcal from Atwater factors
+4209,สมอไทย,carbAvailable_g,,10.8,carb by difference
+4209,สมอไทย,kcal,,63,kcal from Atwater factors
+4211,"สะเดา, ยอด",carbAvailable_g,,14.7,carb by difference
+4211,"สะเดา, ยอด",kcal,,85,kcal from Atwater factors
+4212,สะตอ,carbAvailable_g,,16,carb by difference
+4212,สะตอ,kcal,,132,kcal from Atwater factors
+4213,"สะแล, ดอก",carbAvailable_g,,9.3,carb by difference
+4213,"สะแล, ดอก",kcal,,76,kcal from Atwater factors
+4214,สันตะวาใบพาย,carbAvailable_g,,1.8,carb by difference
+4214,สันตะวาใบพาย,kcal,,10,kcal from Atwater factors
+4215,สายบัว,carbAvailable_g,,11.8,carb by difference
+4215,สายบัว,kcal,,49,kcal from Atwater factors
+4221,หน่อไม้ไผ่ตง,carbAvailable_g,,4.8,carb by difference
+4221,หน่อไม้ไผ่ตง,kcal,,30,kcal from Atwater factors
+4222,หน่อไม้ไผ่ป่า,carbAvailable_g,,5.4,carb by difference
+4222,หน่อไม้ไผ่ป่า,kcal,,33,kcal from Atwater factors
+4225,"หน่อไม้หวาน, หน่อเล็ก",carbAvailable_g,,0.4,carb by difference
+4225,"หน่อไม้หวาน, หน่อเล็ก",kcal,,11,kcal from Atwater factors
+4226,"หน่อไม้หวาน, หน่อใหญ่",carbAvailable_g,,3.1,carb by difference
+4226,"หน่อไม้หวาน, หน่อใหญ่",kcal,,21,kcal from Atwater factors
+4227,"หน่อหวาย, คัว",carbAvailable_g,,60.5,carb by difference
+4227,"หน่อหวาย, คัว",kcal,,400,kcal from Atwater factors
+4228,"หน่อหวาย, ต้ม, อบแห้ง",carbAvailable_g,,50.7,carb by difference
+4228,"หน่อหวาย, ต้ม, อบแห้ง",kcal,,369,kcal from Atwater factors
+4229,หน่อเหรียง,carbAvailable_g,,8,carb by difference
+4229,หน่อเหรียง,kcal,,94,kcal from Atwater factors
+4232,"หยวกกล้วย, อ่อน",carbAvailable_g,,2.6,carb by difference
+4232,"หยวกกล้วย, อ่อน",kcal,,15,kcal from Atwater factors
+4233,"หยวกกล้วยน้ำว้า, อ่อน",carbAvailable_g,,1.4,carb by difference
+4233,"หยวกกล้วยน้ำว้า, อ่อน",kcal,,8,kcal from Atwater factors
+4235,หัวปลี,carbAvailable_g,,5.2,carb by difference
+4235,หัวปลี,kcal,,28,kcal from Atwater factors
+4236,เห็ดขมิ้น,carbAvailable_g,,3.3,carb by difference
+4236,เห็ดขมิ้น,kcal,,29,kcal from Atwater factors
+4238,เห็ดซาง,carbAvailable_g,,46.4,carb by difference
+4238,เห็ดซาง,kcal,,197,kcal from Atwater factors
+4239,เห็ดตับเต่า,carbAvailable_g,,4.5,carb by difference
+4239,เห็ดตับเต่า,kcal,,29,kcal from Atwater factors
+4240,เห็ดตาโล่,carbAvailable_g,,1.7,carb by difference
+4240,เห็ดตาโล่,kcal,,9,kcal from Atwater factors
+4241,เห็ดนางฟ้า,carbAvailable_g,,5.7,carb by difference
+4241,เห็ดนางฟ้า,kcal,,35,kcal from Atwater factors
+4242,เห็ดนางรม,carbAvailable_g,,4.8,carb by difference
+4242,เห็ดนางรม,kcal,,30,kcal from Atwater factors
+4243,เห็ดบัว (เห็ดฟาง),carbAvailable_g,,5,carb by difference
+4243,เห็ดบัว (เห็ดฟาง),kcal,,35,kcal from Atwater factors
+4244,เห็ดเป๋าฮือ,carbAvailable_g,,6,carb by difference
+4244,เห็ดเป๋าฮือ,kcal,,34,kcal from Atwater factors
+4245,เห็ดเผาะ,carbAvailable_g,,8.6,carb by difference
+4245,เห็ดเผาะ,kcal,,47,kcal from Atwater factors
+4246,เห็ดลม/เห็ดกระด้าง,carbAvailable_g,,25.2,carb by difference
+4246,เห็ดลม/เห็ดกระด้าง,kcal,,110,kcal from Atwater factors
+4248,เห็ดหูหนูสด,carbAvailable_g,,10.9,carb by difference
+4248,เห็ดหูหนูสด,kcal,,50,kcal from Atwater factors
+4250,"ออบแอบ, ใบ",kcal,,49,kcal from Atwater factors
+4251,"อีหล่ำ/มะกล่ำ, ใบอ่อน",carbAvailable_g,,13.4,carb by difference
+4251,"อีหล่ำ/มะกล่ำ, ใบอ่อน",kcal,,86,kcal from Atwater factors
+5006,"กล้วยตีบมุกดาหาร, สุก",carbAvailable_g,,27.9,carb by difference
+5006,"กล้วยตีบมุกดาหาร, สุก",kcal,,117,kcal from Atwater factors
+5014,"กล้วยน้ำไทย, สุก",carbAvailable_g,,29,carb by difference
+5014,"กล้วยน้ำไทย, สุก",kcal,,124,kcal from Atwater factors
+5016,"กล้วยน้ำว้าเงิน, สุก",carbAvailable_g,,28,carb by difference
+5016,"กล้วยน้ำว้าเงิน, สุก",kcal,,117,kcal from Atwater factors
+5025,"กล้วยหักมุก, สุก",carbAvailable_g,,26.7,carb by difference
+5025,"กล้วยหักมุก, สุก",kcal,,113,kcal from Atwater factors
+5030,"ขนุน, ละมุด",carbAvailable_g,,27.1,carb by difference
+5030,"ขนุน, ละมุด",kcal,,117,kcal from Atwater factors
+5035,เงาะ,carbAvailable_g,,15.6,carb by difference
+5035,เงาะ,kcal,,67,kcal from Atwater factors
+5038,"ชมพู่, แก้มแหม่ม",carbAvailable_g,,3.8,carb by difference
+5038,"ชมพู่, แก้มแหม่ม",kcal,,16,kcal from Atwater factors
+5039,"ชมพู่, แขกดำ",carbAvailable_g,,6.2,carb by difference
+5039,"ชมพู่, แขกดำ",kcal,,27,kcal from Atwater factors
+5041,"ชมพู่, ทูลเกล้า",carbTotal_g,1,,carbTotal < carbAvailable (shifted column)
+5042,"ชมพู่, นาค",carbAvailable_g,,2.9,carb by difference
+5042,"ชมพู่, นาค",kcal,,13,kcal from Atwater factors
+5043,ชมพู่ มะเหมี่ยว,carbAvailable_g,,4.3,carb by difference
+5043,ชมพู่ มะเหมี่ยว,kcal,,21,kcal from Atwater factors
+5044,"ชมพู่,เมืองเพชร",carbTotal_g,1.1,,carbTotal < carbAvailable (shifted column)
+5045,"ชมพู่, สาแหรก",carbAvailable_g,,5.5,carb by difference
+5045,"ชมพู่, สาแหรก",kcal,,25,kcal from Atwater factors
+5046,"ชมพู่, สีชาด",carbAvailable_g,,2.8,carb by difference
+5046,"ชมพู่, สีชาด",kcal,,13,kcal from Atwater factors
+5048,เชอร์รี่นอก,carbTotal_g,2.3,,carbTotal < carbAvailable (shifted column)
+5048,เชอร์รี่นอก,ash_g,21,,ash impossible (mass balance or cap)
+5049,ตะขบ,carbTotal_g,6,,carbTotal < carbAvailable (shifted column)
+5049,ตะขบ,ash_g,108,,ash impossible (mass balance or cap)
+5050,"แตงไทย,สุก",carbAvailable_g,,2.1,carb by difference
+5050,"แตงไทย,สุก",kcal,,10,kcal from Atwater factors
+5051,"แตงโม, กินรี",carbTotal_g,0.4,,carbTotal < carbAvailable (shifted column)
+5052,"แตงโม, ตอปิโด",carbTotal_g,0.1,,carbTotal < carbAvailable (shifted column)
+5053,"แตงโม, เหยียบไม่แตก",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+5054,แตงโมเหลือง,carbTotal_g,1.4,,carbTotal < carbAvailable (shifted column)
+5055,"ทุเรียน, กระดุม",ash_g,49,,ash impossible (mass balance or cap)
+5055,"ทุเรียน, กระดุม",carbAvailable_g,,19.5,carb by difference (typical ash for food group)
+5055,"ทุเรียน, กระดุม",kcal,,132,kcal from Atwater factors
+5056,ทุเรียนกวน,ash_g,116,,ash impossible (mass balance or cap)
+5056,ทุเรียนกวน,carbAvailable_g,,63.9,carb by difference (typical ash for food group)
+5056,ทุเรียนกวน,kcal,,339,kcal from Atwater factors
+5057,"ทุเรียนกวน, ก้านยาว",ash_g,93,,ash impossible (mass balance or cap)
+5057,"ทุเรียนกวน, ก้านยาว",carbAvailable_g,,66.1,carb by difference (typical ash for food group)
+5057,"ทุเรียนกวน, ก้านยาว",kcal,,348,kcal from Atwater factors
+5058,"ทุเรียนกวน, ก้านยาว+ชะนี",ash_g,144,,ash impossible (mass balance or cap)
+5058,"ทุเรียนกวน, ก้านยาว+ชะนี",carbAvailable_g,,65,carb by difference (typical ash for food group)
+5058,"ทุเรียนกวน, ก้านยาว+ชะนี",kcal,,352,kcal from Atwater factors
+5059,"ทุเรียนกวน, ก้านยาว+หมอนทอง",ash_g,136,,ash impossible (mass balance or cap)
+5059,"ทุเรียนกวน, ก้านยาว+หมอนทอง",carbAvailable_g,,66.5,carb by difference (typical ash for food group)
+5059,"ทุเรียนกวน, ก้านยาว+หมอนทอง",kcal,,343,kcal from Atwater factors
+5060,"ทุเรียน, ก้านยาว",carbAvailable_g,,17.1,carb by difference
+5060,"ทุเรียน, ก้านยาว",kcal,,117,kcal from Atwater factors
+5061,"ทุเรียน, ชะนี",carbAvailable_g,,16.7,carb by difference
+5061,"ทุเรียน, ชะนี",kcal,,119,kcal from Atwater factors
+5062,ทุเรียนเทศ/ทุเรียนน้ำ,carbAvailable_g,,1.4,carb by difference
+5062,ทุเรียนเทศ/ทุเรียนน้ำ,kcal,,14,kcal from Atwater factors
+5063,"ทุเรียน, หมอนทอง",ash_g,29,,ash impossible (mass balance or cap)
+5063,"ทุเรียน, หมอนทอง",carbAvailable_g,,30.2,carb by difference (typical ash for food group)
+5063,"ทุเรียน, หมอนทอง",kcal,,161,kcal from Atwater factors
+5064,"ทุเรียน, อีลวง",ash_g,41,,ash impossible (mass balance or cap)
+5064,"ทุเรียน, อีลวง",carbAvailable_g,,26.4,carb from measured energy
+5065,น้อยหน่า,carbTotal_g,2.7,,carbTotal < carbAvailable (shifted column)
+5066,"ฝรั่ง, กลมสาลี่",carbTotal_g,2.9,,carbTotal < carbAvailable (shifted column)
+5067,"ฝรั่ง, กิมจู",carbTotal_g,3.1,,carbTotal < carbAvailable (shifted column)
+5068,ฝรั่ง. ซันจู,carbTotal_g,3.1,,carbTotal < carbAvailable (shifted column)
+5069,"ฝรั่ง, แป้นสีทอง",carbTotal_g,3.3,,carbTotal < carbAvailable (shifted column)
+5070,"ฝรั่ง, ไร้เมล็ด",carbTotal_g,2.9,,carbTotal < carbAvailable (shifted column)
+5071,พลับ,carbTotal_g,1.9,,carbTotal < carbAvailable (shifted column)
+5072,"พุทรา, ลูกยาว",ash_g,30,,ash impossible (mass balance or cap)
+5072,"พุทรา, ลูกยาว",carbAvailable_g,,24.5,carb by difference (typical ash for food group)
+5072,"พุทรา, ลูกยาว",kcal,,117,kcal from Atwater factors
+5073,พุทราไทย,carbAvailable_g,,7.7,carb by difference
+5073,พุทราไทย,kcal,,47,kcal from Atwater factors
+5074,"พุทรา, แอปเปิ้ล",carbTotal_g,1.8,,carbTotal < carbAvailable (shifted column)
+5074,"พุทรา, แอปเปิ้ล",ash_g,14,,ash impossible (mass balance or cap)
+5075,"แพชชั่นฟรุท, กวน",carbTotal_g,0.9,,carbTotal < carbAvailable (shifted column)
+5075,"แพชชั่นฟรุท, กวน",ash_g,17,,ash impossible (mass balance or cap)
+5076,"แพชชั่นฟรุท, น้ำคั้น",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+5076,"แพชชั่นฟรุท, น้ำคั้น",ash_g,20,,ash impossible (mass balance or cap)
+5077,"แพชชั่นฟรุท, เนื้อภายนอก",carbTotal_g,3.8,,carbTotal < carbAvailable (shifted column)
+5077,"แพชชั่นฟรุท, เนื้อภายนอก",ash_g,45,,ash impossible (mass balance or cap)
+5079,มะกอกฝรั่ง,ash_g,20,,ash impossible (mass balance or cap)
+5079,มะกอกฝรั่ง,carbAvailable_g,,11.3,carb by difference (typical ash for food group)
+5079,มะกอกฝรั่ง,kcal,,50,kcal from Atwater factors
+5080,มะขามเทศ,carbTotal_g,3.4,,carbTotal < carbAvailable (shifted column)
+5080,มะขามเทศ,ash_g,53,,ash impossible (mass balance or cap)
+5081,มะขามป้อม,carbTotal_g,0.8,,carbTotal < carbAvailable (shifted column)
+5081,มะขามป้อม,ash_g,28,,ash impossible (mass balance or cap)
+5082,มะขามหวาน,ash_g,141,,ash impossible (mass balance or cap)
+5082,มะขามหวาน,carbAvailable_g,,79.3,carb by difference (typical ash for food group)
+5082,มะขามหวาน,kcal,,338,kcal from Atwater factors
+5083,"มะปราง, สุก",carbTotal_g,1.5,,carbTotal < carbAvailable (shifted column)
+5083,"มะปราง, สุก",ash_g,9,,ash impossible (mass balance or cap)
+5084,มะเฟือง,carbTotal_g,3,,carbTotal < carbAvailable (shifted column)
+5085,มะไฟ,carbAvailable_g,,8.5,carb by difference
+5085,มะไฟ,kcal,,40,kcal from Atwater factors
+5086,"มะม่วง, แก้ว, ดิบ",carbTotal_g,2.4,,carbTotal < carbAvailable (shifted column)
+5086,"มะม่วง, แก้ว, ดิบ",ash_g,14,,ash impossible (mass balance or cap)
+5087,"มะม่วง, แก้ว, สุก",carbTotal_g,1.6,,carbTotal < carbAvailable (shifted column)
+5087,"มะม่วง, แก้ว, สุก",ash_g,34,,ash impossible (mass balance or cap)
+5088,"มะม่วง, เขียวสะอาด, ดิบ",carbAvailable_g,,10.4,carb by difference
+5088,"มะม่วง, เขียวสะอาด, ดิบ",kcal,,46,kcal from Atwater factors
+5089,"มะม่วง, เขียวเสวย, ดิบ",carbTotal_g,2,,carbTotal < carbAvailable (shifted column)
+5090,"มะม่วง, เขียวเสวย, สุก",carbAvailable_g,,17.9,carb by difference
+5090,"มะม่วง, เขียวเสวย, สุก",kcal,,81,kcal from Atwater factors
+5091,"มะม่วง, คาราบาว, สุก",carbTotal_g,1,,carbTotal < carbAvailable (shifted column)
+5092,"มะม่วง, ทองดำ, ดิบ",ash_g,30,,ash impossible (mass balance or cap)
+5092,"มะม่วง, ทองดำ, ดิบ",carbAvailable_g,,23.6,carb by difference (typical ash for food group)
+5092,"มะม่วง, ทองดำ, ดิบ",kcal,,102,kcal from Atwater factors
+5093,"มะม่วง, น้ำดอกไม้, สุก",carbTotal_g,0.8,,carbTotal < carbAvailable (shifted column)
+5094,"มะม่วง, พราหมณ์, สุก",carbAvailable_g,,10.4,carb by difference
+5094,"มะม่วง, พราหมณ์, สุก",kcal,,46,kcal from Atwater factors
+5095,"มะม่วง, พิมเสน, สุก",ash_g,25,,ash impossible (mass balance or cap)
+5095,"มะม่วง, พิมเสน, สุก",carbAvailable_g,,13.6,carb by difference (typical ash for food group)
+5095,"มะม่วง, พิมเสน, สุก",kcal,,61,kcal from Atwater factors
+5096,"มะม่วง, พิมเสนมัน, ดิบ",carbTotal_g,1.8,,carbTotal < carbAvailable (shifted column)
+5096,"มะม่วง, พิมเสนมัน, ดิบ",ash_g,25,,ash impossible (mass balance or cap)
+5097,"มะม่วง, ยายกล่ำ, สุก",carbTotal_g,7.3,,carbTotal < carbAvailable (shifted column)
+5098,"มะม่วง, แรด, ดิบ",carbTotal_g,1.8,,carbTotal < carbAvailable (shifted column)
+5099,"มะม่วงลิ้นงูเห่า/มันขุนศรีบ้านแพ้ว, สุก",carbTotal_g,1.3,,carbTotal < carbAvailable (shifted column)
+5100,"มะม่วง, หนังกลางวัน, สุก",ash_g,25,,ash impossible (mass balance or cap)
+5100,"มะม่วง, หนังกลางวัน, สุก",carbAvailable_g,,18.7,carb by difference (typical ash for food group)
+5100,"มะม่วง, หนังกลางวัน, สุก",kcal,,79,kcal from Atwater factors
+5101,"มะม่วง, แห้วมัน, ดิบ",carbAvailable_g,,14.3,carb by difference
+5101,"มะม่วง, แห้วมัน, ดิบ",kcal,,61,kcal from Atwater factors
+5102,"มะม่วง, อกร่อง, สุก",carbTotal_g,1.1,,carbTotal < carbAvailable (shifted column)
+5102,"มะม่วง, อกร่อง, สุก",ash_g,29,,ash impossible (mass balance or cap)
+5103,มะม่วงหาวมะนาวโห่,ash_g,37,,ash impossible (mass balance or cap)
+5103,มะม่วงหาวมะนาวโห่,carbAvailable_g,,6.8,carb by difference (typical ash for food group)
+5103,มะม่วงหาวมะนาวโห่,kcal,,55,kcal from Atwater factors
+5104,"มะม่วงหิมพานต์, ผล, สุก",carbTotal_g,2.6,,carbTotal < carbAvailable (shifted column)
+5104,"มะม่วงหิมพานต์, ผล, สุก",ash_g,11,,ash impossible (mass balance or cap)
+5105,มะยงชิด,carbTotal_g,1.6,,carbTotal < carbAvailable (shifted column)
+5106,"มะละกอ, ค่อนข้างสุก",ash_g,18,,ash impossible (mass balance or cap)
+5106,"มะละกอ, ค่อนข้างสุก",carbAvailable_g,,2,carb by difference (typical ash for food group)
+5106,"มะละกอ, ค่อนข้างสุก",kcal,,9,kcal from Atwater factors
+5107,"มะละกอ, แขกดำ, สุก",carbTotal_g,1.7,,carbTotal < carbAvailable (shifted column)
+5107,"มะละกอ, แขกดำ, สุก",ash_g,11,,ash impossible (mass balance or cap)
+5108,"มะละกอ, ฮอลแลนด์, สุก",carbTotal_g,1.7,,carbTotal < carbAvailable (shifted column)
+5108,"มะละกอ, ฮอลแลนด์, สุก",ash_g,11,,ash impossible (mass balance or cap)
+5109,"มะละกอ, ฮาวาย, สุก",carbTotal_g,1.9,,carbTotal < carbAvailable (shifted column)
+5109,"มะละกอ, ฮาวาย, สุก",ash_g,34,,ash impossible (mass balance or cap)
+5110,มังคุด,carbTotal_g,1.7,,carbTotal < carbAvailable (shifted column)
+5110,มังคุด,ash_g,11,,ash impossible (mass balance or cap)
+5111,ระกำ,carbAvailable_g,,11,carb by difference
+5111,ระกำ,kcal,,49,kcal from Atwater factors
+5112,ราสเบอรี่,carbTotal_g,2.4,,carbTotal < carbAvailable (shifted column)
+5112,ราสเบอรี่,ash_g,35,,ash impossible (mass balance or cap)
+5113,ลองกอง,carbTotal_g,4.4,,carbTotal < carbAvailable (shifted column)
+5114,ละมุดไทย/ละมุดสีดา,carbTotal_g,5.6,,carbTotal < carbAvailable (shifted column)
+5114,ละมุดไทย/ละมุดสีดา,ash_g,15,,ash impossible (mass balance or cap)
+5115,"ละมุดฝรั่ง, พันธุ์มะกอก",carbAvailable_g,,7,carb by difference
+5115,"ละมุดฝรั่ง, พันธุ์มะกอก",kcal,,31,kcal from Atwater factors
+5116,ลางสาด,carbAvailable_g,,10.6,carb by difference
+5116,ลางสาด,kcal,,48,kcal from Atwater factors
+5117,ลำใย,carbAvailable_g,,23.6,carb by difference
+5117,ลำใย,kcal,,104,kcal from Atwater factors
+5118,"ลำใย, กะโหลก",carbAvailable_g,,14.2,carb by difference
+5118,"ลำใย, กะโหลก",kcal,,63,kcal from Atwater factors
+5119,"ลำใย, เบี้ยวเขียว",carbTotal_g,1.1,,carbTotal < carbAvailable (shifted column)
+5120,ลิ้นจี่,carbAvailable_g,,6.2,carb by difference
+5120,ลิ้นจี่,kcal,,31,kcal from Atwater factors
+5121,"ลิ้นจี่, กะโหลกใบอ้อ",carbTotal_g,1.6,,carbTotal < carbAvailable (shifted column)
+5122,"ลิ้นจี่, ค่อม",carbTotal_g,1.2,,carbTotal < carbAvailable (shifted column)
+5123,"ลิ้นจี่, จักรพรรดิ์",carbTotal_g,0.5,,carbTotal < carbAvailable (shifted column)
+5124,"ลิ้นจี่, สำเภาแก้ว",carbTotal_g,1.7,,carbTotal < carbAvailable (shifted column)
+5125,"ลิ้นจี่, ฮงฮวย",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+5126,ลูกจันทน์/จันทน์เทศ,carbAvailable_g,,59.9,carb by difference
+5126,ลูกจันทน์/จันทน์เทศ,kcal,,312,kcal from Atwater factors
+5127,ลูกตาล,carbTotal_g,1.9,,carbTotal < carbAvailable (shifted column)
+5128,ลูกท้อ,carbTotal_g,2.7,,carbTotal < carbAvailable (shifted column)
+5129,ลูกหว้า,carbTotal_g,3.3,,carbTotal < carbAvailable (shifted column)
+5130,ลูกไหน/ลูกพลัม,carbTotal_g,3,,carbTotal < carbAvailable (shifted column)
+5131,สตรอว์เบอร์รี่,carbTotal_g,2,,carbTotal < carbAvailable (shifted column)
+5132,"ส้ม, เกลี้ยง",ash_g,33,,ash impossible (mass balance or cap)
+5132,"ส้ม, เกลี้ยง",carbAvailable_g,,11.6,carb by difference (typical ash for food group)
+5132,"ส้ม, เกลี้ยง",kcal,,49,kcal from Atwater factors
+5133,"ส้ม, เขียวหวาน",carbTotal_g,1.6,,carbTotal < carbAvailable (shifted column)
+5133,"ส้ม, เขียวหวาน",ash_g,26,,ash impossible (mass balance or cap)
+5134,"ส้ม, โชกุน",carbTotal_g,1.3,,carbTotal < carbAvailable (shifted column)
+5134,"ส้ม, โชกุน",ash_g,9.6,,ash impossible (mass balance or cap)
+5135,ส้มแก้ว,carbTotal_g,1.8,,carbTotal < carbAvailable (shifted column)
+5136,ส้มจีนไร้เมล็ด,carbTotal_g,3.6,,carbTotal < carbAvailable (shifted column)
+5138,ส้มสายน้ำผึ้ง,carbTotal_g,1.7,,carbTotal < carbAvailable (shifted column)
+5138,ส้มสายน้ำผึ้ง,ash_g,18,,ash impossible (mass balance or cap)
+5139,"ส้มโอ, ทองดี",carbTotal_g,0.7,,carbTotal < carbAvailable (shifted column)
+5139,"ส้มโอ, ทองดี",ash_g,9,,ash impossible (mass balance or cap)
+5140,"ส้มโอ, บางขุนนนท์",ash_g,22,,ash impossible (mass balance or cap)
+5140,"ส้มโอ, บางขุนนนท์",carbAvailable_g,,11.4,carb by difference (typical ash for food group)
+5140,"ส้มโอ, บางขุนนนท์",kcal,,48,kcal from Atwater factors
+5141,"ส้มโอ, ขาวแตงกวา",carbTotal_g,1.6,,carbTotal < carbAvailable (shifted column)
+5141,"ส้มโอ, ขาวแตงกวา",ash_g,11,,ash impossible (mass balance or cap)
+5142,"ส้มโอ, ขาวน้ำผึ้ง",carbTotal_g,1.2,,carbTotal < carbAvailable (shifted column)
+5142,"ส้มโอ, ขาวน้ำผึ้ง",ash_g,8,,ash impossible (mass balance or cap)
+5143,"ส้มโอ, ขาวใหญ่",carbTotal_g,1.7,,carbTotal < carbAvailable (shifted column)
+5143,"ส้มโอ, ขาวใหญ่",ash_g,8,,ash impossible (mass balance or cap)
+5144,สละ,carbTotal_g,3.2,,carbTotal < carbAvailable (shifted column)
+5145,"สับปะรด, นางแล",carbTotal_g,1.4,,carbTotal < carbAvailable (shifted column)
+5145,"สับปะรด, นางแล",ash_g,12,,ash impossible (mass balance or cap)
+5146,"สับปะรด, ภูแล",carbTotal_g,1.3,,carbTotal < carbAvailable (shifted column)
+5147,"สัปปะรด, ภูเก็ต",carbTotal_g,1.4,,carbTotal < carbAvailable (shifted column)
+5147,"สัปปะรด, ภูเก็ต",ash_g,8,,ash impossible (mass balance or cap)
+7076,"ปลาอีสร้อย, สด",carbTotal_g,1.9,,carbTotal < carbAvailable (shifted column)
+8002,"ไข่ไก่, ไข่แดง",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+8003,"ไข่ไก่, ทั้งฟอง",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+8004,"ไข่จระเข้, ไข่ขาว",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+8005,"ไข่จระเข้, ไข่แดง",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+8006,"ไข่จระเข้, ทั้งฟอง",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+8007,ไข่จาละเม็ด/ไข่เต่าทะเล,carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+8008,ไข่นกกะทา,carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+8009,"ไข่ปลากระบอก, เค็ม",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+8010,"ไข่เป็ด, ไข่ขาว",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+8011,"ไข่เป็ด, ไข่แดง",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+8012,"ไข่เป็ด, ทั้งฟอง",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+8013,"ไข่เปรี้ยว, ไข่ไก่, ไข่ขาว",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+8015,"ไข่เปรี้ยว, ไข่ไก่, ทั้งฟอง",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+8016,ไข่มดแดง,carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+8017,ไข่มดแดงและตัวอ่อน,carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+8018,ไข่แมงมัน,carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+9001,"นม, พาสเจอร์ไรส์, รสธรรมชาติ",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+9002,"นม, พาสเจอร์ไรส์, รสหวาน",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+9003,"นม, ยูเอชที, รสธรรมชาติ",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+9004,"นม, ยูเอชที, รสหวาน",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+9005,"นม, สเตอริไลส์, รสธรรมชาติ",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+9006,"นมข้นคืนรูป, ไม่หวาน, สูตรน้ำมันปาล์ม",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+9007,"นมข้นคืนรูป, ไม่หวาน, สูตรมันเนย",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+9008,"นมข้นคืนรูป, หวาน",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+9009,"นมข้นคืนรูป, หวาน, สูตรน้ำมันปาล์ม",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+9010,"นมข้นคืนรูป, หวาน, สูตรมันเนย",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+9011,นมคน,carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+9012,"นมเปรี้ยวพร้อมดื่ม, ไขมันต่ำ, ยูเอชที, รสธรรมชาติ",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+9013,"นมเปรี้ยวพร้อมดื่ม, ไขมันต่ำ, ยูเอชที, รสผลไม้รวม",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+9014,"นมเปรี้ยวพร้อมดื่ม, พาสเจอร์ไรส์, รสธรรมชาติ",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+9015,"นมเปรี้ยวพร้อมดื่ม, พาสเจอร์ไรส์, สูตรนมสด, รสผลไม้รวม",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+9016,"นมเปรี้ยวพร้อมดื่ม, พาสเจอร์ไรส์, สูตรโยเกิร์ต 35%, รสผลไม้รวม",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+9017,"นมเปรี้ยวพร้อมดื่ม, พาสเจอร์ไรส์, สูตรโยเกิร์ต 76.5%, รสผลไม้รวม",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+9018,"นมเปรี้ยวพร้อมดื่ม, ยูเอชที, สูตรนมสด 50%, รสผลไม้รวม",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+9019,"นมเปรี้ยวพร้อมดื่ม, ยูเอชที, สูตรนมสด 85%, รสผลไม้รวม",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+9020,"นมเปรี้ยวพร้อมดื่ม, ยูเอชที, สูตรนมสดผสมนมผง, รสผลไม้รวม",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+9021,นมผง,carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+9022,"นมผง, ขาดมันเนย",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+9023,นมชนิดเม็ด,carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+9024,"นมพร่องมันเนย, พาสเจอร์ไรส์, รสธรรมชาติ",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+9025,"นมพร่องมันเนย, ยูเอชที, รสธรรมชาติ",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+9026,"นมพร่องมันเนย, ยูเอชที, สูตรนมสดผสมนมผงพร่องมันเนย (อัตราส่วน 22:78), รสธรรมชาติ",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+9027,"นมพร่องมันเนย, ยูเอชที, สูตรนมสดผสมนมผงพร่องมันเนย (อัตราส่วน 46:6), รสธรรมชาติ",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+9028,"นมแพะ, ดิบ",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+9029,"นมแพะ, ต้ม",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+9030,"นมแพะ, พลาสเจอร์ไรส์",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+9031,"นมวัว, ดิบ",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+9032,"เนย, ชนิดเค็ม",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+9033,"เนยแข็ง, เชดดาร์",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+9034,"โยเกิร์ต, ไขมันต่ำ, รสผลไม้รวม",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+9035,"โยเกิร์ต, รสธรรมชาติ",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+9036,"โยเกิร์ต, สูตรนมสดผสมนมพร่องมันเนย",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+9037,"โยเกิร์ต, สูตรนมสดผสมนมพร่องมันเนย 73:4, รสผลไม้รวม",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+9038,"โยเกิร์ต, สูตรนมสดผสมนมพร่องมันเนย 73:3, รสผลไม้รวม",carbTotal_g,0,,carbTotal < carbAvailable (shifted column)
+10002,"กะปิ, คุณภาพดี",carbAvailable_g,,2.8,carb by difference
+10002,"กะปิ, คุณภาพดี",kcal,,142,kcal from Atwater factors
+10003,"กะปิ, คุณภาพรอง",carbAvailable_g,,51.9,carb by difference (typical ash for food group)
+10003,"กะปิ, คุณภาพรอง",kcal,,281,kcal from Atwater factors
+10004,ขมิ้นขาว,carbAvailable_g,,8.5,carb by difference (typical ash for food group)
+10004,ขมิ้นขาว,kcal,,39,kcal from Atwater factors
+10005,ขมิ้นชัน,carbAvailable_g,,12.1,carb by difference
+10005,ขมิ้นชัน,kcal,,68,kcal from Atwater factors
+10006,ข่า,carbAvailable_g,,22.1,carb by difference
+10006,ข่า,kcal,,95,kcal from Atwater factors
+10007,เครื่องแกงเผ็ด,carbAvailable_g,,20.3,carb by difference
+10007,เครื่องแกงเผ็ด,kcal,,121,kcal from Atwater factors
+10008,เครื่องแกงมัสมั่น,carbAvailable_g,,11.5,carb by difference
+10008,เครื่องแกงมัสมั่น,kcal,,282,kcal from Atwater factors
+10009,ดอกจันทน์เทศ,carbAvailable_g,,48.1,carb by difference
+10009,ดอกจันทน์เทศ,kcal,,388,kcal from Atwater factors
+10010,ตะไคร้,carbAvailable_g,,29.7,carb by difference
+10010,ตะไคร้,kcal,,143,kcal from Atwater factors
+10013,"ใบกระวาน, แห้ง",carbAvailable_g,,69.3,carb by difference
+10013,"ใบกระวาน, แห้ง",kcal,,372,kcal from Atwater factors
+10014,ผงกะหรี่,carbAvailable_g,,52,carb by difference
+10014,ผงกะหรี่,kcal,,299,kcal from Atwater factors
+10015,"ผักชี, ราก",carbAvailable_g,,12.2,carb by difference
+10015,"ผักชี, ราก",kcal,,57,kcal from Atwater factors
+10016,"ผักซี, ลูก",carbAvailable_g,,66.3,carb by difference
+10016,"ผักซี, ลูก",kcal,,325,kcal from Atwater factors
+10017,"พริกขี้หนู, แห้ง",carbAvailable_g,,50.5,carb by difference
+10017,"พริกขี้หนู, แห้ง",kcal,,347,kcal from Atwater factors
+10018,"พริกชี้ฟ้า, แห้ง",carbAvailable_g,,50,carb by difference
+10018,"พริกชี้ฟ้า, แห้ง",kcal,,364,kcal from Atwater factors
+10019,"พริกไทย, ขาว",carbAvailable_g,,68.8,carb by difference
+10019,"พริกไทย, ขาว",kcal,,380,kcal from Atwater factors
+10021,"พะโล้, ผง",carbAvailable_g,,72.2,carb by difference
+10021,"พะโล้, ผง",kcal,,371,kcal from Atwater factors
+10022,"มะกรูด, น้ำ",carbAvailable_g,,7.4,carb by difference (typical ash for food group)
+10022,"มะกรูด, น้ำ",kcal,,32,kcal from Atwater factors
+10023,"มะกรูด, ใบ",carbAvailable_g,,29,carb by difference
+10023,"มะกรูด, ใบ",kcal,,171,kcal from Atwater factors
+10024,"มะกรูด, ผิว",carbAvailable_g,,21.1,carb by difference
+10024,"มะกรูด, ผิว",kcal,,118,kcal from Atwater factors
+10025,มัสตาด,carbAvailable_g,,32.8,carb by difference
+10025,มัสตาด,kcal,,511,kcal from Atwater factors
+10026,"ยี่หร่า/เทียนขาว, เมล็ด",carbAvailable_g,,62.4,carb by difference
+10026,"ยี่หร่า/เทียนขาว, เมล็ด",kcal,,313,kcal from Atwater factors
+10027,"สะระแหน่, ใบ",carbAvailable_g,,8,carb by difference
+10027,"สะระแหน่, ใบ",kcal,,52,kcal from Atwater factors
+10028,หอมแดง,carbAvailable_g,,12.6,carb by difference
+10028,หอมแดง,kcal,,63,kcal from Atwater factors
+10029,"โหระพา, ใบ",carbAvailable_g,,7.9,carb by difference
+10029,"โหระพา, ใบ",kcal,,54,kcal from Atwater factors
+10030,อบเชย,carbAvailable_g,,76.6,carb by difference
+10030,อบเชย,kcal,,329,kcal from Atwater factors
+11001,กระเพาะปลา,carbAvailable_g,,1.8,carb by difference
+11002,"กระเพาะปลา, เส้นหมี่",carbAvailable_g,,9.4,carb by difference
+11003,ก๋วยจั๊บน้ำข้น,carbAvailable_g,,8.5,carb by difference
+11004,ก๋วยเตี๋ยวแขก (ก๋วยเตี๋ยวแกง),carbAvailable_g,,9.1,carb by difference
+11005,ก๋วยเตี๋ยวคั่วไก่,carbAvailable_g,,23.8,carb by difference
+11006,ก๋วยเตี๋ยวเนื้อสับ,carbAvailable_g,,14.8,carb by difference
+11007,"ก๋วยเตี๋ยวผัดไทย, ใส่ไข่",carbAvailable_g,,23.7,carb by difference
+11008,"ก๋วยเตี๋ยววุ้นเส้น, เย็นตาโฟ, น้ำ",carbAvailable_g,,12.7,carb by difference
+11009,"ก๋วยเตี๋ยวเส้นเซี่ยงไฮ้, น้ำ",carbAvailable_g,,5.1,carb by difference
+11010,"ก๋วยเตี๋ยวเส้นบะหมี่, เกี๊ยว, หมูแดง, น้ำ",carbAvailable_g,,8.6,carb by difference
+11011,"ก๋วยเตี๋ยวเส้นบะหมี่, หมู, แห้ง",carbAvailable_g,,17.5,carb by difference
+11012,"ก๋วยเตี๋ยวเส้นเล็ก, แคระ, น้ำ",carbAvailable_g,,11.5,carb by difference
+11013,"ก๋วยเตี๋ยวเส้นเล็ก, ลูกชิ้น, เนื้อสด, น้ำ",carbAvailable_g,,9.9,carb by difference
+11014,"ก๋วยเตี๋ยวเส้นเล็ก, หมู, ต้มยำ",carbAvailable_g,,12.5,carb by difference
+11015,"ก๋วยเตี๋ยวเส้นเล็ก, หมู, ตับ, แห้ง",carbAvailable_g,,20.8,carb by difference
+11016,"ก๋วยเตี๋ยวเส้นเล็ก, หมู, น้ำตก",carbAvailable_g,,11.6,carb by difference
+11017,"ก๋วยเตี๋ยวเส้นเล็ก, หมู, แห้ง",carbAvailable_g,,31.9,carb by difference
+11018,"ก๋วยเตี๋ยวเส้นเล็ก, หมูเลียง, น้ำ",carbAvailable_g,,12.1,carb by difference
+11019,"ก๋วยเตี๋ยวเส้นหมี่, ต้มยำ",carbAvailable_g,,9.7,carb by difference
+11020,"ก๋วยเตี๋ยวเส้นหมี่, เนื้อ, น้ำตก",carbAvailable_g,,9.2,carb by difference
+11021,"ก๋วยเตี๋ยวเส้นหมี่, ลูกชิ้น, น้ำ",carbAvailable_g,,5.2,carb by difference
+11134,แกงขี้เหล็ก,ash_g,1.84,,ash impossible (mass balance or cap)
+11134,แกงขี้เหล็ก,carbAvailable_g,,0,carb from measured energy
+11135,แกงเขียวหวานหมู,carbAvailable_g,,0,carb from measured energy
+11136,แกงบอน,carbAvailable_g,,7.5,carb by difference
+11137,แกงส้มผักรวมกับปลาช่อน,carbAvailable_g,,2.9,carb by difference
+11141,ขนมจีนน้ำพริก,carbAvailable_g,,19.1,carb by difference
+11143,ขนมจีนน้ำยา,carbAvailable_g,,9.1,carb by difference
+11145,ขนมจีนน้ำยาป่า,carbAvailable_g,,13.1,carb by difference
+11146,ซุปหน่อไม้,carbAvailable_g,,5,carb by difference
+11147,"เต้าเจี้ยว, หลน",carbAvailable_g,,7.9,carb by difference
+11149,"ห่อหมก, ปลาช่อน, ใบยอ",carbAvailable_g,,0,carb from measured energy
+11150,แกงไก่ใส่หยวกกล้วย,carbAvailable_g,,0,carb by difference
+11151,"แกงขี้เหล็ก (ดอกขี้เหล็ก), ใส่ปลาย่าง",ash_g,1.72,,ash impossible (mass balance or cap)
+11151,"แกงขี้เหล็ก (ดอกขี้เหล็ก), ใส่ปลาย่าง",carbAvailable_g,,0,carb from measured energy
+11152,แกงไข่ (ไข่เป็ด),carbAvailable_g,,6.8,carb by difference
+11154,แกงน้ำเคย (แกงเคยปลา),carbAvailable_g,,1.1,carb by difference
+11155,แกงพริกปลาตัวเล็ก,carbAvailable_g,,3,carb by difference
+11156,แกงมัสมั่นเนื้อ,carbAvailable_g,,0.1,carb from measured energy
+11157,แกงส้มผักรวมกับปลา,carbAvailable_g,,0.6,carb by difference
+11159,ไก่กอและ,carbAvailable_g,,13.3,carb by difference
+11160,ขนมจีนน้ำพริก,carbAvailable_g,,14,carb by difference
+11162,ขนมจีนน้ำยาป่า,carbAvailable_g,,12.9,carb by difference
+11163,ขนมจีนน้ำละซอ,carbAvailable_g,,18,carb by difference
+11164,"ข้าวยำ, ข้าวสีม่วง",carbAvailable_g,,30.4,carb by difference
+11165,ข้าวยำคลุก,carbAvailable_g,,32.9,carb by difference
+11166,ข้าวยำปักษ์ใต้,carbAvailable_g,,26,carb by difference
+11167,ข้าวหมกไก่,carbAvailable_g,,26.9,carb by difference
+11168,นาซิดาแฆ - แกงกุ้ง (ข้าวเจ้า + ข้าวเหนียว หุงกับกะทิราดแกงกุ้ง),carbAvailable_g,,45.2,carb by difference
+11169,นาชิดาแฆ - แกงปลา (ข้าวเจ้า + ข้าวเหนียว หุงกับกะทิราดแกงปลา),carbAvailable_g,,32.1,carb by difference
+11170,นาซิตีเน้ะ (ข้าวอัดเป็นแท่ง ราดด้วยปลานึ่ง และมะพร้าวคั่ว),carbAvailable_g,,24.1,carb by difference
+11171,"นาชิมีเยาะ (ข้าวเจ้าหุงกับกะทิราดแกงตุ้มิ, แกงปลา)",carbAvailable_g,,35.4,carb by difference
+11173,ผัดหมี่ไทย,carbAvailable_g,,35.2,carb by difference
+11174,ยำบูดู,carbAvailable_g,,0.9,carb by difference
+11177,"เส้นหมี่, ผัดซีอิ้ว",carbAvailable_g,,33.9,carb by difference
+11178,แกงขนุนอ่อน,carbAvailable_g,,3.2,carb by difference
+11181,"ขนมจีน, น้ำเงี้ยว",carbAvailable_g,,5.2,carb by difference
+11186,ไส้ถั่ว,carbAvailable_g,,5.8,carb by difference
+11187,ก้อยอีสาน,carbAvailable_g,,6,carb by difference
+11188,แกงกล้วยกับไก่,carbAvailable_g,,5.4,carb by difference
+11189,"แกงเผือก, ใส่ปลา",carbAvailable_g,,7.7,carb by difference
+11190,แกงหน่อไม้,carbAvailable_g,,3.9,carb by difference
+11191,แกงหอยขม,carbAvailable_g,,5.1,carb by difference
+11192,"แกงอ่อม, เนื้อ",carbAvailable_g,,2,carb by difference
+11193,"แกงอ่อม, ปลา",carbAvailable_g,,0,carb by difference
+11194,ขนมจีนน้ำนัวปลาร้า,carbAvailable_g,,18.4,carb by difference
+11195,ขนมจีนน้ำยาป่า,carbAvailable_g,,8.9,carb by difference
+11196,ซุบหน่อไม้,carbAvailable_g,,3.4,carb by difference
+11197,ซุปกะทิหน่อไม้,carbAvailable_g,,4.1,carb by difference
+11198,ซุปมะเขือ/ยำมะเขือเปราะ,carbAvailable_g,,5.8,carb by difference
+11199,ซุปมะเขือยาว,carbAvailable_g,,10.5,carb by difference
+11202,"ลาบเลือด, อีสาน",carbAvailable_g,,5.3,carb by difference
+11204,"ส้มตำ, อีสาน",carbAvailable_g,,3.6,carb by difference
+11205,"ไส้กรอก, อีสาน",carbAvailable_g,,12.8,carb by difference
+11206,ห่อหมกไข่ปลา,carbAvailable_g,,0,carb from measured energy
+11207,กาน่าฉ่าย,carbAvailable_g,,7.2,carb by difference
+11208,กุ้งเจ,carbAvailable_g,,17.7,carb by difference
+11209,"เกี้ยนทอด, อาหารเจ",carbAvailable_g,,30.5,carb by difference
+11210,"แกงส้มผักรวม, อาหารเจ",carbAvailable_g,,5.7,carb by difference
+11211,"แกงอ่อมมะระใส่เห็ด, อาหารเจ",carbAvailable_g,,6.9,carb by difference
+11212,"ข้าวกล้องราดลาบเห็ด, อาหารเจ",carbAvailable_g,,23.1,carb by difference
+11213,"ต้มจับฉ่าย, อาหารเจ",carbAvailable_g,,4.1,carb by difference
+11214,"ต้มพะโล้, อาหารเจ",carbAvailable_g,,6.1,carb by difference
+11215,"ต้มหน่อไม้จีน, อาหารเจ",carbAvailable_g,,3.4,carb by difference
+11216,"ทอดมันถั่วเขียว, อาหารเจ",carbAvailable_g,,32.6,carb by difference
+11217,"เนื้อเป็ด, อาหารเจ",carbAvailable_g,,8,carb by difference
+11218,"ปลาเค็ม, อาหารเจ",carbAvailable_g,,11.2,carb by difference
+11219,"ปลาเส้นผสมสาหร่าย, อาหารเจ",carbAvailable_g,,15.8,carb by difference
+11222,"ผัดวุ้นเส้น (ผัดโต๊ะ), อาหารเจ",carbTotal_g,1.5,,carbTotal < carbAvailable (shifted column)
+11222,"ผัดวุ้นเส้น (ผัดโต๊ะ), อาหารเจ",ash_g,14,,ash impossible (mass balance or cap)
+11225,"ยำก๋วยเตี๋ยวเซียงไฮ้, อาหารเจ",carbTotal_g,0.4,,carbTotal < carbAvailable (shifted column)
+11225,"ยำก๋วยเตี๋ยวเซียงไฮ้, อาหารเจ",ash_g,13,,ash impossible (mass balance or cap)
+11226,"เย็นตาโฟ, อาหารเจ",carbTotal_g,0.5,,carbTotal < carbAvailable (shifted column)
+11226,"เย็นตาโฟ, อาหารเจ",ash_g,162,,ash impossible (mass balance or cap)
+11229,"หมี่กรอบ, อาหารเจ",carbTotal_g,0.6,,carbTotal < carbAvailable (shifted column)
+11229,"หมี่กรอบ, อาหารเจ",ash_g,17,,ash impossible (mass balance or cap)
+11231,"หมี่เหลืองผัดซีอิ๊ว, อาหารเจ",carbTotal_g,0.5,,carbTotal < carbAvailable (shifted column)
+11231,"หมี่เหลืองผัดซีอิ๊ว, อาหารเจ",ash_g,165,,ash impossible (mass balance or cap)
+12005,ขนมโก๋,carbTotal_g,0.5,,carbTotal < carbAvailable (shifted column)
+12007,ขนมขี้มอด,carbTotal_g,0.6,,carbTotal < carbAvailable (shifted column)
+13002,"จิ้งหรีด, ดิบ",carbAvailable_g,,0.9,carb by difference
+13002,"จิ้งหรีด, ดิบ",kcal,,133,kcal from Atwater factors
+13004,"ต่อ, ตัวแก่, ดิบ",carbAvailable_g,,2.8,carb by difference
+13004,"ต่อ, ตัวแก่, ดิบ",kcal,,111,kcal from Atwater factors
+13005,"ต่อ, ตัวอ่อน, ดิบ",carbAvailable_g,,4.8,carb by difference
+13005,"ต่อ, ตัวอ่อน, ดิบ",kcal,,140,kcal from Atwater factors
+13006,"ตั๊กแตน, ปาทังกา, ดิบ",carbAvailable_g,,1.2,carb by difference
+13006,"ตั๊กแตน, ปาทังกา, ดิบ",kcal,,157,kcal from Atwater factors
+13007,"ตั๊กแตน, ปาทังกา, ทอด",carbAvailable_g,,8.6,carb by difference
+13007,"ตั๊กแตน, ปาทังกา, ทอด",kcal,,476,kcal from Atwater factors
+13008,"แมงกระชอน, คั่วพริก",carbAvailable_g,,4.6,carb by difference
+13008,"แมงกระชอน, คั่วพริก",kcal,,235,kcal from Atwater factors
+13009,"แมงกินูน, ดิบ",carbAvailable_g,,2.2,carb by difference
+13009,"แมงกินูน, ดิบ",kcal,,98,kcal from Atwater factors
+13010,"แมงตับเต่า, คั่วพริก",carbAvailable_g,,6.4,carb by difference
+13010,"แมงตับเต่า, คั่วพริก",kcal,,222,kcal from Atwater factors
+13011,"แมงป่อง, ดิบ",carbAvailable_g,,2.8,carb by difference
+13011,"แมงป่อง, ดิบ",kcal,,130,kcal from Atwater factors
+13012,"แมงมัน, คั่ว",carbAvailable_g,,8.9,carb by difference
+13012,"แมงมัน, คั่ว",kcal,,330,kcal from Atwater factors
+13013,"หนอนไม้ไผ่, ดิบ",carbAvailable_g,,2.4,carb by difference
+13013,"หนอนไม้ไผ่, ดิบ",kcal,,230,kcal from Atwater factors
+14001,"กุ้ง, ชุบแป้งทอด",carbAvailable_g,,23.6,carb by difference
+14001,"กุ้ง, ชุบแป้งทอด",kcal,,221,kcal from Atwater factors
+14002,"กุ้งฝอย, ชุบแป้งทอด",carbAvailable_g,,23.1,carb by difference
+14002,"กุ้งฝอย, ชุบแป้งทอด",kcal,,616,kcal from Atwater factors
+14003,"กุ้ง, แห้ง, ทอด",carbAvailable_g,,0.6,carb by difference
+14003,"กุ้ง, แห้ง, ทอด",kcal,,389,kcal from Atwater factors
+14004,"ไก่, โครง, ทอด",carbAvailable_g,,4.6,carb by difference
+14004,"ไก่, โครง, ทอด",kcal,,285,kcal from Atwater factors
+14005,"ไก่, น่อง, ทอด",carbAvailable_g,,2.7,carb by difference
+14005,"ไก่, น่อง, ทอด",kcal,,248,kcal from Atwater factors
+14006,"ไก่, ปีก, ทอด",carbAvailable_g,,4,carb by difference
+14006,"ไก่, ปีก, ทอด",kcal,,267,kcal from Atwater factors
+14007,"ไก่, อก, ทอด",carbAvailable_g,,2.9,carb by difference
+14007,"ไก่, อก, ทอด",kcal,,213,kcal from Atwater factors
+14008,"ไก่, เนื้อ, ซุบแป้งทอด",carbAvailable_g,,15.1,carb by difference
+14008,"ไก่, เนื้อ, ซุบแป้งทอด",kcal,,353,kcal from Atwater factors
+14009,"ไก่ยอ, ชุบแป้งทอด",carbAvailable_g,,20.6,carb by difference
+14009,"ไก่ยอ, ชุบแป้งทอด",kcal,,364,kcal from Atwater factors
+14010,ไข่เจียว,carbAvailable_g,,3.5,carb by difference
+14010,ไข่เจียว,kcal,,340,kcal from Atwater factors
+14011,ไข่ดาว,carbAvailable_g,,2.4,carb by difference
+14011,ไข่ดาว,kcal,,265,kcal from Atwater factors
+14012,"ปลาแก้ว, ชุบแป้งทอด",carbAvailable_g,,26,carb by difference
+14012,"ปลาแก้ว, ชุบแป้งทอด",kcal,,495,kcal from Atwater factors
+14013,"ปลาช่อน, ทอด",carbAvailable_g,,0,carb by difference
+14013,"ปลาช่อน, ทอด",kcal,,230,kcal from Atwater factors
+14015,"ปลาทู, สด, ทอด",carbAvailable_g,,0,carb by difference
+14015,"ปลาทู, สด, ทอด",kcal,,232,kcal from Atwater factors
+14017,"ปลารากกล้วย, ชุบแป้งทอด",carbAvailable_g,,7,carb by difference
+14017,"ปลารากกล้วย, ชุบแป้งทอด",kcal,,561,kcal from Atwater factors
+14018,"ปลาหมึก, ชุบแป้งทอด",carbAvailable_g,,9.8,carb by difference
+14018,"ปลาหมึก, ชุบแป้งทอด",kcal,,328,kcal from Atwater factors
+14019,"ปลาอินทรีย์, สด, ทอด",carbAvailable_g,,0,carb by difference
+14019,"ปลาอินทรีย์, สด, ทอด",kcal,,198,kcal from Atwater factors
+14020,"ลูกชิ้นกุ้ง, ทอด",carbAvailable_g,,11.6,carb by difference
+14020,"ลูกชิ้นกุ้ง, ทอด",kcal,,157,kcal from Atwater factors
+14021,"ลูกชิ้นไก่, ทอด",carbAvailable_g,,24.1,carb by difference
+14021,"ลูกชิ้นไก่, ทอด",kcal,,179,kcal from Atwater factors
+14022,"ลูกชิ้นปลา, ทอด",carbAvailable_g,,15.2,carb by difference
+14022,"ลูกชิ้นปลา, ทอด",kcal,,277,kcal from Atwater factors
+14024,"ไส้กรอก, ทอด",carbAvailable_g,,23.9,carb by difference
+14024,"ไส้กรอก, ทอด",kcal,,359,kcal from Atwater factors
+14025,หมูกรอบ,carbAvailable_g,,0.4,carb by difference
+14025,หมูกรอบ,kcal,,385,kcal from Atwater factors
+14026,"กุยฉ่าย, ทอด",carbAvailable_g,,28.9,carb by difference
+14026,"กุยฉ่าย, ทอด",kcal,,198,kcal from Atwater factors
+14027,ขนมโดนัท,carbAvailable_g,,49.3,carb by difference
+14027,ขนมโดนัท,kcal,,432,kcal from Atwater factors
+14028,"ซาลาเปา, ทอด",carbAvailable_g,,52.1,carb by difference
+14028,"ซาลาเปา, ทอด",kcal,,393,kcal from Atwater factors
+14029,"เต้าหู้, ทอด",carbAvailable_g,,2.9,carb by difference
+14029,"เต้าหู้, ทอด",kcal,,228,kcal from Atwater factors
+14030,ปาท่องโก๋ (ลูกเล็ก),carbAvailable_g,,44.6,carb by difference
+14030,ปาท่องโก๋ (ลูกเล็ก),kcal,,427,kcal from Atwater factors
+14031,ปาท่องโก๋ (ลูกใหญ่),carbAvailable_g,,40.6,carb by difference
+14031,ปาท่องโก๋ (ลูกใหญ่),kcal,,441,kcal from Atwater factors
+14032,"ถั่วลิสง, ทอด",carbAvailable_g,,22.9,carb by difference
+14032,"ถั่วลิสง, ทอด",kcal,,616,kcal from Atwater factors
+14033,"เผือก, ทอด",carbAvailable_g,,63.5,carb by difference
+14033,"เผือก, ทอด",kcal,,396,kcal from Atwater factors
+14034,"เผือก, ชุบแป้งทอด",carbAvailable_g,,39.9,carb by difference
+14034,"เผือก, ชุบแป้งทอด",kcal,,311,kcal from Atwater factors
+14035,"มันเทศ, ชุบแป้งทอด",carbAvailable_g,,44.7,carb by difference
+14035,"มันเทศ, ชุบแป้งทอด",kcal,,297,kcal from Atwater factors
+14036,"มันฝรั่ง, ทอด",carbAvailable_g,,46.2,carb by difference
+14036,"มันฝรั่ง, ทอด",kcal,,390,kcal from Atwater factors
+14037,"เมล็ดมะม่วงหิมพานต์, ทอด",carbAvailable_g,,27.1,carb by difference
+14037,"เมล็ดมะม่วงหิมพานต์, ทอด",kcal,,625,kcal from Atwater factors
+14038,โรตี (ใส่นมข้น + น้ำตาล),carbAvailable_g,,55.2,carb by difference
+14038,โรตี (ใส่นมข้น + น้ำตาล),kcal,,479,kcal from Atwater factors
