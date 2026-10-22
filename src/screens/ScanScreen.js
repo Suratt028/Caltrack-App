@@ -14,7 +14,7 @@ import Banner from '../components/Banner';
 import ScreenHeader from '../components/ScreenHeader';
 import { useApp } from '../context/AppContext';
 import { searchNutritionFoods } from '../services/foodService';
-import { analyzeFoodImage } from '../services/aiVisionService';
+import { analyzeFoodImage, prepareScanImage } from '../services/aiVisionService';
 import styles from '../style/screens/ScanScreenStyles';
 
 function FoodBoxOverlays({ items = [] }) {
@@ -106,9 +106,10 @@ export default function ScanScreen({ navigation }) {
     setLastAsset(asset);
 
     try {
+      const upload = await prepareScanImage(asset);
       const aiResult = await analyzeFoodImage(
-        asset.base64,
-        asset.mimeType || 'image/jpeg',
+        upload.base64,
+        upload.mimeType,
         user?.id,
         storeImage
       );

@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { buildProfileGoals, todayKey } from '../utils/calculations';
 import {
@@ -17,6 +17,7 @@ import {
   saveWeight,
   setAuthToken,
   setUnauthorizedHandler,
+  updateLog,
 } from '../services/atlasService';
 
 const STORAGE_KEYS = {
@@ -55,6 +56,11 @@ function groupLogsByDate(logs = []) {
       ],
     };
   }, {});
+}
+
+// Ids the server assigned (Mongo ObjectIds); local-only entries use "<timestamp>_<random>".
+function isServerLogId(entryId) {
+  return /^[a-f\d]{24}$/i.test(String(entryId));
 }
 
 function isRemoteUser(user) {
@@ -103,6 +109,13 @@ export function AppProvider({ children }) {
   const [profile, setProfile] = useState(null); // null until onboarding completes
   const [user, setUser] = useState(null);
   const [logsByDay, setLogsByDay] = useState({});
+  // Latest logs, updated synchronously so overlapping add/remove/update calls
+  // (e.g. two quick taps on "+") each build on the other's result.
+  const logsRef = useRef({});
+  const setLogs = useCallback((next) => {
+    logsRef.current = next;
+    setLogsByDay(next);
+  }, []);
   const [weightsByDay, setWeightsByDay] = useState({});
   const [isLoading, setIsLoading] = useState(true);
 
@@ -119,7 +132,7 @@ export function AppProvider({ children }) {
     const groupedWeights = groupWeightsByDate(serverWeights);
     const completeProfile = hasCompletedOnboarding(serverProfile) ? serverProfile : null;
     setProfile(completeProfile);
-    setLogsByDay(groupedLogs);
+    setLogs(groupedLogs);
     setWeightsByDay(groupedWeights);
     await Promise.all([
       completeProfile
@@ -128,7 +141,7 @@ export function AppProvider({ children }) {
       AsyncStorage.setItem(keys.logs, JSON.stringify(groupedLogs)),
       AsyncStorage.setItem(keys.weights, JSON.stringify(groupedWeights)),
     ]);
-  }, []);
+  }, [setLogs]);
 
   // Load persisted state once on app start.
   useEffect(() => {
@@ -165,7 +178,7 @@ export function AppProvider({ children }) {
           const cachedProfile = JSON.parse(rawProfile);
           setProfile(hasCompletedOnboarding(cachedProfile) ? cachedProfile : null);
         }
-        if (rawLogs) setLogsByDay(JSON.parse(rawLogs));
+        if (rawLogs) setLogs(JSON.parse(rawLogs));
         if (rawWeights) setWeightsByDay(JSON.parse(rawWeights));
         // Sessions saved before the server issued tokens can't call the API: sign in again.
         if (persistedUser && isRemoteUser(persistedUser) && !persistedUser.token) {
@@ -180,7 +193,7 @@ export function AppProvider({ children }) {
         setIsLoading(false);
       }
     })();
-  }, []);
+  }, [setLogs]);
 
   useEffect(() => {
     if (isRemoteUser(user)) {
@@ -200,7 +213,7 @@ export function AppProvider({ children }) {
     setAuthToken(next?.token);
     if (next?.id !== user?.id) {
       setProfile(null);
-      setLogsByDay({});
+      setLogs({});
       setWeightsByDay({});
     }
     setUser(next);
@@ -217,19 +230,21 @@ export function AppProvider({ children }) {
           const cachedProfile = mapRemoteProfile(JSON.parse(rawProfile));
           setProfile(hasCompletedOnboarding(cachedProfile) ? cachedProfile : null);
         }
-        if (rawLogs) setLogsByDay(JSON.parse(rawLogs));
+        if (rawLogs) setLogs(JSON.parse(rawLogs));
         if (rawWeights) setWeightsByDay(JSON.parse(rawWeights));
       }
     } else {
       await AsyncStorage.removeItem(STORAGE_KEYS.user);
     }
-  }, [user?.id]);
+  }, [user?.id, setLogs]);
 
-  const persistLogs = useCallback(async (next) => {
-    setLogsByDay(next);
+  // update: (currentLogsByDay) => nextLogsByDay, applied to the latest state.
+  const persistLogs = useCallback(async (update) => {
+    const next = update(logsRef.current);
+    setLogs(next);
     const key = user?.id ? userDataStorageKeys(user.id).logs : STORAGE_KEYS.logs;
     await AsyncStorage.setItem(key, JSON.stringify(next));
-  }, [user?.id]);
+  }, [user?.id, setLogs]);
 
   const persistWeights = useCallback(async (next) => {
     setWeightsByDay(next);
@@ -315,9 +330,9 @@ export function AppProvider({ children }) {
     await AsyncStorage.multiRemove(Object.values(STORAGE_KEYS));
     setProfile(null);
     setUser(null);
-    setLogsByDay({});
+    setLogs({});
     setWeightsByDay({});
-  }, []);
+  }, [setLogs]);
 
   // The server rejected our token (expired after 30 days, or AUTH_SECRET changed).
   useEffect(() => {
@@ -359,7 +374,6 @@ export function AppProvider({ children }) {
 
   const addFoodLog = useCallback(
     async (entry, dateKey = todayKey()) => {
-      const day = logsByDay[dateKey] || [];
       const nextEntry = { ...entry, id: `${Date.now()}_${Math.random().toString(36).slice(2, 7)}`, time: new Date().toISOString() };
       let savedEntry = nextEntry;
       if (isRemoteUser(user)) {
@@ -367,25 +381,50 @@ export function AppProvider({ children }) {
         if (!log?._id) throw new Error('เซิร์ฟเวอร์ไม่ได้ยืนยันการบันทึกอาหาร กรุณาลองใหม่');
         savedEntry = { ...log.entry, id: String(log._id) };
       }
-      const next = {
-        ...logsByDay,
-        [dateKey]: [...day, savedEntry],
-      };
-      await persistLogs(next);
+      await persistLogs((current) => ({
+        ...current,
+        [dateKey]: [...(current[dateKey] || []), savedEntry],
+      }));
     },
-    [logsByDay, persistLogs, user]
+    [persistLogs, user]
   );
 
   const removeFoodLog = useCallback(
     async (entryId, dateKey = todayKey()) => {
-      const day = logsByDay[dateKey] || [];
-      if (isRemoteUser(user) && /^[a-f\d]{24}$/i.test(String(entryId))) {
+      if (isRemoteUser(user) && isServerLogId(entryId)) {
         await deleteLog(user.id, entryId);
       }
-      const next = { ...logsByDay, [dateKey]: day.filter((e) => e.id !== entryId) };
-      await persistLogs(next);
+      await persistLogs((current) => ({
+        ...current,
+        [dateKey]: (current[dateKey] || []).filter((e) => e.id !== entryId),
+      }));
     },
-    [logsByDay, persistLogs, user]
+    [persistLogs, user]
+  );
+
+  // patch: any of name, meal, time, servings, unit, grams, kcal, protein, carbs, fat, fiber, sugar, sodium.
+  const updateFoodLog = useCallback(
+    async (entryId, dateKey = todayKey(), patch = {}) => {
+      let serverEntry = null;
+      if (isRemoteUser(user) && isServerLogId(entryId)) {
+        const log = await updateLog(user.id, entryId, patch);
+        if (!log?._id) throw new Error('เซิร์ฟเวอร์ไม่ได้ยืนยันการแก้ไขอาหาร กรุณาลองใหม่');
+        serverEntry = { ...log.entry, id: String(log._id) };
+      }
+      await persistLogs((current) => ({
+        ...current,
+        [dateKey]: (current[dateKey] || []).map((e) => {
+          if (e.id !== entryId) return e;
+          if (serverEntry) return serverEntry;
+          const merged = { ...e, ...patch };
+          const protein = Number(merged.protein) || 0;
+          const carbs = Number(merged.carbs) || 0;
+          const fat = Number(merged.fat) || 0;
+          return { ...merged, macros: { protein, carb: carbs, fat } };
+        }),
+      }));
+    },
+    [persistLogs, user]
   );
 
   // Today's weigh-in is also the profile's current weight, so goals stay in step.
@@ -409,19 +448,19 @@ export function AppProvider({ children }) {
     await AsyncStorage.multiRemove([...Object.values(STORAGE_KEYS), ...dataKeys]);
     setProfile(null);
     setUser(null);
-    setLogsByDay({});
+    setLogs({});
     setWeightsByDay({});
-  }, [user]);
+  }, [user, setLogs]);
 
   const getDayTotals = useCallback(
     (dateKey = todayKey()) => {
       const entries = logsByDay[dateKey] || [];
       return entries.reduce(
         (acc, e) => ({
-          kcal: acc.kcal + (e.kcal || 0),
-          protein: acc.protein + (e.protein || 0),
-          carbs: acc.carbs + (e.carbs || 0),
-          fat: acc.fat + (e.fat || 0),
+          kcal: acc.kcal + (Number(e.kcal) || 0),
+          protein: acc.protein + (Number(e.protein) || 0),
+          carbs: acc.carbs + (Number(e.carbs) || 0),
+          fat: acc.fat + (Number(e.fat) || 0),
         }),
         { kcal: 0, protein: 0, carbs: 0, fat: 0 }
       );
@@ -445,11 +484,12 @@ export function AppProvider({ children }) {
       updateProfile,
       addFoodLog,
       removeFoodLog,
+      updateFoodLog,
       logWeight,
       resetAllData,
       getDayTotals,
     }),
-    [isLoading, profile, user, logsByDay, weightsByDay, login, loginWithProvider, loginWithAppleTicket, register, logout, completeOnboarding, updateProfile, addFoodLog, removeFoodLog, logWeight, resetAllData, getDayTotals]
+    [isLoading, profile, user, logsByDay, weightsByDay, login, loginWithProvider, loginWithAppleTicket, register, logout, completeOnboarding, updateProfile, addFoodLog, removeFoodLog, updateFoodLog, logWeight, resetAllData, getDayTotals]
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

@@ -362,6 +362,176 @@ function normalizeFoodLog(log) {
   };
 }
 
+// Unexpected (5xx) failures: log the detail here, send the client a generic message.
+const SERVER_ERROR_MESSAGE = 'เกิดข้อผิดพลาดที่เซิร์ฟเวอร์ กรุณาลองใหม่อีกครั้ง';
+function sendServerError(req, res, error) {
+  console.error(`${req.method} ${req.path} failed:`, error);
+  return res.status(500).json({ error: SERVER_ERROR_MESSAGE });
+}
+
+// ---------------------------------------------------------------------------
+// Food-log entry validation (POST /api/logs, PATCH /api/logs/:logId)
+// ---------------------------------------------------------------------------
+const DATE_KEY_RE = /^\d{4}-\d{2}-\d{2}$/;
+// Upper bounds per entry (a whole meal, not per 100 g); anything above is a client bug.
+const LOG_NUMBER_CAPS = {
+  kcal: 10000,
+  protein: 1000,
+  carbs: 1000,
+  fat: 1000,
+  fiber: 1000,
+  sugar: 1000,
+  sodium: 50000,
+  calcium: 50000,
+  iron: 1000,
+  vitaminC: 10000,
+  servings: 100,
+  grams: 10000,
+};
+const LOG_PATCH_NUMBER_FIELDS = ['servings', 'grams', 'kcal', 'protein', 'carbs', 'fat', 'fiber', 'sugar', 'sodium'];
+const LOG_PATCH_STRING_FIELDS = { name: 200, meal: 30, time: 40, unit: 30 };
+const LOG_MAX_ITEMS = 20;
+const LOG_MAX_ENTRY_BYTES = 32 * 1024;
+const LOG_MAX_STRING_LENGTH = 1000;
+
+class LogValidationError extends Error {}
+
+function isValidDateKey(value) {
+  if (typeof value !== 'string' || !DATE_KEY_RE.test(value)) return false;
+  const date = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
+// The app's local calendar day (REPORT_TIMEZONE), not UTC: 00:00–07:00 in Bangkok is still "yesterday" in UTC.
+function localDateKey(date = new Date()) {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: REPORT_TIMEZONE, year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(date);
+}
+
+// Missing/blank → undefined; otherwise a finite number in [0, cap] or a LogValidationError.
+function parseLogNumber(field, value) {
+  if (value === undefined || value === null || value === '') return undefined;
+  const number = typeof value === 'number' ? value : (typeof value === 'string' ? Number(value) : NaN);
+  const cap = LOG_NUMBER_CAPS[field];
+  if (!Number.isFinite(number) || number < 0 || number > cap) {
+    throw new LogValidationError(`${field} ต้องเป็นตัวเลขระหว่าง 0 ถึง ${cap}`);
+  }
+  return number;
+}
+
+function parseLogString(field, value, maxLength) {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value !== 'string' || value.length > maxLength) {
+    throw new LogValidationError(`${field} ต้องเป็นข้อความไม่เกิน ${maxLength} ตัวอักษร`);
+  }
+  return value;
+}
+
+// Rejects Mongo operator / dotted keys and over-long strings anywhere in the stored entry.
+function assertSafeLogValue(value, depth = 0) {
+  if (depth > 6) throw new LogValidationError('ข้อมูลอาหารซ้อนกันลึกเกินไป');
+  if (typeof value === 'string') {
+    if (value.length > LOG_MAX_STRING_LENGTH) throw new LogValidationError('ข้อความในรายการอาหารยาวเกินไป');
+    return;
+  }
+  if (!value || typeof value !== 'object') return;
+  if (Array.isArray(value)) {
+    if (value.length > LOG_MAX_ITEMS * 2) throw new LogValidationError('รายการในข้อมูลอาหารมากเกินไป');
+    value.forEach((item) => assertSafeLogValue(item, depth + 1));
+    return;
+  }
+  for (const [key, child] of Object.entries(value)) {
+    if (key.startsWith('$') || key.includes('.')) throw new LogValidationError(`ชื่อฟิลด์ไม่ถูกต้อง: ${key}`);
+    assertSafeLogValue(child, depth + 1);
+  }
+}
+
+// Builds the entry stored by POST /api/logs from the client's entry. Extra fields
+// (items, aiPredictions, foodId, source, ...) are kept for feedback, within size limits.
+function buildLogEntry(inputEntry, dateKey) {
+  if (!inputEntry || typeof inputEntry !== 'object' || Array.isArray(inputEntry)) {
+    throw new LogValidationError('entry is required');
+  }
+  const name = parseLogString('name', inputEntry.name ?? inputEntry.foodName, LOG_PATCH_STRING_FIELDS.name);
+  if (!name || !name.trim()) throw new LogValidationError('กรุณาระบุชื่ออาหาร');
+  if (inputEntry.items !== undefined && (!Array.isArray(inputEntry.items) || inputEntry.items.length > LOG_MAX_ITEMS)) {
+    throw new LogValidationError(`items ต้องเป็นรายการไม่เกิน ${LOG_MAX_ITEMS} รายการ`);
+  }
+  assertSafeLogValue(inputEntry);
+  if (Buffer.byteLength(JSON.stringify(inputEntry), 'utf8') > LOG_MAX_ENTRY_BYTES) {
+    throw new LogValidationError('ข้อมูลรายการอาหารมีขนาดใหญ่เกินไป');
+  }
+
+  const macros = inputEntry.macros && typeof inputEntry.macros === 'object' ? inputEntry.macros : {};
+  const numbers = {};
+  for (const field of Object.keys(LOG_NUMBER_CAPS)) {
+    let raw = inputEntry[field];
+    if (field === 'kcal') raw = raw ?? inputEntry.calories;
+    if (field === 'protein') raw = raw ?? macros.protein;
+    if (field === 'carbs') raw = raw ?? inputEntry.carb ?? macros.carbs ?? macros.carb;
+    if (field === 'fat') raw = raw ?? macros.fat;
+    const value = parseLogNumber(field, raw);
+    if (value !== undefined) numbers[field] = value;
+  }
+  const meal = parseLogString('meal', inputEntry.meal ?? inputEntry.mealType, LOG_PATCH_STRING_FIELDS.meal);
+  const protein = numbers.protein || 0;
+  const carbs = numbers.carbs || 0;
+  const fat = numbers.fat || 0;
+
+  const { id: _ignoredId, _id: _ignoredMongoId, calories: _ignoredCalories, carb: _ignoredCarb, ...rest } = inputEntry;
+  return {
+    ...rest,
+    ...numbers,
+    name: name.trim(),
+    date: dateKey,
+    meal: meal || 'snack',
+    kcal: numbers.kcal || 0,
+    protein,
+    carbs,
+    fat,
+    macros: { protein, carb: carbs, fat },
+  };
+}
+
+// Whitelisted PATCH fields → { field: value } (validated), or a LogValidationError.
+function parseLogPatch(body) {
+  const source = body?.entry && typeof body.entry === 'object' ? body.entry : body;
+  if (!source || typeof source !== 'object' || Array.isArray(source)) {
+    throw new LogValidationError('ไม่มีข้อมูลที่จะแก้ไข');
+  }
+  const patch = {};
+  for (const [field, maxLength] of Object.entries(LOG_PATCH_STRING_FIELDS)) {
+    if (!(field in source)) continue;
+    const value = parseLogString(field, source[field], maxLength);
+    if (value === undefined) continue;
+    if (field === 'name' && !value.trim()) throw new LogValidationError('กรุณาระบุชื่ออาหาร');
+    patch[field] = field === 'name' ? value.trim() : value;
+  }
+  for (const field of LOG_PATCH_NUMBER_FIELDS) {
+    if (!(field in source)) continue;
+    const value = parseLogNumber(field, source[field]);
+    if (value !== undefined) patch[field] = value;
+  }
+  if (Object.keys(patch).length === 0) throw new LogValidationError('ไม่มีข้อมูลที่แก้ไขได้');
+  return patch;
+}
+
+// The analytics mirror of a log entry (user.foods).
+function userFoodFieldsFromEntry(entry) {
+  return {
+    foodName: entry.name || entry.foodName || 'อาหารทั่วไป',
+    kcal: Number(entry.kcal ?? entry.calories) || 0,
+    protein: Number(entry.protein) || 0,
+    carbs: Number(entry.carbs) || 0,
+    fat: Number(entry.fat) || 0,
+    fiber: Number(entry.fiber) || 0,
+    sugar: Number(entry.sugar) || 0,
+    sodium: Number(entry.sodium) || 0,
+    entry,
+  };
+}
+
 // Helper Functions
 // Passwords: salted scrypt, stored as "scrypt$<salt hex>$<hash hex>".
 // Older accounts hold an unsalted HMAC-SHA256 (keyed with AUTH_SECRET); those
@@ -776,7 +946,7 @@ app.get('/api/seed-demo', requireAdmin, async (req, res) => {
     const data = await seedDemoData();
     res.json({ message: 'Demo data created successfully', data });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendServerError(req, res, error);
   }
 });
 
@@ -785,7 +955,7 @@ app.post('/api/seed-demo', requireAdmin, async (req, res) => {
     const data = await seedDemoData();
     res.json({ message: 'Demo data created successfully', data });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendServerError(req, res, error);
   }
 });
 
@@ -1009,7 +1179,7 @@ app.post('/api/admin/login', adminLoginLimit, async (req, res) => {
       admin: { email, role: 'admin', displayName: databaseAdmin?.displayName || 'Administrator' },
     });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return sendServerError(req, res, error);
   }
 });
 
@@ -1046,7 +1216,7 @@ app.get('/api/admin/overview', requireAdmin, async (req, res) => {
 
     return res.json({ users, foods, logs, newUsers7d, daily });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return sendServerError(req, res, error);
   }
 });
 
@@ -1087,7 +1257,7 @@ app.get('/api/admin/reports', requireAdmin, async (req, res) => {
       topFoods: topFoods.map((row) => ({ name: row._id, count: row.count })),
     });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return sendServerError(req, res, error);
   }
 });
 
@@ -1118,7 +1288,7 @@ app.get('/api/admin/export/user-foods.csv', requireAdmin, async (req, res) => {
     return res.end();
   } catch (error) {
     if (res.headersSent) return res.end();
-    return res.status(500).json({ error: error.message });
+    return sendServerError(req, res, error);
   }
 });
 
@@ -1128,7 +1298,7 @@ app.get('/api/admin/export/foods.json', requireAdmin, async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename="caltrack-foods-${new Date().toISOString().slice(0, 10)}.json"`);
     return res.json(foods);
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return sendServerError(req, res, error);
   }
 });
 
@@ -1161,7 +1331,7 @@ app.get('/api/admin/scan-logs', requireAdmin, async (req, res) => {
     };
     return res.json({ logs, stats });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return sendServerError(req, res, error);
   }
 });
 
@@ -1188,7 +1358,7 @@ app.get('/api/admin/users', requireAdmin, async (req, res) => {
     ]);
     return res.json({ users, total });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return sendServerError(req, res, error);
   }
 });
 
@@ -1207,7 +1377,7 @@ app.post('/api/admin/users', requireAdmin, async (req, res) => {
     });
     return res.status(201).json({ user: { _id: user._id.toString(), email: user.email, displayName: user.displayName, role: user.role, createdAt: user.createdAt } });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return sendServerError(req, res, error);
   }
 });
 
@@ -1230,7 +1400,7 @@ app.patch('/api/admin/users/:userId', requireAdmin, async (req, res) => {
     if (!user) return res.status(404).json({ error: 'User not found' });
     return res.json({ user });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return sendServerError(req, res, error);
   }
 });
 
@@ -1256,7 +1426,7 @@ app.delete('/api/admin/users/:userId', requireAdmin, async (req, res) => {
     const { password: _password, ...user } = target;
     return res.json({ success: true, user });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return sendServerError(req, res, error);
   }
 });
 
@@ -1269,7 +1439,7 @@ app.get('/api/admin/users/:userId/logs', requireAdmin, async (req, res) => {
     const logs = await Log.find({ userId: req.params.userId }).sort({ createdAt: -1 }).limit(100).lean();
     return res.json({ logs });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return sendServerError(req, res, error);
   }
 });
 
@@ -1281,7 +1451,7 @@ app.get('/api/admin/foods', requireAdmin, async (req, res) => {
     const foods = await Food.find(filter).sort({ nameTh: 1 }).limit(limit).lean();
     return res.json({ foods });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return sendServerError(req, res, error);
   }
 });
 
@@ -1293,7 +1463,8 @@ app.post('/api/admin/foods', requireAdmin, async (req, res) => {
     const food = await Food.create({ foodId, nameTh, nameEn, kcal, protein_g, carbAvailable_g, fat_g });
     return res.status(201).json({ food });
   } catch (error) {
-    return res.status(500).json({ error: error.code === 11000 ? 'foodId already exists' : error.message });
+    if (error.code === 11000) return res.status(500).json({ error: 'foodId already exists' });
+    return sendServerError(req, res, error);
   }
 });
 
@@ -1306,7 +1477,7 @@ app.patch('/api/admin/foods/:foodId', requireAdmin, async (req, res) => {
     if (!food) return res.status(404).json({ error: 'food not found' });
     return res.json({ food });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return sendServerError(req, res, error);
   }
 });
 
@@ -1316,7 +1487,7 @@ app.delete('/api/admin/foods/:foodId', requireAdmin, async (req, res) => {
     if (!food) return res.status(404).json({ error: 'food not found' });
     return res.json({ food });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return sendServerError(req, res, error);
   }
 });
 
@@ -1325,7 +1496,7 @@ app.get('/api/profiles/:userId', requireSelf, async (req, res) => {
     const profile = await Profile.findOne({ userId: req.params.userId });
     res.json({ profile });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendServerError(req, res, error);
   }
 });
 
@@ -1335,7 +1506,7 @@ app.put('/api/profiles/:userId', requireSelf, async (req, res) => {
     const profile = await Profile.findOneAndUpdate({ userId: req.params.userId }, payload, { upsert: true, new: true, setDefaultsOnInsert: true });
     res.json({ profile });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendServerError(req, res, error);
   }
 });
 
@@ -1344,7 +1515,7 @@ app.delete('/api/profiles/:userId', requireSelf, async (req, res) => {
     const profile = await Profile.findOneAndDelete({ userId: req.params.userId });
     res.json({ profile });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendServerError(req, res, error);
   }
 });
 
@@ -1353,7 +1524,7 @@ app.get('/api/weights/:userId', requireSelf, async (req, res) => {
     const weights = await WeightLog.find({ userId: req.params.userId }).sort({ dateKey: 1 });
     return res.json({ weights });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return sendServerError(req, res, error);
   }
 });
 
@@ -1370,7 +1541,7 @@ app.put('/api/weights/:userId/:dateKey', requireSelf, async (req, res) => {
     );
     return res.json({ weight });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return sendServerError(req, res, error);
   }
 });
 
@@ -1385,7 +1556,7 @@ app.delete('/api/users/:userId/data', requireSelf, async (req, res) => {
     ]);
     return res.json({ message: 'user data cleared' });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return sendServerError(req, res, error);
   }
 });
 
@@ -1394,74 +1565,73 @@ app.get('/api/logs/:userId', requireSelf, async (req, res) => {
     const logs = await Log.find({ userId: req.params.userId }).sort({ createdAt: -1 });
     res.json({ logs: logs.map(normalizeFoodLog) });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendServerError(req, res, error);
   }
 });
 
 app.post('/api/logs/:userId', requireSelf, async (req, res) => {
   try {
     const { userId } = req.params;
-    const dateKey = String(req.body.dateKey || req.body.entry?.date || new Date().toISOString().slice(0, 10));
-    const inputEntry = req.body.entry && typeof req.body.entry === 'object' ? req.body.entry : {};
-    const macros = inputEntry.macros && typeof inputEntry.macros === 'object' ? inputEntry.macros : {};
-    const entryProtein = Number(inputEntry.protein ?? macros.protein) || 0;
-    const entryCarbs = Number(inputEntry.carbs ?? inputEntry.carb ?? macros.carbs ?? macros.carb) || 0;
-    const entryFat = Number(inputEntry.fat ?? macros.fat) || 0;
-    const entry = {
-      ...inputEntry,
-      id: undefined,
-      date: inputEntry.date || dateKey,
-      meal: inputEntry.meal || inputEntry.mealType || 'snack',
-      protein: entryProtein,
-      carbs: entryCarbs,
-      fat: entryFat,
-      macros: { protein: entryProtein, carb: entryCarbs, fat: entryFat },
-    };
-    delete entry.id;
+    const requestedDateKey = req.body?.dateKey ?? req.body?.entry?.date;
+    if (requestedDateKey !== undefined && requestedDateKey !== null && !isValidDateKey(requestedDateKey)) {
+      return res.status(400).json({ error: 'dateKey ต้องอยู่ในรูปแบบ YYYY-MM-DD' });
+    }
+    const dateKey = requestedDateKey || localDateKey();
+    let entry;
+    try {
+      entry = buildLogEntry(req.body?.entry, dateKey);
+    } catch (validationError) {
+      if (validationError instanceof LogValidationError) return res.status(400).json({ error: validationError.message });
+      throw validationError;
+    }
+
     const createdLog = await Log.create({ userId, dateKey, entry });
     const log = normalizeFoodLog(createdLog);
-
-    let foodName = 'อาหารทั่วไป';
-    let kcal = 0, protein = 0, carbs = 0, fat = 0, fiber = 0, sugar = 0, sodium = 0;
-
-    if (entry.name || entry.foodName) foodName = entry.name || entry.foodName;
-    kcal = Number(entry.kcal || entry.calories) || 0;
-    protein = Number(entry.protein) || 0;
-    carbs = Number(entry.carbs) || 0;
-    fat = Number(entry.fat) || 0;
-    fiber = Number(entry.fiber) || 0;
-    sugar = Number(entry.sugar) || 0;
-    sodium = Number(entry.sodium) || 0;
-
     const userFood = await UserFood.create({
       userId,
       logId: log._id,
-      dateKey: dateKey || new Date().toISOString().slice(0, 10),
-      foodName,
-      kcal,
-      protein,
-      carbs,
-      fat,
-      fiber,
-      sugar,
-      sodium,
+      dateKey,
       source: 'log',
-      entry,
+      ...userFoodFieldsFromEntry(entry),
     });
 
     res.json({ log, userFood });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendServerError(req, res, error);
   }
 });
 
 app.patch('/api/logs/:userId/:logId', requireSelf, async (req, res) => {
   try {
-    const { userId: _ignoredUserId, _id: _ignoredId, ...updates } = req.body || {};
-    const log = await Log.findOneAndUpdate({ userId: req.params.userId, _id: req.params.logId }, updates, { new: true });
-    res.json({ log });
+    const { userId, logId } = req.params;
+    if (!mongoose.isValidObjectId(logId)) return res.status(404).json({ error: 'log not found' });
+    let patch;
+    try {
+      patch = parseLogPatch(req.body);
+    } catch (validationError) {
+      if (validationError instanceof LogValidationError) return res.status(400).json({ error: validationError.message });
+      throw validationError;
+    }
+
+    const existing = await Log.findOne({ userId, _id: logId }).lean();
+    if (!existing) return res.status(404).json({ error: 'log not found' });
+
+    const current = existing.entry && typeof existing.entry === 'object' ? existing.entry : {};
+    const merged = { ...current, ...patch };
+    const macros = current.macros && typeof current.macros === 'object' ? current.macros : {};
+    const protein = Number(merged.protein ?? macros.protein) || 0;
+    const carbs = Number(merged.carbs ?? merged.carb ?? macros.carbs ?? macros.carb) || 0;
+    const fat = Number(merged.fat ?? macros.fat) || 0;
+    const $set = Object.fromEntries(Object.entries(patch).map(([field, value]) => [`entry.${field}`, value]));
+    $set['entry.macros'] = { protein, carb: carbs, fat };
+
+    const updated = await Log.findOneAndUpdate({ userId, _id: logId }, { $set }, { returnDocument: 'after' });
+    if (!updated) return res.status(404).json({ error: 'log not found' });
+    const log = normalizeFoodLog(updated);
+    await UserFood.updateOne({ userId, logId: updated._id }, { $set: userFoodFieldsFromEntry(updated.toObject().entry) });
+    return res.json({ log });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return sendServerError(req, res, error);
   }
 });
 
@@ -1474,7 +1644,7 @@ app.delete('/api/logs/:userId/:logId', requireSelf, async (req, res) => {
     await UserFood.deleteOne({ logId: log._id });
     res.json({ log });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendServerError(req, res, error);
   }
 });
 
@@ -1509,7 +1679,7 @@ app.get('/api/foods/search', async (req, res) => {
 
     res.json({ results, count: results.length });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendServerError(req, res, error);
   }
 });
 
@@ -1520,18 +1690,22 @@ app.get('/api/foods/:foodId', async (req, res) => {
     if (!food) return res.status(404).json({ error: 'food not found' });
     res.json({ food });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendServerError(req, res, error);
   }
 });
 
 // POST /api/nutrition/calculate
 // Body: { items: [{ foodId: "1001", grams: 150 }, { foodId: "4012", grams: 80 }] }
 // Scales each food's per-100g values by grams/100 and returns per-item + total nutrition.
+const NUTRITION_MAX_ITEMS = 50;
 app.post('/api/nutrition/calculate', async (req, res) => {
   try {
     const { items } = req.body;
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'items array is required, e.g. [{ foodId, grams }]' });
+    }
+    if (items.length > NUTRITION_MAX_ITEMS) {
+      return res.status(400).json({ error: `items array can hold at most ${NUTRITION_MAX_ITEMS} foods` });
     }
     const invalidItem = items.find((item) => {
       const grams = Number(item?.grams);
@@ -1579,7 +1753,7 @@ app.post('/api/nutrition/calculate', async (req, res) => {
 
     res.json({ totals, breakdown, notFound });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendServerError(req, res, error);
   }
 });
 
@@ -1630,7 +1804,7 @@ app.get('/api/admin/system-settings', requireAdmin, async (req, res) => {
   try {
     return res.json(await getSystemSettings({ fresh: true }));
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return sendServerError(req, res, error);
   }
 });
 
@@ -1653,7 +1827,7 @@ app.put('/api/admin/system-settings', requireAdmin, async (req, res) => {
     );
     return res.json(await getSystemSettings({ fresh: true }));
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return sendServerError(req, res, error);
   }
 });
 
@@ -1683,7 +1857,7 @@ app.put('/api/admin/ai-scan-config', requireAdmin, async (req, res) => {
     );
     return res.json(await getAiScanConfig());
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return sendServerError(req, res, error);
   }
 });
 
@@ -1951,7 +2125,7 @@ app.post('/api/ai/scan', requireUser, async (req, res) => {
     });
   } catch (err) {
     console.error('AI Scan Error:', err.message);
-    res.status(500).json({ error: err.message });
+    sendServerError(req, res, err);
   }
 });
 
@@ -1964,7 +2138,7 @@ app.get('/api/scan-images/:scanId', requireUser, async (req, res) => {
     }
     res.json({ scan });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendServerError(req, res, error);
   }
 });
 
@@ -1999,7 +2173,7 @@ const handleCreateTicket = async (req, res) => {
     }
     res.status(201).json({ ticket });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendServerError(req, res, error);
   }
 };
 
@@ -2011,7 +2185,7 @@ const handleGetTickets = async (req, res) => {
     const tickets = await Ticket.find(filter).sort({ createdAt: -1 }).lean();
     res.json({ tickets });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendServerError(req, res, error);
   }
 };
 
@@ -2027,7 +2201,7 @@ const handleUpdateTicket = async (req, res) => {
     if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
     res.json({ ticket });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendServerError(req, res, error);
   }
 };
 
@@ -2039,7 +2213,7 @@ const handleDeleteTicket = async (req, res) => {
     if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
     res.json({ success: true, ticket });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendServerError(req, res, error);
   }
 };
 

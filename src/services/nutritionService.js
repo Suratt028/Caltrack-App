@@ -1,5 +1,6 @@
 // src/services/nutritionService.js
 import { API_BASE_URL } from '../config';
+import { fetchWithTimeout } from './atlasService';
 
 /**
  * Calculates nutrition totals from per-100g database values and gram amounts.
@@ -28,7 +29,7 @@ export async function calculateNutrition(items) {
     throw new Error('อาหารแต่ละรายการต้องมี foodId และน้ำหนัก 1–5000 กรัม');
   }
 
-  const response = await fetch(`${API_BASE_URL}/nutrition/calculate`, {
+  const response = await fetchWithTimeout(`${API_BASE_URL}/nutrition/calculate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ items }),

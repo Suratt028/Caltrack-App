@@ -1,6 +1,7 @@
 // src/services/foodService.js
 // Food lookups against the CalTrack server (MongoDB "foods" collection, values per 100 g).
 import { API_BASE_URL } from '../config';
+import { fetchWithTimeout } from './atlasService';
 
 const NUTRIENT_FIELDS = {
   kcal: 'kcal',
@@ -36,7 +37,7 @@ export async function searchNutritionFoods(query, limit = 5) {
   if (!normalizedQuery) return [];
   const resultLimit = Math.max(1, Math.min(20, Math.trunc(Number(limit) || 5)));
 
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `${API_BASE_URL}/foods/search?q=${encodeURIComponent(normalizedQuery)}&limit=${resultLimit}`
   );
   const payload = await response.json().catch(() => ({}));
@@ -48,7 +49,7 @@ export async function searchNutritionFoods(query, limit = 5) {
 }
 
 export async function getNutritionFoodById(foodId) {
-  const response = await fetch(`${API_BASE_URL}/foods/${encodeURIComponent(foodId)}`);
+  const response = await fetchWithTimeout(`${API_BASE_URL}/foods/${encodeURIComponent(foodId)}`);
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
     throw new Error(payload.error || `โหลดข้อมูลอาหารไม่สำเร็จ (${response.status})`);
