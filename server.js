@@ -8,7 +8,15 @@ const { OAuth2Client } = require('google-auth-library');
 const { addNutritionTotals, scaleNutrition } = require('./server/nutritionMath');
 const { getGeminiScanError } = require('./server/geminiScanError');
 const { requestWithGeminiFallback } = require('./server/geminiScanRequest');
-const { searchTerms, englishWords, rankFoodCandidates, isConfidentMatch } = require('./server/foodMatching');
+const {
+  candidateSearchTerms,
+  englishWords,
+  spellingRegexSource,
+  thaiNameVariants,
+  rankFoodCandidates,
+  rankSearchResults,
+  isConfidentMatch,
+} = require('./server/foodMatching');
 
 const app = express();
 app.use(cors());
@@ -1483,29 +1491,38 @@ app.delete('/api/logs/:userId/:logId', requireSelf, async (req, res) => {
 // ---------------------------------------------------------------------------
 
 // GET /api/foods/search?q=ข้าว&limit=20
-// Searches nameTh, nameEn and scientificName with a case-insensitive partial match.
-// Works for food names, fruits, and dish/ingredient descriptions alike, since the
-// dataset's "name" fields already include ingredient wording (e.g. "ข้าวผัดกระเพราหมูสับ").
+// Searches nameTh, nameEn and scientificName with a case-insensitive partial match,
+// under any listed spelling ("กระเพรา" = "กะเพรา") and everyday-name alias
+// ("ข้าวสวย" → "ข้าวเจ้า, นึ่ง"; see server/thaiFoodAliases.js). Rows are ranked in
+// server/foodMatching before `limit` is applied, so the best match is never cut off.
+const SEARCH_PREFIX_POOL = 300;
+const SEARCH_CONTAINS_POOL = 600;
+
 app.get('/api/foods/search', async (req, res) => {
   try {
-    const q = (req.query.q || '').trim();
+    const q = (req.query.q || '').trim().slice(0, 100);
     const limit = Math.min(parseInt(req.query.limit, 10) || 20, 100);
 
     if (!q) {
       return res.json({ results: [], count: 0 });
     }
 
-    const regex = new RegExp(escapeRegex(q), 'i');
-    const results = await Food.find({
-      $or: [{ nameTh: regex }, { nameEn: regex }, { scientificName: regex }],
-    })
-      .limit(limit)
-      .lean();
-
-    // Rank names that start with the query above names that merely contain it
-    const qLower = q.toLowerCase();
-    const startsWith = (s) => (s || '').toLowerCase().startsWith(qLower);
-    results.sort((a, b) => (startsWith(b.nameTh) || startsWith(b.nameEn)) - (startsWith(a.nameTh) || startsWith(a.nameEn)));
+    const thaiSources = thaiNameVariants(q).map((variant) => spellingRegexSource(variant.name));
+    const rawSource = escapeRegex(q);
+    const anyName = (prefix) => [
+      ...thaiSources.map((source) => ({ nameTh: new RegExp(prefix + source, 'i') })),
+      { nameEn: new RegExp(prefix + rawSource, 'i') },
+    ];
+    // Names starting with the query hold the exact/variant matches; fetch them
+    // separately so a long list of "contains" hits can't crowd them out.
+    const [prefixHits, containsHits] = await Promise.all([
+      Food.find({ $or: anyName('^') }).limit(SEARCH_PREFIX_POOL).lean(),
+      Food.find({ $or: [...anyName(''), { scientificName: new RegExp(rawSource, 'i') }] })
+        .limit(SEARCH_CONTAINS_POOL)
+        .lean(),
+    ]);
+    const pool = [...new Map([...prefixHits, ...containsHits].map((food) => [String(food._id), food])).values()];
+    const results = rankSearchResults(pool, q, limit);
 
     res.json({ results, count: results.length });
   } catch (error) {
@@ -1588,22 +1605,43 @@ app.post('/api/nutrition/calculate', async (req, res) => {
 // ---------------------------------------------------------------------------
 const SCAN_LOW_CONFIDENCE = 0.7;
 
-// Database candidates for one AI-detected dish: pre-filter in MongoDB on any
-// Thai word/word-pair or whole English word, then rank in server/foodMatching.
-async function findFoodCandidates(nameTh, nameEn, limit = 5) {
+// Database candidates for one AI-detected dish: pre-filter in MongoDB on the
+// whole names (the AI's name, its aliases and table aliases) and on any Thai
+// word/word-pair or whole English word, then rank in server/foodMatching.
+// The whole-name query runs separately so word hits can't crowd out the best rows.
+async function findFoodCandidates(nameTh, nameEn, limit = 5, aliases = []) {
+  const { names, terms } = candidateSearchTerms(nameTh, aliases);
   const conditions = [
-    ...searchTerms(nameTh).map((term) => ({ nameTh: new RegExp(escapeRegex(term)) })),
+    ...terms.map((term) => ({ nameTh: new RegExp(spellingRegexSource(term)) })),
     ...englishWords(nameEn).map((word) => ({ nameEn: new RegExp(`\\b${escapeRegex(word)}\\b`, 'i') })),
   ];
   if (!conditions.length) return [];
-  const pool = await Food.find({ $or: conditions }).limit(1500).lean();
-  return rankFoodCandidates(pool, nameTh, nameEn, limit);
+  const [nameHits, termHits] = await Promise.all([
+    names.length
+      ? Food.find({ $or: names.map((name) => ({ nameTh: new RegExp(spellingRegexSource(name)) })) }).limit(300).lean()
+      : [],
+    Food.find({ $or: conditions }).limit(1500).lean(),
+  ]);
+  const pool = [...new Map([...nameHits, ...termHits].map((food) => [String(food._id), food])).values()];
+  return rankFoodCandidates(pool, nameTh, nameEn, limit, { aliases });
 }
 const SCAN_PROMPT_MAX_LENGTH = 4000;
 // The JSON response schema is fixed in code; admins only edit the instructions.
 const DEFAULT_SCAN_PROMPT = `
 วิเคราะห์อาหารทุกชนิดที่มองเห็นแยกเป็นรายการ ไม่รวมอาหารต่างชนิดเป็นเมนูเดียว
-ประเมินกรัมเป็นช่วง min/likely/max โดยย้ำว่าเป็นค่าประมาณจากภาพ ไม่ใช่การชั่งจริง
+การตั้งชื่อ (name_th) ให้ตรงกับตารางคุณค่าทางโภชนาการอาหารไทย:
+- ขึ้นต้นด้วยชนิดอาหารหลัก ตามด้วยส่วนประกอบหรือวิธีปรุง คั่นด้วยจุลภาค เช่น "ข้าวผัด, หมู" "ส้มตำ, ปลาร้า" "ก๋วยเตี๋ยวเส้นเล็ก, หมู, น้ำ"
+- สะกดตามพจนานุกรม เช่น กะเพรา ก๋วยเตี๋ยว ผัดไทย ซีอิ๊ว กะทิ
+- ข้าวสวยให้ใช้ "ข้าวเจ้า, นึ่ง" ข้าวเหนียวให้ใช้ "ข้าวเหนียว, นึ่ง"
+- กับข้าวราดบนข้าวในจานเดียว (ข้าวราดแกง ข้าวราดกะเพรา) ให้เป็นรายการเดียวชื่อ "ข้าวราด..." เช่น "ข้าวราดผัดกะเพราไก่"
+- ข้าวที่ผัดหรือหุงรวมกับเครื่อง (ข้าวผัด ข้าวมันไก่ ข้าวหมก) เป็นรายการเดียว
+- ข้าวแยกถ้วยหรือแยกจานจากกับข้าว ให้แยกเป็นรายการข้าวกับรายการกับข้าว
+- ใส่ชื่ออื่นที่คนไทยเรียกกันทั่วไปใน aliases (ไม่เกิน 3 ชื่อ) เช่น "ข้าวสวย" "ชาไทย" "กะเพราไก่"
+ประเมินกรัมเป็นช่วง min/likely/max โดยเทียบกับภาชนะไทยทั่วไป และย้ำว่าเป็นค่าประมาณจากภาพ ไม่ใช่การชั่งจริง:
+- ข้าวสวย 1 ทัพพี ประมาณ 55-60 กรัม ข้าวราดแกง 1 จาน ข้าวประมาณ 150-200 กรัม
+- ก๋วยเตี๋ยวน้ำ 1 ชาม ประมาณ 350-450 กรัม รวมน้ำซุป แกง/ต้ม 1 ถ้วย ประมาณ 200-250 กรัม
+- อาหารจานเดียว (ข้าวผัด ผัดไทย) 1 จาน ประมาณ 250-350 กรัม เครื่องดื่ม 1 แก้ว ประมาณ 250-400 กรัม
+- ใช้ช้อน ส้อม ตะเกียบ หรือมือในภาพเป็นตัวเทียบขนาดถ้ามี และระบุใน reference_object
 ใส่กรอบภาพเป็น [ymin, xmin, ymax, xmax] ช่วง 0-1000 หากระบุตำแหน่งได้
 ประมาณสารอาหารสำหรับน้ำหนัก likely ของแต่ละรายการ และตอบ JSON ตาม schema เท่านั้น
 หากไม่แน่ใจชื่อ ให้ใช้ชื่อที่ใกล้เคียงและลด confidence ห้ามแต่งข้อมูลอ้างอิงหรือค่าความแม่นยำ
@@ -1769,6 +1807,7 @@ app.post('/api/ai/scan', requireUser, async (req, res) => {
                     properties: {
                       name_th: { type: 'STRING' },
                       name_en: { type: 'STRING' },
+                      aliases: { type: 'ARRAY', items: { type: 'STRING' } },
                       box_2d: { type: 'ARRAY', items: { type: 'NUMBER' } },
                       cooking_method: { type: 'STRING' },
                       estimated_grams: {
@@ -1879,9 +1918,13 @@ app.post('/api/ai/scan', requireUser, async (req, res) => {
           ? rawItem.box_2d.map(Number)
           : null;
         const nameEn = String(rawItem.name_en || '').trim();
+        const aliases = (Array.isArray(rawItem.aliases) ? rawItem.aliases : [])
+          .map((alias) => String(alias || '').trim())
+          .filter((alias) => alias && alias.length <= 80 && alias !== nameTh)
+          .slice(0, 5);
         let candidates = [];
         try {
-          candidates = await findFoodCandidates(nameTh, nameEn);
+          candidates = await findFoodCandidates(nameTh, nameEn, 5, aliases);
         } catch (matchError) {
           console.warn('Food candidate lookup failed:', matchError.message);
         }
@@ -1889,6 +1932,7 @@ app.post('/api/ai/scan', requireUser, async (req, res) => {
         items.push({
           name_th: nameTh,
           name_en: nameEn,
+          aliases,
           box_2d: box,
           cooking_method: String(rawItem.cooking_method || ''),
           estimated_grams: {
