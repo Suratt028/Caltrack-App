@@ -26,6 +26,8 @@ export default StyleSheet.create({
   },
   content: {
     padding: spacing.lg,
+    paddingHorizontal: spacing.lg + 15,
+    paddingTop: spacing.lg + 30,
   },
   sectionTitle: {
     fontSize: 16,
