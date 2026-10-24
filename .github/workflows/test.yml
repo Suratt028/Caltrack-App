@@ -1,0 +1,44 @@
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      # mongodb-memory-server downloads a mongod binary (at install time and on
+      # first use); cache it per package version so runs skip the download.
+      - name: Read mongodb-memory-server version
+        id: mms
+        run: |
+          version=$(node -p "require('./package-lock.json').packages['node_modules/mongodb-memory-server'].version")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "MONGOMS_DOWNLOAD_DIR=$HOME/.cache/mongodb-binaries" >> "$GITHUB_ENV"
+
+      - name: Cache mongod binaries
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/mongodb-binaries
+          key: mongodb-binaries-${{ runner.os }}-${{ steps.mms.outputs.version }}
+
+      - run: npm ci
+
+      - run: npm test
