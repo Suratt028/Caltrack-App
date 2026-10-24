@@ -14,48 +14,110 @@ export default StyleSheet.create({
     marginTop: spacing.xs,
     marginBottom: spacing.md,
   },
-  referenceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.sm,
+  pressed: {
+    opacity: 0.75,
   },
-  referenceText: {
-    flex: 1,
-    fontSize: 12,
-    color: colors.inkMuted,
-  },
+
+  /* ------------------------------ item card ------------------------------ */
   itemCard: {
-    backgroundColor: colors.surfaceMuted,
+    backgroundColor: colors.surface,
     borderColor: colors.border,
     borderWidth: 1,
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
     padding: spacing.md,
     marginBottom: spacing.md,
   },
+  itemCardExcluded: {
+    backgroundColor: colors.surfaceMuted,
+  },
   itemHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.sm,
+    gap: spacing.sm,
+    minHeight: 44,
   },
-  itemTitle: {
-    ...typography.label,
-    color: colors.ink,
-  },
-  deleteBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+  indexBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: colors.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.dangerSoft,
+  },
+  indexBadgeText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.primary,
+  },
+  itemHeaderText: {
+    flex: 1,
+    minWidth: 0,
+  },
+  itemTitle: {
+    ...typography.h3,
+    color: colors.ink,
+  },
+  itemMeta: {
+    fontSize: 13,
+    color: colors.inkMuted,
+    marginTop: 2,
   },
   label: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.inkMuted,
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
+  },
+
+  /* -------------------------------- chips -------------------------------- */
+  chipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    minHeight: 40,
+    maxWidth: '100%',
+    paddingHorizontal: 14,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  chipSelected: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  chipDashed: {
+    borderStyle: 'dashed',
+    borderColor: colors.inkFaint,
+    backgroundColor: 'transparent',
+  },
+  chipText: {
+    fontSize: 14,
     color: colors.ink,
-    marginTop: spacing.xs,
-    marginBottom: spacing.xs,
+    flexShrink: 1,
+  },
+  chipTextSelected: {
+    color: colors.white,
+    fontWeight: '700',
+  },
+  chipTextLink: {
+    color: colors.primary,
+    fontWeight: '600',
+  },
+
+  /* -------------------------------- search ------------------------------- */
+  searchBlock: {
+    marginTop: spacing.sm,
+  },
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   input: {
     backgroundColor: colors.surface,
@@ -64,38 +126,20 @@ export default StyleSheet.create({
     borderRadius: radius.sm,
     paddingHorizontal: spacing.md,
     paddingVertical: 10,
-    fontSize: 14,
+    fontSize: 15,
     color: colors.ink,
-    marginBottom: spacing.xs,
   },
   inputInvalid: {
     borderColor: colors.danger,
   },
-  estimateRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.sm,
-  },
-  estimateText: {
-    flex: 1,
-    fontSize: 11,
-    color: colors.inkMuted,
-    marginLeft: spacing.xs,
-    lineHeight: 16,
-  },
-  searchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
   searchInput: {
     flex: 1,
-    marginBottom: 0,
+    minHeight: 44,
   },
   searchBtn: {
-    minWidth: 56,
+    minWidth: 52,
     minHeight: 44,
     backgroundColor: colors.primary,
-    paddingHorizontal: spacing.md,
     borderRadius: radius.sm,
     marginLeft: spacing.sm,
     alignItems: 'center',
@@ -105,49 +149,102 @@ export default StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
     paddingVertical: 10,
-    minHeight: 44,
+    minHeight: 48,
     justifyContent: 'center',
   },
   searchResultName: {
     color: colors.ink,
     fontWeight: '700',
-    fontSize: 13,
+    fontSize: 14,
   },
   searchResultMeta: {
     color: colors.inkMuted,
-    fontSize: 11,
+    fontSize: 13,
     marginTop: 2,
   },
-  sourceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  searchError: {
+    color: colors.inkMuted,
+    fontSize: 13,
     marginTop: spacing.sm,
   },
-  sourceChip: {
-    borderRadius: radius.pill,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    marginRight: spacing.sm,
+
+  /* ------------------------------- portion ------------------------------- */
+  portionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
-  sourceChipDb: { backgroundColor: colors.primarySoft },
-  sourceChipAi: { backgroundColor: colors.turmericSoft },
-  sourceChipText: {
-    fontSize: 11,
-    fontWeight: '700',
+  portionChip: {
+    width: 46,
+    height: 44,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  sourceChipTextDb: { color: colors.primaryDark },
-  sourceChipTextAi: { color: colors.turmericDark },
-  nutritionText: {
-    flex: 1,
-    fontSize: 12,
+  portionChipText: {
+    fontSize: 15,
     color: colors.ink,
-    fontWeight: '600',
   },
+  gramsBox: {
+    flex: 1,
+    minWidth: 72,
+    height: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.sm,
+    paddingHorizontal: 10,
+    backgroundColor: colors.surface,
+  },
+  gramsInput: {
+    flex: 1,
+    minWidth: 0,
+    fontSize: 15,
+    color: colors.ink,
+    textAlign: 'right',
+    paddingVertical: 0,
+  },
+  gramsUnit: {
+    fontSize: 13,
+    color: colors.inkMuted,
+    marginLeft: 4,
+  },
+  itemFooter: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+    paddingTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  itemMacros: {
+    flex: 1,
+    fontSize: 13,
+    color: colors.inkMuted,
+  },
+  itemKcal: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: colors.ink,
+  },
+  itemKcalUnit: {
+    fontSize: 13,
+    fontWeight: '400',
+    color: colors.inkMuted,
+  },
+
+  /* ------------------------------- actions ------------------------------- */
   addBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 46,
+    minHeight: 48,
     borderRadius: radius.md,
     borderWidth: 1.5,
     borderColor: colors.primary,
@@ -162,19 +259,29 @@ export default StyleSheet.create({
   },
   totalsCard: {
     backgroundColor: colors.primarySoft,
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
     padding: spacing.md,
     marginBottom: spacing.md,
   },
+  totalsHeader: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+  },
   totalsTitle: {
     ...typography.label,
+    fontSize: 14,
     color: colors.primaryDark,
-    marginBottom: spacing.sm,
   },
   totalsKcal: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '800',
     color: colors.ink,
+  },
+  totalsKcalUnit: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: colors.inkMuted,
   },
   totalsMacroRow: {
     flexDirection: 'row',
@@ -193,34 +300,22 @@ export default StyleSheet.create({
     marginRight: 6,
   },
   macroText: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 13,
+    fontWeight: '600',
     color: colors.ink,
   },
-  totalsMicro: {
-    fontSize: 11,
-    color: colors.inkMuted,
-    marginTop: spacing.sm,
-    lineHeight: 16,
-  },
-  actionRow: {
-    flexDirection: 'row',
+  cancelBtn: {
+    minHeight: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginTop: spacing.xs,
   },
-  actionGap: {
-    marginRight: spacing.sm,
+  cancelText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.inkMuted,
   },
   errorBlock: {
     marginBottom: spacing.sm,
-  },
-  loadingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.sm,
-  },
-  loadingText: {
-    color: colors.inkMuted,
-    marginLeft: spacing.xs,
-    fontSize: 12,
   },
 });

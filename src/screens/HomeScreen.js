@@ -21,12 +21,23 @@ const formatNumber = (v) => Math.round(Number(v) || 0).toLocaleString('th-TH');
 
 const sortByTime = (a, b) => String(a.time || '').localeCompare(String(b.time || ''));
 
+function dateForOffset(offset) {
+  const date = new Date();
+  date.setDate(date.getDate() + offset);
+  return date;
+}
+
 export default function HomeScreen({ navigation }) {
   const { profile, user, getDayTotals, logsByDay, removeFoodLog } = useApp();
   const [notice, setNotice] = useState(null);
+  // 0 = today, -1 = yesterday, …; the header arrows move between days.
+  const [dayOffset, setDayOffset] = useState(0);
   const noticeTimer = useRef(null);
 
-  const rawTotals = getDayTotals() || {};
+  const isToday = dayOffset === 0;
+  const selectedDate = dateForOffset(dayOffset);
+  const selectedKey = todayKey(selectedDate);
+  const rawTotals = getDayTotals(selectedKey) || {};
   const totals = {
     kcal: Number(rawTotals.kcal) || 0,
     protein: Number(rawTotals.protein) || 0,
@@ -34,7 +45,7 @@ export default function HomeScreen({ navigation }) {
     fat: Number(rawTotals.fat) || 0,
   };
 
-  const todayEntries = logsByDay[todayKey()] || [];
+  const todayEntries = logsByDay[selectedKey] || [];
 
   // Every goal value comes from the saved profile — never hardcoded.
   const hasGoal = Number(profile?.calorieGoal) > 0;
@@ -44,11 +55,13 @@ export default function HomeScreen({ navigation }) {
   const overBy = over ? totals.kcal - calorieGoal : 0;
 
   const greetingName = profile?.displayName || user?.displayName || 'คุณ';
-  const dateLabel = new Date().toLocaleDateString('th-TH', {
-    weekday: 'long',
+  const dateLabel = selectedDate.toLocaleDateString('th-TH', {
+    weekday: 'short',
     day: 'numeric',
-    month: 'long',
+    month: 'short',
+    year: 'numeric',
   });
+  const dayTitle = isToday ? 'วันนี้' : dayOffset === -1 ? 'เมื่อวาน' : dateLabel;
 
   useEffect(() => () => clearTimeout(noticeTimer.current), []);
 
@@ -60,12 +73,12 @@ export default function HomeScreen({ navigation }) {
 
   const askRemove = (entry) => {
     confirmAction({
-      title: 'ลบรายการนี้ออกจากบันทึกวันนี้?',
+      title: `ลบรายการนี้ออกจากบันทึก${isToday ? 'วันนี้' : ''}?`,
       message: `${entry.name} · ${Math.round(Number(entry.kcal) || 0)} kcal`,
       confirmLabel: 'ลบรายการ',
       onConfirm: async () => {
         try {
-          await removeFoodLog(entry.id);
+          await removeFoodLog(entry.id, selectedKey);
           showNotice(`ลบ "${entry.name}" แล้ว`);
         } catch (error) {
           showNotice(error?.message || 'ลบรายการไม่สำเร็จ กรุณาลองใหม่อีกครั้ง', 'error');
@@ -88,28 +101,50 @@ export default function HomeScreen({ navigation }) {
     todayEntries.some((entry) => entry.meal === meal.key)
   ).length;
   const dinnerEmpty = !todayEntries.some((entry) => entry.meal === 'dinner');
+  // Today shows every meal so each has its own "+"; past days only what was logged.
+  const visibleGroups = mealGroups.filter((group) => isToday || group.entries.length > 0);
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
         {/* Header */}
-        <View style={styles.headerRow}>
-          <View style={styles.headerText}>
-            <Text style={styles.greeting} numberOfLines={2}>สวัสดี {greetingName}</Text>
-            <Text style={styles.dateText}>
-              {dateLabel} · วันนี้ดูแลตัวเองทีละมื้อก็พอ
-            </Text>
+        <Text style={styles.greetingSmall} numberOfLines={1}>สวัสดี {greetingName}</Text>
+        <View style={styles.dateSwitcher}>
+          <Pressable
+            onPress={() => setDayOffset((offset) => offset - 1)}
+            accessibilityRole="button"
+            accessibilityLabel="ดูวันก่อนหน้า"
+            hitSlop={4}
+            style={({ pressed }) => [styles.dateArrow, pressed && styles.leafBtnPressed]}
+          >
+            <Ionicons name="chevron-back" size={22} color={colors.primary} />
+          </Pressable>
+          <View style={styles.dateCenter} accessibilityRole="header">
+            <Text style={styles.dateTitle}>{dayTitle}</Text>
+            {dayTitle !== dateLabel ? <Text style={styles.dateText}>{dateLabel}</Text> : null}
           </View>
           <Pressable
-            onPress={() => showNotice('วันนี้ดูแลตัวเองทีละมื้อก็พอ', 'info')}
+            onPress={() => setDayOffset((offset) => Math.min(0, offset + 1))}
+            disabled={isToday}
             accessibilityRole="button"
-            accessibilityLabel="เคล็ดลับโภชนาการวันนี้"
-            accessibilityHint="แสดงเคล็ดลับดูแลตัวเองในวันนี้"
-            style={({ pressed }) => [styles.leafBtn, pressed && styles.leafBtnPressed]}
+            accessibilityLabel="ดูวันถัดไป"
+            accessibilityState={{ disabled: isToday }}
+            hitSlop={4}
+            style={({ pressed }) => [styles.dateArrow, pressed && styles.leafBtnPressed]}
           >
-            <Ionicons name="leaf-outline" size={20} color={colors.primary} />
+            <Ionicons name="chevron-forward" size={22} color={isToday ? colors.border : colors.primary} />
           </Pressable>
         </View>
+        {!isToday ? (
+          <Pressable
+            onPress={() => setDayOffset(0)}
+            accessibilityRole="button"
+            hitSlop={8}
+            style={styles.backToToday}
+          >
+            <Text style={styles.linkText}>กลับไปวันนี้</Text>
+          </Pressable>
+        ) : null}
 
         {!!notice && (
           <Banner
@@ -124,7 +159,7 @@ export default function HomeScreen({ navigation }) {
           /* Energy card — ring + consumed/goal stats + macro grid */
           <Card style={styles.block}>
             <View style={styles.energyHeader}>
-              <Text style={styles.sectionTitle}>พลังงานวันนี้</Text>
+              <Text style={styles.sectionTitle}>พลังงาน{isToday ? 'วันนี้' : 'ของวันนั้น'}</Text>
               <Pressable
                 onPress={() => navigation.navigate('Profile')}
                 accessibilityRole="link"
@@ -211,7 +246,7 @@ export default function HomeScreen({ navigation }) {
               />
             </Card>
             <Card style={styles.block}>
-              <Text style={styles.sectionTitle}>พลังงานที่บันทึกวันนี้</Text>
+              <Text style={styles.sectionTitle}>พลังงานที่บันทึก{isToday ? 'วันนี้' : ''}</Text>
               <Text style={styles.bigKcal}>
                 {formatNumber(totals.kcal)}
                 <Text style={styles.bigKcalUnit}> kcal</Text>
@@ -223,29 +258,45 @@ export default function HomeScreen({ navigation }) {
           </>
         )}
 
-        {/* Food today */}
+        {/* Food for the selected day, grouped by meal */}
         <View style={styles.foodHeader}>
-          <Text style={styles.sectionTitle}>อาหารวันนี้</Text>
+          <Text style={styles.sectionTitle}>อาหาร{isToday ? 'วันนี้' : 'ของวันนั้น'}</Text>
           <Text style={styles.countText}>{todayEntries.length} รายการ</Text>
         </View>
 
-        {todayEntries.length === 0 ? (
+        {!isToday && todayEntries.length === 0 ? (
           <Card style={styles.block}>
             <EmptyState
-              icon="add-outline"
-              title="มื้อแรกของวันนี้ เริ่มได้เลย"
-              message="ยังไม่มีรายการอาหาร ไม่ต้องครบทุกมื้อก็ค่อย ๆ บันทึกได้"
-              actionTitle="บันทึกอาหาร"
-              onAction={() => navigation.navigate('Log')}
+              icon="calendar-outline"
+              title="ไม่มีบันทึกในวันนี้"
+              message="วันที่ไม่ได้บันทึกจะไม่ถูกนับในแนวโน้ม"
             />
           </Card>
         ) : (
           <View style={styles.block}>
-            {mealGroups
-              .filter((group) => group.entries.length > 0)
-              .map((group) => (
+            {visibleGroups.map((group) => {
+              const groupKcal = group.entries.reduce((sum, entry) => sum + (Number(entry.kcal) || 0), 0);
+              return (
                 <View key={group.key} style={styles.mealGroup}>
-                  <Text style={styles.mealGroupTitle}>{group.label}</Text>
+                  <View style={styles.mealGroupHeader}>
+                    <Text style={styles.mealGroupTitle}>
+                      {group.label}
+                      {group.entries.length === 0 ? <Text style={styles.mealGroupEmpty}>  ยังไม่มีรายการ</Text> : null}
+                    </Text>
+                    {group.entries.length > 0 ? (
+                      <Text style={styles.mealGroupKcal}>{formatNumber(groupKcal)} kcal</Text>
+                    ) : null}
+                    {isToday && group.key !== 'other' ? (
+                      <Pressable
+                        onPress={() => navigation.navigate('Log', { meal: group.key, requestedAt: Date.now() })}
+                        accessibilityRole="button"
+                        accessibilityLabel={`เพิ่มอาหาร${group.label}`}
+                        style={({ pressed }) => [styles.mealAddBtn, pressed && styles.leafBtnPressed]}
+                      >
+                        <Ionicons name="add" size={20} color={colors.primary} />
+                      </Pressable>
+                    ) : null}
+                  </View>
                   {group.entries.map((entry) => (
                     <MealEntryCard
                       key={entry.id}
@@ -261,61 +312,23 @@ export default function HomeScreen({ navigation }) {
                     />
                   ))}
                 </View>
-              ))}
+              );
+            })}
           </View>
         )}
 
-        {/* Reflective card */}
-        <Card style={[styles.block, styles.mintCard]}>
-          <Text style={styles.sectionTitle}>วันนี้ในแบบของคุณ</Text>
-          <Text style={styles.reflectBody}>
-            บันทึกแล้ว {todayEntries.length} รายการ จาก {mealsWithEntries} มื้อ
-          </Text>
-          {todayEntries.length > 0 && dinnerEmpty ? (
-            <Text style={styles.reflectBody}>มื้อเย็นยังว่างอยู่ เพิ่มเมื่อคุณพร้อมได้เลย</Text>
-          ) : null}
-        </Card>
-
-        {/* Goal card */}
-        {hasGoal ? (
-          <Card style={styles.block}>
-            <Text style={styles.sectionTitle}>เป้าหมายของคุณ</Text>
-            <Text style={styles.goalKcal}>{formatNumber(calorieGoal)} kcal ต่อวัน</Text>
-            <View style={styles.goalMacros}>
-              <Text style={styles.goalMacroItem}>โปรตีน {formatNumber(macroGoals.protein)} กรัม</Text>
-              <Text style={styles.goalMacroItem}>คาร์บ {formatNumber(macroGoals.carbs)} กรัม</Text>
-              <Text style={styles.goalMacroItem}>ไขมัน {formatNumber(macroGoals.fat)} กรัม</Text>
-            </View>
-            <Text style={styles.goalDisclaimer}>ไม่ใช่เป้าหมายแนะนำสำหรับทุกคน</Text>
-            <Pressable
-              onPress={() => navigation.navigate('Profile')}
-              accessibilityRole="link"
-              accessibilityLabel="ดูและแก้ไขโปรไฟล์"
-              accessibilityHint="เปิดหน้าโปรไฟล์เพื่อดูหรือแก้ไขเป้าหมายโภชนาการ"
-              hitSlop={8}
-              style={styles.goalLinkRow}
-            >
-              <Text style={styles.linkText}>ดูและแก้ไขโปรไฟล์ →</Text>
-            </Pressable>
+        {/* Reflective card — today only. Logging lives in the tab bar (Log / Scan). */}
+        {isToday && todayEntries.length > 0 ? (
+          <Card style={[styles.block, styles.mintCard]}>
+            <Text style={styles.sectionTitle}>วันนี้ในแบบของคุณ</Text>
+            <Text style={styles.reflectBody}>
+              บันทึกแล้ว {todayEntries.length} รายการ จาก {mealsWithEntries} มื้อ
+            </Text>
+            {dinnerEmpty ? (
+              <Text style={styles.reflectBody}>มื้อเย็นยังว่างอยู่ เพิ่มเมื่อคุณพร้อมได้เลย</Text>
+            ) : null}
           </Card>
         ) : null}
-
-        {/* Actions */}
-        <View style={styles.actions}>
-          <PrimaryButton
-            title="บันทึกอาหาร"
-            icon="add"
-            onPress={() => navigation.navigate('Log')}
-            accessibilityHint="เปิดหน้าค้นหาเมนูอาหารเพื่อบันทึกมื้อนี้"
-          />
-          <PrimaryButton
-            title="สแกนอาหารด้วย AI"
-            icon="camera"
-            variant="outline"
-            onPress={() => navigation.navigate('Scan')}
-            accessibilityHint="เปิดกล้องเพื่อประเมินแคลอรี่จากรูปอาหาร"
-          />
-        </View>
       </ScrollView>
     </SafeAreaView>
   );

@@ -11,6 +11,15 @@ import Banner from './Banner';
 import styles from '../style/components/FoodScanReviewStyles';
 
 const MAX_GRAMS = 5000;
+// Portion chips are multiples of the AI's estimate (or 100 g for a manual pick).
+const PORTION_STEPS = [
+  { factor: 0.5, label: '½' },
+  { factor: 1, label: '1' },
+  { factor: 1.5, label: '1½' },
+  { factor: 2, label: '2' },
+];
+const MAX_CANDIDATE_CHIPS = 3;
+const DEFAULT_MANUAL_GRAMS = 100;
 
 function validGrams(value) {
   const grams = Number(value);
@@ -19,7 +28,7 @@ function validGrams(value) {
 
 function calculationKey(items) {
   return items
-    .filter((item) => item.foodId && validGrams(item.grams))
+    .filter((item) => item.included && item.foodId && validGrams(item.grams))
     .map((item) => `${item.id}:${item.foodId}:${Number(item.grams)}`)
     .join('|');
 }
@@ -44,8 +53,20 @@ function displayNutrition(nutrition) {
   };
 }
 
+function hasCoreNutrition(nutrition) {
+  return Boolean(nutrition) && ['kcal', 'protein', 'carbs', 'fat'].every(
+    (key) => nutrition[key] != null && Number.isFinite(Number(nutrition[key]))
+  );
+}
+
 function formatAmount(value, digits = 1) {
   return value == null || !Number.isFinite(Number(value)) ? '—' : Number(value).toFixed(digits);
+}
+
+function formatKcal(value) {
+  return value == null || !Number.isFinite(Number(value))
+    ? '—'
+    : Math.round(Number(value)).toLocaleString('th-TH');
 }
 
 function toCandidate(candidate) {
@@ -71,39 +92,43 @@ function toCandidate(candidate) {
   };
 }
 
-export default function FoodScanReview({ analysis, onConfirm, onReset }) {
+function initialItem(item, index) {
+  const aiName = item.name_th || item.nameTh || item.name || '';
+  const candidates = (item.candidates || []).map(toCandidate);
   // When the server marks the top database candidate as a confident match
   // (exact dish name or a listed variant, complete nutrition, not raw), start
-  // from database values; the AI name is kept so the user can switch back.
-  const [initialItems] = useState(() =>
-    (analysis.items || []).map((item, index) => {
-      const aiName = item.name_th || item.nameTh || item.name || '';
-      const candidates = (item.candidates || []).map(toCandidate);
-      const best = !item.foodId && candidates[0]?.confident ? candidates[0] : null;
-      return {
-        ...item,
-        id: item.id || `${Date.now()}_${index}`,
-        name: best ? best.name : aiName,
-        aiName,
-        grams: String(item.estimated_grams?.likely ?? item.estimatedGrams ?? ''),
-        estimatedGrams: Number(item.estimated_grams?.likely ?? item.estimatedGrams) || 0,
-        estimatedNutrition: item.estimated_nutrition || item.estimatedNutrition || null,
-        foodId: best ? best.foodId : item.foodId || '',
-        per100g: best ? best.per100g : item.per100g || null,
-        estimatedFields: best ? best.estimated : [],
-        autoMatched: Boolean(best),
-        candidateList: candidates,
-      };
-    })
-  );
-  const [items, setItems] = useState(initialItems);
+  // from database values; the AI estimate stays one tap away.
+  const best = !item.foodId && candidates[0]?.confident ? candidates[0] : null;
+  const aiGrams = Number(item.estimated_grams?.likely ?? item.estimatedGrams) || 0;
+  const baseGrams = aiGrams || DEFAULT_MANUAL_GRAMS;
+  const chosen = best || (item.foodId
+    ? { foodId: String(item.foodId), name: aiName, nameEn: item.name_en || '', per100g: item.per100g || null, estimated: [] }
+    : null);
+  return {
+    ...item,
+    id: item.id || `${Date.now()}_${index}`,
+    included: true,
+    name: chosen ? chosen.name : aiName,
+    aiName,
+    grams: String(baseGrams),
+    baseGrams,
+    estimatedGrams: aiGrams,
+    estimatedNutrition: item.estimated_nutrition || item.estimatedNutrition || null,
+    foodId: chosen ? chosen.foodId : '',
+    per100g: chosen ? chosen.per100g : null,
+    estimatedFields: chosen ? chosen.estimated || [] : [],
+    autoMatched: Boolean(best),
+    candidateList: chosen && !candidates.some((c) => c.foodId === chosen.foodId)
+      ? [chosen, ...candidates]
+      : candidates,
+  };
+}
+
+export default function FoodScanReview({ analysis, onConfirm, onReset }) {
+  const [items, setItems] = useState(() => (analysis.items || []).map(initialItem));
+  const [searchOpen, setSearchOpen] = useState({});
   const [queries, setQueries] = useState({});
-  const [searchResults, setSearchResults] = useState(() =>
-    Object.fromEntries(initialItems.map((item) => [
-      item.id,
-      item.candidateList.filter((candidate) => candidate.foodId !== item.foodId),
-    ]))
-  );
+  const [searchResults, setSearchResults] = useState({});
   const [searching, setSearching] = useState({});
   const [searchErrors, setSearchErrors] = useState({});
   const [computedByItem, setComputedByItem] = useState({});
@@ -113,11 +138,12 @@ export default function FoodScanReview({ analysis, onConfirm, onReset }) {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
 
+  const includedItems = items.filter((item) => item.included);
   const currentCalculationKey = calculationKey(items);
-  const selectedItems = items.filter((item) => item.foodId && validGrams(item.grams));
+  const dbItems = includedItems.filter((item) => item.foodId && validGrams(item.grams));
 
   useEffect(() => {
-    if (selectedItems.length === 0) {
+    if (dbItems.length === 0) {
       setComputedByItem({});
       setComputedKey('');
       setCalculationError('');
@@ -131,7 +157,7 @@ export default function FoodScanReview({ analysis, onConfirm, onReset }) {
       setCalculationError('');
       try {
         const response = await calculateNutrition(
-          selectedItems.map((item) => ({ foodId: item.foodId, grams: Number(item.grams) }))
+          dbItems.map((item) => ({ foodId: item.foodId, grams: Number(item.grams) }))
         );
         if (response.notFound?.length) {
           throw new Error(`อาหารไม่อยู่ในฐานข้อมูล: ${response.notFound.join(', ')}`);
@@ -139,12 +165,12 @@ export default function FoodScanReview({ analysis, onConfirm, onReset }) {
         if (!active) return;
 
         const nextValues = {};
-        selectedItems.forEach((item, index) => {
+        dbItems.forEach((item, index) => {
           const breakdown = response.breakdown?.[index];
           if (breakdown) nextValues[item.id] = displayNutrition(breakdown.nutrition);
         });
         setComputedByItem(nextValues);
-        setComputedKey(calculationKey(items));
+        setComputedKey(currentCalculationKey);
       } catch (error) {
         if (active) setCalculationError(error.message || 'คำนวณสารอาหารจากฐานข้อมูลไม่สำเร็จ');
       } finally {
@@ -165,7 +191,7 @@ export default function FoodScanReview({ analysis, onConfirm, onReset }) {
   };
 
   const searchForItem = async (item) => {
-    const query = (queries[item.id] ?? item.name).trim();
+    const query = (queries[item.id] ?? item.aiName ?? '').trim();
     if (!query) return;
 
     setSearching((previous) => ({ ...previous, [item.id]: true }));
@@ -173,6 +199,9 @@ export default function FoodScanReview({ analysis, onConfirm, onReset }) {
     try {
       const matches = await searchNutritionFoods(query, 5);
       setSearchResults((previous) => ({ ...previous, [item.id]: matches }));
+      if (matches.length === 0) {
+        setSearchErrors((previous) => ({ ...previous, [item.id]: 'ไม่พบเมนูนี้ ลองใช้ชื่ออื่น' }));
+      }
     } catch (error) {
       setSearchErrors((previous) => ({
         ...previous,
@@ -192,13 +221,17 @@ export default function FoodScanReview({ analysis, onConfirm, onReset }) {
       estimatedFields: food.estimated || [],
       autoMatched: false,
       source: 'nutrition_database',
+      // A food picked from search joins the chips so the user can switch back to it.
+      candidateList: item.candidateList.some((c) => c.foodId === food.foodId)
+        ? item.candidateList
+        : [food, ...item.candidateList],
     });
-    setQueries((previous) => ({ ...previous, [item.id]: food.name }));
+    setSearchOpen((previous) => ({ ...previous, [item.id]: false }));
     setSearchResults((previous) => ({ ...previous, [item.id]: [] }));
   };
 
   // Back to the AI's own name and nutrition estimate.
-  const switchToAiEstimate = (item) => {
+  const chooseAiEstimate = (item) => {
     updateItem(item.id, {
       foodId: '',
       name: item.aiName,
@@ -207,12 +240,11 @@ export default function FoodScanReview({ analysis, onConfirm, onReset }) {
       autoMatched: false,
       source: 'ai_estimate',
     });
-    setQueries((previous) => ({ ...previous, [item.id]: item.aiName }));
-    setSearchResults((previous) => ({ ...previous, [item.id]: item.candidateList || [] }));
   };
 
   const getItemNutrition = (item) => {
     if (item.foodId) return computedByItem[item.id] || null;
+    if (!item.estimatedNutrition) return null;
     const base = displayNutrition(item.estimatedNutrition);
     const baselineGrams = item.estimatedGrams;
     const grams = Number(item.grams);
@@ -223,7 +255,7 @@ export default function FoodScanReview({ analysis, onConfirm, onReset }) {
     );
   };
 
-  const totals = items.reduce((sum, item) => {
+  const totals = includedItems.reduce((sum, item) => {
     const nutrition = getItemNutrition(item);
     if (!nutrition) return sum;
     Object.keys(sum).forEach((key) => {
@@ -236,32 +268,35 @@ export default function FoodScanReview({ analysis, onConfirm, onReset }) {
     return sum;
   }, Object.fromEntries(['kcal', 'protein', 'carbs', 'fat', 'fiber', 'sugar', 'sodium', 'calcium', 'iron', 'vitaminC'].map((key) => [key, 0])));
 
-  const invalidItems = items.filter((item) => !item.name.trim() || !validGrams(item.grams));
-  const missingNutrition = items.some((item) => {
-    const nutrition = item.foodId ? computedByItem[item.id] : item.estimatedNutrition;
-    if (!nutrition) return !item.foodId;
-    return ['kcal', 'protein', 'carbs', 'fat'].some(
-      (key) => nutrition[key] == null || !Number.isFinite(Number(nutrition[key]))
-    );
+  const unchosenItems = includedItems.filter((item) => !item.foodId && !item.estimatedNutrition);
+  const invalidGramItems = includedItems.filter((item) => !validGrams(item.grams));
+  const missingNutrition = includedItems.some((item) => {
+    if (!item.foodId && !item.estimatedNutrition) return false; // reported as unchosen
+    const nutrition = item.foodId ? computedByItem[item.id] : displayNutrition(item.estimatedNutrition);
+    if (item.foodId && !nutrition) return false; // still calculating
+    return !hasCoreNutrition(nutrition);
   });
-  const dbCalculationPending = selectedItems.length > 0 && computedKey !== currentCalculationKey;
+  const dbCalculationPending = dbItems.length > 0 && computedKey !== currentCalculationKey;
   const canSave =
-    items.length > 0 &&
-    invalidItems.length === 0 &&
+    includedItems.length > 0 &&
+    unchosenItems.length === 0 &&
+    invalidGramItems.length === 0 &&
     !missingNutrition &&
     !calculating &&
     !dbCalculationPending &&
     !calculationError;
 
   const confirm = async () => {
-    if (saving) return;
-    // Drop the candidate lists before saving; they are only needed on this screen.
-    const reviewItems = items.map(({ candidates: _candidates, candidateList: _candidateList, ...item }) => ({
-      ...item,
-      grams: Number(item.grams),
-      nutrition: getItemNutrition(item),
-      nutritionSource: item.foodId ? 'database' : 'ai_estimate',
-    }));
+    if (saving || !canSave) return;
+    // Only ticked items are saved; candidate lists are only needed on this screen.
+    const reviewItems = includedItems.map(
+      ({ candidates: _candidates, candidateList: _candidateList, included: _included, baseGrams: _baseGrams, ...item }) => ({
+        ...item,
+        grams: Number(item.grams),
+        nutrition: getItemNutrition(item),
+        nutritionSource: item.foodId ? 'database' : 'ai_estimate',
+      })
+    );
     setSaving(true);
     setSaveError('');
     try {
@@ -273,261 +308,307 @@ export default function FoodScanReview({ analysis, onConfirm, onReset }) {
     }
   };
 
+  const addManualItem = () => {
+    const id = `manual_${Date.now()}`;
+    setItems((previous) => [...previous, {
+      id,
+      included: true,
+      name: '',
+      aiName: '',
+      grams: String(DEFAULT_MANUAL_GRAMS),
+      baseGrams: DEFAULT_MANUAL_GRAMS,
+      estimatedGrams: 0,
+      estimatedNutrition: null,
+      confidence: 0,
+      foodId: '',
+      per100g: null,
+      estimatedFields: [],
+      candidateList: [],
+    }]);
+    setSearchOpen((previous) => ({ ...previous, [id]: true }));
+    setQueries((previous) => ({ ...previous, [id]: '' }));
+  };
+
+  const ctaTitle = includedItems.length === 0
+    ? 'เลือกอย่างน้อย 1 รายการ'
+    : `บันทึก ${includedItems.length} รายการ${totals.kcal != null ? ` · ${formatKcal(totals.kcal)} kcal` : ''}`;
+
   return (
     <View>
-      <Text style={styles.title}>ตรวจสอบรายการอาหาร</Text>
-      <Text style={styles.helper}>
-        ชื่อและปริมาณจากภาพเป็นค่าประมาณ แก้ไขได้ก่อนบันทึก และเลือกจับคู่กับฐานข้อมูลเพื่อความแม่นยำ
-      </Text>
-
-      {!!analysis.reference_object && (
-        <View style={styles.referenceRow}>
-          <Ionicons name="eye-outline" size={15} color={colors.inkMuted} />
-          <Text style={styles.referenceText}> สิ่งอ้างอิงในภาพ: {analysis.reference_object}</Text>
-        </View>
-      )}
+      <Text style={styles.title}>ใช่เมนูเหล่านี้ไหม?</Text>
+      <Text style={styles.helper}>AI ประเมินจากภาพ ค่าจริงอาจต่างตามสูตรและปริมาณ</Text>
 
       {items.map((item, index) => {
-        const gramsRange = item.estimated_grams || {};
-        const nutrition = getItemNutrition(item);
+        const nutrition = item.included ? getItemNutrition(item) : null;
         const gramsValid = validGrams(item.grams);
+        const chips = item.candidateList.slice(0, MAX_CANDIDATE_CHIPS);
+        // Keep the current database pick visible even when it ranks below the cut.
+        if (item.foodId && !chips.some((c) => c.foodId === item.foodId)) {
+          const current = item.candidateList.find((c) => c.foodId === item.foodId);
+          if (current) chips[chips.length - 1] = current;
+        }
+        const aiChipAvailable = Boolean(item.aiName) && hasCoreNutrition(displayNutrition(item.estimatedNutrition));
+        const isSearchOpen = searchOpen[item.id] || (!item.foodId && !aiChipAvailable && chips.length === 0);
+        const title = item.name || 'เลือกเมนู';
+        const grams = Number(item.grams);
         return (
-          <View key={item.id} style={styles.itemCard}>
-            <View style={styles.itemHeader}>
-              <Text style={styles.itemTitle}>รายการที่ {index + 1}</Text>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={`ลบ ${item.name || `รายการที่ ${index + 1}`}`}
-                hitSlop={10}
-                onPress={() => setItems((previous) => previous.filter((entry) => entry.id !== item.id))}
-                style={({ pressed }) => [styles.deleteBtn, pressed && { opacity: 0.7 }]}
-              >
-                <Ionicons name="trash-outline" size={17} color={colors.danger} />
-              </Pressable>
-            </View>
-
-            <Text style={styles.label}>ชื่ออาหาร</Text>
-            <TextInput
-              value={item.name}
-              onChangeText={(value) => {
-                updateItem(item.id, { name: value, foodId: '', per100g: null, estimatedFields: [], autoMatched: false, source: 'ai_estimate' });
-                setQueries((previous) => ({ ...previous, [item.id]: value }));
-              }}
-              style={styles.input}
-              placeholder="แก้ชื่ออาหาร"
-              placeholderTextColor={colors.inkFaint}
-            />
-
-            <Text style={styles.label}>ปริมาณ (กรัม)</Text>
-            <TextInput
-              value={item.grams}
-              onChangeText={(value) => updateItem(item.id, { grams: value })}
-              keyboardType="decimal-pad"
-              style={[styles.input, !gramsValid && item.grams !== '' && styles.inputInvalid]}
-              placeholder="ใส่น้ำหนักโดยประมาณ"
-              placeholderTextColor={colors.inkFaint}
-            />
-            {gramsRange.min != null && gramsRange.max != null && (
-              <View style={styles.estimateRow}>
-                <Ionicons name="sparkles-outline" size={13} color={colors.turmericDark} />
-                <Text style={styles.estimateText}>
-                  AI ประเมิน {gramsRange.min}–{gramsRange.max} กรัม · ความมั่นใจ{' '}
-                  {Math.round((item.confidence || 0) * 100)}%
+          <View key={item.id} style={[styles.itemCard, !item.included && styles.itemCardExcluded]}>
+            <Pressable
+              onPress={() => updateItem(item.id, { included: !item.included })}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: item.included }}
+              accessibilityLabel={`รวม ${title} ในบันทึก`}
+              style={styles.itemHeader}
+            >
+              <View style={styles.indexBadge}>
+                <Text style={styles.indexBadgeText}>{index + 1}</Text>
+              </View>
+              <View style={styles.itemHeaderText}>
+                <Text style={styles.itemTitle} numberOfLines={2}>{title}</Text>
+                <Text style={styles.itemMeta}>
+                  {gramsValid ? `${Math.round(grams)} กรัม` : 'ใส่น้ำหนัก'}
+                  {item.foodId ? '' : item.aiName && item.name === item.aiName ? ' · ค่าประมาณจาก AI' : ''}
                 </Text>
               </View>
-            )}
-
-            <View style={styles.searchRow}>
-              <TextInput
-                value={queries[item.id] ?? item.name}
-                onChangeText={(value) => {
-                  setQueries((previous) => ({ ...previous, [item.id]: value }));
-                  setSearchResults((previous) => ({ ...previous, [item.id]: [] }));
-                  setSearchErrors((previous) => ({ ...previous, [item.id]: '' }));
-                }}
-                onSubmitEditing={() => searchForItem(item)}
-                returnKeyType="search"
-                style={[styles.input, styles.searchInput]}
-                placeholder="ค้นหาเมนูในฐานข้อมูล"
-                placeholderTextColor={colors.inkFaint}
+              <Ionicons
+                name={item.included ? 'checkbox' : 'square-outline'}
+                size={26}
+                color={item.included ? colors.primary : colors.inkMuted}
               />
-              <Pressable
-                onPress={() => searchForItem(item)}
-                disabled={searching[item.id]}
-                accessibilityRole="button"
-                accessibilityLabel={`ค้นหา ${item.name} ในฐานข้อมูล`}
-                style={({ pressed }) => [styles.searchBtn, pressed && { opacity: 0.85 }]}
-              >
-                {searching[item.id] ? (
-                  <ActivityIndicator color={colors.white} size="small" />
-                ) : (
-                  <Ionicons name="search" size={18} color={colors.white} />
+            </Pressable>
+
+            {item.included && (
+              <>
+                <Text style={styles.label}>เมนูที่ใกล้เคียง</Text>
+                <View style={styles.chipRow}>
+                  {chips.map((food) => {
+                    const selected = item.foodId === food.foodId;
+                    return (
+                      <Pressable
+                        key={food.foodId}
+                        onPress={() => chooseFood(item, food)}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected }}
+                        accessibilityLabel={`เลือก ${food.name}`}
+                        style={({ pressed }) => [styles.chip, selected && styles.chipSelected, pressed && styles.pressed]}
+                      >
+                        <Text style={[styles.chipText, selected && styles.chipTextSelected]} numberOfLines={1}>
+                          {food.name}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                  {aiChipAvailable && (
+                    <Pressable
+                      onPress={() => chooseAiEstimate(item)}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: !item.foodId }}
+                      accessibilityLabel={`ใช้ค่าประมาณจาก AI: ${item.aiName}`}
+                      style={({ pressed }) => [styles.chip, !item.foodId && styles.chipSelected, pressed && styles.pressed]}
+                    >
+                      <Ionicons name="sparkles-outline" size={14} color={!item.foodId ? colors.white : colors.turmericDark} />
+                      <Text style={[styles.chipText, !item.foodId && styles.chipTextSelected]} numberOfLines={1}>
+                        {item.aiName} (AI)
+                      </Text>
+                    </Pressable>
+                  )}
+                  <Pressable
+                    onPress={() => setSearchOpen((previous) => ({ ...previous, [item.id]: !isSearchOpen }))}
+                    accessibilityRole="button"
+                    accessibilityState={{ expanded: isSearchOpen }}
+                    accessibilityLabel="ค้นหาเมนูอื่น"
+                    style={({ pressed }) => [styles.chip, styles.chipDashed, pressed && styles.pressed]}
+                  >
+                    <Ionicons name="search" size={14} color={colors.primary} />
+                    <Text style={[styles.chipText, styles.chipTextLink]}>เมนูอื่น</Text>
+                  </Pressable>
+                </View>
+
+                {isSearchOpen && (
+                  <View style={styles.searchBlock}>
+                    <View style={styles.searchRow}>
+                      <TextInput
+                        value={queries[item.id] ?? item.aiName ?? ''}
+                        onChangeText={(value) => {
+                          setQueries((previous) => ({ ...previous, [item.id]: value }));
+                          setSearchResults((previous) => ({ ...previous, [item.id]: [] }));
+                          setSearchErrors((previous) => ({ ...previous, [item.id]: '' }));
+                        }}
+                        onSubmitEditing={() => searchForItem(item)}
+                        returnKeyType="search"
+                        style={[styles.input, styles.searchInput]}
+                        placeholder="พิมพ์ชื่อเมนู เช่น ผัดกะเพรา"
+                        placeholderTextColor={colors.inkFaint}
+                        accessibilityLabel="ค้นหาเมนูในฐานข้อมูล"
+                      />
+                      <Pressable
+                        onPress={() => searchForItem(item)}
+                        disabled={searching[item.id]}
+                        accessibilityRole="button"
+                        accessibilityLabel="ค้นหา"
+                        style={({ pressed }) => [styles.searchBtn, pressed && styles.pressed]}
+                      >
+                        {searching[item.id] ? (
+                          <ActivityIndicator color={colors.white} size="small" />
+                        ) : (
+                          <Ionicons name="search" size={18} color={colors.white} />
+                        )}
+                      </Pressable>
+                    </View>
+                    {(searchResults[item.id] || []).map((food) => (
+                      <Pressable
+                        key={food.foodId}
+                        onPress={() => chooseFood(item, food)}
+                        accessibilityRole="button"
+                        accessibilityLabel={`เลือก ${food.name}`}
+                        style={({ pressed }) => [styles.searchResult, pressed && styles.pressed]}
+                      >
+                        <Text style={styles.searchResultName}>{food.name}</Text>
+                        <Text style={styles.searchResultMeta}>
+                          {food.estimated?.includes('kcal') ? '≈' : ''}
+                          {food.per100g.kcal ?? '—'} kcal / 100 กรัม
+                        </Text>
+                      </Pressable>
+                    ))}
+                    {!!searchErrors[item.id] && (
+                      <Text style={styles.searchError}>{searchErrors[item.id]}</Text>
+                    )}
+                  </View>
                 )}
-              </Pressable>
-            </View>
 
-            {(searchResults[item.id] || []).map((food) => (
-              <Pressable
-                key={food.foodId}
-                onPress={() => chooseFood(item, food)}
-                accessibilityRole="button"
-                accessibilityLabel={`เลือก ${food.name}`}
-                style={({ pressed }) => [styles.searchResult, pressed && { opacity: 0.7 }]}
-              >
-                <Text style={styles.searchResultName}>{food.name}</Text>
-                <Text style={styles.searchResultMeta}>
-                  {food.nameEn ? `${food.nameEn} · ` : ''}
-                  {food.estimated?.includes('kcal') ? '≈' : ''}
-                  {food.per100g.kcal ?? '-'} kcal / 100 g
+                <Text style={styles.label}>
+                  {item.estimatedGrams ? 'ปริมาณ (เท่าของที่ AI ประเมิน)' : `ปริมาณ (เท่าของ ${DEFAULT_MANUAL_GRAMS} กรัม)`}
                 </Text>
-              </Pressable>
-            ))}
-            {!!searchErrors[item.id] && (
-              <View style={styles.errorBlock}>
-                <Banner tone="error" message={searchErrors[item.id]} />
-              </View>
+                <View style={styles.portionRow}>
+                  {PORTION_STEPS.map((step) => {
+                    const stepGrams = Math.round(item.baseGrams * step.factor);
+                    const selected = gramsValid && Math.round(grams) === stepGrams;
+                    return (
+                      <Pressable
+                        key={step.label}
+                        onPress={() => updateItem(item.id, { grams: String(stepGrams) })}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected }}
+                        accessibilityLabel={`${step.label} เท่า ${stepGrams} กรัม`}
+                        style={({ pressed }) => [styles.portionChip, selected && styles.chipSelected, pressed && styles.pressed]}
+                      >
+                        <Text style={[styles.portionChipText, selected && styles.chipTextSelected]}>{step.label}</Text>
+                      </Pressable>
+                    );
+                  })}
+                  <View style={[styles.gramsBox, !gramsValid && styles.inputInvalid]}>
+                    <TextInput
+                      value={item.grams}
+                      onChangeText={(value) => updateItem(item.id, { grams: value })}
+                      keyboardType="decimal-pad"
+                      style={styles.gramsInput}
+                      accessibilityLabel={`น้ำหนัก ${title} เป็นกรัม`}
+                    />
+                    <Text style={styles.gramsUnit}>ก.</Text>
+                  </View>
+                </View>
+
+                <View style={styles.itemFooter}>
+                  <Text style={styles.itemMacros} numberOfLines={1}>
+                    {nutrition
+                      ? `P ${formatAmount(nutrition.protein, 0)} · C ${formatAmount(nutrition.carbs, 0)} · F ${formatAmount(nutrition.fat, 0)} ก.`
+                      : item.foodId && calculating ? 'กำลังคำนวณ…' : ''}
+                    {item.foodId && item.estimatedFields?.length ? ' · บางค่าเป็นค่าประมาณ' : ''}
+                  </Text>
+                  <Text style={styles.itemKcal}>
+                    {formatKcal(nutrition?.kcal)}
+                    <Text style={styles.itemKcalUnit}> kcal</Text>
+                  </Text>
+                </View>
+              </>
             )}
-
-            <View style={styles.sourceRow}>
-              <View style={[styles.sourceChip, item.foodId ? styles.sourceChipDb : styles.sourceChipAi]}>
-                <Text
-                  style={[
-                    styles.sourceChipText,
-                    item.foodId ? styles.sourceChipTextDb : styles.sourceChipTextAi,
-                  ]}
-                >
-                  {item.foodId
-                    ? `ฐานข้อมูลโภชนาการ${item.autoMatched ? ' (จับคู่อัตโนมัติ)' : ''}${item.estimatedFields?.length ? ' · บางค่าเป็นค่าประมาณ' : ''}`
-                    : 'ค่าประมาณจาก AI'}
-                </Text>
-              </View>
-              {!!nutrition && (
-                <Text style={styles.nutritionText} numberOfLines={2}>
-                  {nutrition.kcal == null ? '—' : Math.round(nutrition.kcal)} kcal · P{' '}
-                  {formatAmount(nutrition.protein)} · C {formatAmount(nutrition.carbs)} · F{' '}
-                  {formatAmount(nutrition.fat)} g
-                </Text>
-              )}
-            </View>
-            {Boolean(item.foodId) && Boolean(calculating) ? (
-              <Text style={styles.estimateText}>กำลังคำนวณจากฐานข้อมูล...</Text>
-            ) : null}
-            {Boolean(item.foodId) && Boolean(item.aiName) && item.aiName !== item.name ? (
-              <Pressable
-                onPress={() => switchToAiEstimate(item)}
-                accessibilityRole="button"
-                accessibilityLabel={`ใช้ชื่อและค่าประมาณจาก AI: ${item.aiName}`}
-                hitSlop={6}
-                style={({ pressed }) => [{ marginTop: 6, alignSelf: 'flex-start' }, pressed && { opacity: 0.7 }]}
-              >
-                <Text style={[styles.estimateText, { color: colors.primary, fontWeight: '700' }]}>
-                  ไม่ใช่เมนูนี้? ใช้ค่าประมาณจาก AI ({item.aiName})
-                </Text>
-              </Pressable>
-            ) : null}
           </View>
         );
       })}
 
       {items.length === 0 && (
         <View style={styles.errorBlock}>
-          <Banner tone="warning" message="ยังไม่มีรายการอาหาร กรุณาสแกนใหม่หรือค้นหาเมนูจากฐานข้อมูล" />
+          <Banner tone="warning" message="ไม่พบอาหารในภาพ เพิ่มรายการเองหรือสแกนใหม่ได้เลย" />
         </View>
       )}
 
       <Pressable
-        onPress={() => setItems((previous) => [...previous, {
-          id: `manual_${Date.now()}`,
-          name: '',
-          grams: '',
-          estimatedGrams: 0,
-          estimatedNutrition: null,
-          confidence: 0,
-          foodId: '',
-        }])}
+        onPress={addManualItem}
         accessibilityRole="button"
-        accessibilityLabel="เพิ่มรายการอาหาร"
-        style={({ pressed }) => [styles.addBtn, pressed && { opacity: 0.8 }]}
+        accessibilityLabel="เพิ่มรายการที่ AI มองไม่เห็น"
+        style={({ pressed }) => [styles.addBtn, pressed && styles.pressed]}
       >
         <Ionicons name="add" size={20} color={colors.primaryDark} />
-        <Text style={styles.addBtnText}>เพิ่มรายการอาหาร</Text>
+        <Text style={styles.addBtnText}>เพิ่มสิ่งที่ AI มองไม่เห็น</Text>
       </Pressable>
 
-      {items.length > 0 && (
+      {includedItems.length > 0 && (
         <View style={styles.totalsCard}>
-          <Text style={styles.totalsTitle}>ยอดรวมโดยประมาณ</Text>
-          <Text style={styles.totalsKcal}>{formatAmount(totals.kcal, 0)} kcal</Text>
+          <View style={styles.totalsHeader}>
+            <Text style={styles.totalsTitle}>รวม {includedItems.length} รายการ</Text>
+            <Text style={styles.totalsKcal}>
+              {formatKcal(totals.kcal)}
+              <Text style={styles.totalsKcalUnit}> kcal</Text>
+            </Text>
+          </View>
           <View style={styles.totalsMacroRow}>
             <View style={styles.macroItem}>
               <View style={[styles.macroDot, { backgroundColor: colors.protein }]} />
-              <Text style={styles.macroText}>โปรตีน {formatAmount(totals.protein)} g</Text>
+              <Text style={styles.macroText}>โปรตีน {formatAmount(totals.protein, 0)} ก.</Text>
             </View>
             <View style={styles.macroItem}>
               <View style={[styles.macroDot, { backgroundColor: colors.carbs }]} />
-              <Text style={styles.macroText}>คาร์บ {formatAmount(totals.carbs)} g</Text>
+              <Text style={styles.macroText}>คาร์บ {formatAmount(totals.carbs, 0)} ก.</Text>
             </View>
             <View style={styles.macroItem}>
               <View style={[styles.macroDot, { backgroundColor: colors.fat }]} />
-              <Text style={styles.macroText}>ไขมัน {formatAmount(totals.fat)} g</Text>
+              <Text style={styles.macroText}>ไขมัน {formatAmount(totals.fat, 0)} ก.</Text>
             </View>
           </View>
-          <Text style={styles.totalsMicro}>
-            ใยอาหาร {formatAmount(totals.fiber)} g · น้ำตาล {formatAmount(totals.sugar)} g · โซเดียม{' '}
-            {formatAmount(totals.sodium, 0)} mg
-          </Text>
         </View>
       )}
 
-      {calculating && (
-        <View style={styles.loadingRow}>
-          <ActivityIndicator color={colors.primary} size="small" />
-          <Text style={styles.loadingText}>กำลังคำนวณสารอาหารจากฐานข้อมูล...</Text>
-        </View>
-      )}
       {!!calculationError && (
         <View style={styles.errorBlock}>
           <Banner tone="error" message={calculationError} />
         </View>
       )}
-      {invalidItems.length > 0 && (
+      {unchosenItems.length > 0 && (
         <View style={styles.errorBlock}>
-          <Banner
-            tone="error"
-            message={`กรอกชื่ออาหารและน้ำหนัก 1–${MAX_GRAMS} กรัมให้ครบทุกแถวก่อนบันทึก`}
-          />
+          <Banner tone="warning" message="เลือกเมนูให้ครบทุกรายการที่ติ๊กไว้ หรือเอาติ๊กออก" />
+        </View>
+      )}
+      {invalidGramItems.length > 0 && (
+        <View style={styles.errorBlock}>
+          <Banner tone="error" message={`น้ำหนักต้องอยู่ระหว่าง 1–${MAX_GRAMS} กรัม`} />
         </View>
       )}
       {missingNutrition && (
         <View style={styles.errorBlock}>
-          <Banner
-            tone="error"
-            message="ต้องมีค่าพลังงาน โปรตีน คาร์บ และไขมันของทุกรายการก่อนบันทึก (เลือกอาหารจากฐานข้อมูลได้)"
-          />
+          <Banner tone="error" message="บางรายการยังไม่มีค่าพลังงานหรือสารอาหารหลัก ลองเลือกเมนูอื่นที่ใกล้เคียง" />
         </View>
       )}
-
       {!!saveError && (
         <View style={styles.errorBlock}>
           <Banner tone="error" message={saveError} />
         </View>
       )}
 
-      <View style={styles.actionRow}>
-        <PrimaryButton
-          title="ยกเลิก"
-          variant="outline"
-          onPress={onReset}
-          disabled={saving}
-          style={[styles.actionGap, { flex: 1 }]}
-        />
-        <PrimaryButton
-          title="ยืนยันและบันทึก"
-          onPress={confirm}
-          loading={saving}
-          disabled={!canSave || saving}
-          style={{ flex: 1 }}
-        />
-      </View>
+      <PrimaryButton
+        title={ctaTitle}
+        icon="checkmark"
+        onPress={confirm}
+        loading={saving}
+        disabled={!canSave || saving}
+      />
+      <Pressable
+        onPress={onReset}
+        disabled={saving}
+        accessibilityRole="button"
+        style={({ pressed }) => [styles.cancelBtn, pressed && styles.pressed]}
+      >
+        <Text style={styles.cancelText}>ยกเลิกและถ่ายใหม่</Text>
+      </Pressable>
     </View>
   );
 }
