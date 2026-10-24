@@ -95,15 +95,20 @@ function Tabs() {
             );
           }
           const [activeIcon, inactiveIcon] = TAB_ICONS[route.name] || ['ellipse', 'ellipse-outline'];
+          // Fixed-size pill: the tab bar's icon box is only ~31px wide, so
+          // horizontal padding would squeeze the icon itself to zero width.
           return (
             <View
               style={
                 focused
                   ? {
+                      width: 56,
+                      height: 30,
+                      flexShrink: 0,
+                      alignItems: 'center',
+                      justifyContent: 'center',
                       backgroundColor: colors.mint,
                       borderRadius: 999,
-                      paddingHorizontal: 16,
-                      paddingVertical: 3,
                     }
                   : null
               }
