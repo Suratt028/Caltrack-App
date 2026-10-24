@@ -14,7 +14,9 @@ export default StyleSheet.create({
   },
   value: {
     color: colors.ink,
-    lineHeight: 46,
+    // Noto Sans Thai's ascent is tall: at the 42px stat size a tighter line box
+    // clips the top of the digits on iOS.
+    lineHeight: 58,
   },
   unit: {
     fontSize: 13,
