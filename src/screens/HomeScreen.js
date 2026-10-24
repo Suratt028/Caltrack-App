@@ -64,8 +64,12 @@ export default function HomeScreen({ navigation }) {
       message: `${entry.name} · ${Math.round(Number(entry.kcal) || 0)} kcal`,
       confirmLabel: 'ลบรายการ',
       onConfirm: async () => {
-        await removeFoodLog(entry.id);
-        showNotice(`ลบ "${entry.name}" แล้ว`);
+        try {
+          await removeFoodLog(entry.id);
+          showNotice(`ลบ "${entry.name}" แล้ว`);
+        } catch (error) {
+          showNotice(error?.message || 'ลบรายการไม่สำเร็จ กรุณาลองใหม่อีกครั้ง', 'error');
+        }
       },
     });
   };
@@ -250,6 +254,8 @@ export default function HomeScreen({ navigation }) {
                       name={entry.name}
                       time={entry.time}
                       servings={entry.servings}
+                      unit={entry.unit}
+                      grams={entry.grams}
                       kcal={entry.kcal}
                       onRemove={() => askRemove(entry)}
                     />

@@ -172,33 +172,6 @@ export default StyleSheet.create({
     color: colors.ink,
     marginBottom: spacing.sm,
   },
-  categoryGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: spacing.md,
-  },
-  categoryItem: {
-    width: '31%',
-    minHeight: 72,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  categoryItemPressed: {
-    opacity: 0.8,
-  },
-  categoryText: {
-    color: colors.inkMuted,
-    fontSize: 11,
-    lineHeight: 16,
-    marginTop: 6,
-    textAlign: 'center',
-  },
   successState: {
     alignItems: 'center',
     paddingVertical: spacing.lg,

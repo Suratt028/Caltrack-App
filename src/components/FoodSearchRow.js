@@ -10,8 +10,10 @@ import styles from '../style/components/FoodSearchRowStyles';
  * name + serving label on the left, kcal on the right, and a mint 44dp round
  * "+" button that opens the portion screen before saving.
  */
-export default function FoodSearchRow({ name, subtitle, kcal, onPress }) {
-  const calories = Math.round(Number(kcal) || 0);
+export default function FoodSearchRow({ name, subtitle, kcal, kcalEstimated = false, onPress }) {
+  // Missing energy shows "—", not 0; calculated (not measured) energy gets "≈".
+  const hasKcal = kcal != null && Number.isFinite(Number(kcal));
+  const calories = hasKcal ? `${kcalEstimated ? '≈' : ''}${Math.round(Number(kcal))}` : '—';
 
   return (
     <View style={styles.row}>

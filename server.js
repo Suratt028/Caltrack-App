@@ -5,12 +5,18 @@ const crypto = require('crypto');
 const mongoose = require('mongoose');
 const { OAuth2Client } = require('google-auth-library');
 
-const multer = require('multer');
-const { processAndSaveFood } = require('./controllers/foodController');
-const { processFoodUpload } = require('./services/foodUploadService');
 const { addNutritionTotals, scaleNutrition } = require('./server/nutritionMath');
 const { getGeminiScanError } = require('./server/geminiScanError');
 const { requestWithGeminiFallback } = require('./server/geminiScanRequest');
+const {
+  candidateSearchTerms,
+  englishWords,
+  spellingRegexSource,
+  thaiNameVariants,
+  rankFoodCandidates,
+  rankSearchResults,
+  isConfidentMatch,
+} = require('./server/foodMatching');
 
 const app = express();
 app.use(cors());
@@ -33,8 +39,6 @@ app.use(async (req, res, next) => {
   return next();
 });
 
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
-
 const dbName = process.env.MONGODB_DB_NAME || 'caltrack';
 const mongoUser = process.env.MONGODB_USERNAME;
 const mongoPassword = process.env.MONGODB_PASSWORD;
@@ -45,16 +49,15 @@ const adminPassword = process.env.ADMIN_PASSWORD || 'Admin@1234';
 const adminDisplayName = process.env.ADMIN_DISPLAY_NAME || 'CalTrack Administrator';
 // The fallbacks above are public (they are in the repo), so anyone could sign
 // admin tokens or log in as admin. Fine for local dev only.
-if (!process.env.AUTH_SECRET) {
-  console.warn('⚠️  AUTH_SECRET is not set; admin tokens are signed with a public default. Set it before deploying.');
+const PLACEHOLDER_SECRETS = ['dev-secret-change-me', 'change-me-in-production'];
+if (!process.env.AUTH_SECRET || PLACEHOLDER_SECRETS.includes(process.env.AUTH_SECRET)) {
+  console.warn('⚠️  AUTH_SECRET is not set or is a placeholder; anyone could forge sign-in tokens. Set a random value before deploying.');
+} else if (Buffer.byteLength(process.env.AUTH_SECRET) < 32) {
+  console.warn('⚠️  AUTH_SECRET is shorter than 32 characters; use a longer random value (e.g. `openssl rand -hex 32`).');
 }
 if (!process.env.ADMIN_PASSWORD) {
   console.warn('⚠️  ADMIN_PASSWORD is not set; the admin account uses a public default password. Set it before deploying.');
 }
-const fatSecretClientId = process.env.FATSECRET_CLIENT_ID;
-const fatSecretClientSecret = process.env.FATSECRET_CLIENT_SECRET;
-const fatSecretCustomerKey = process.env.FATSECRET_CUSTOMER_KEY;
-const fatSecretOAuthUrl = process.env.FATSECRET_OAUTH_URL || 'https://oauth.fatsecret.com/connect/token';
 const googleOAuthClientIds = (process.env.GOOGLE_OAUTH_CLIENT_IDS || '')
   .split(',')
   .map((value) => value.trim())
@@ -66,7 +69,8 @@ const appleOAuthClientIds = (process.env.APPLE_OAUTH_CLIENT_IDS || '')
 const appleServiceId = process.env.APPLE_SERVICE_ID;
 const appleRedirectUri = process.env.APPLE_REDIRECT_URI;
 const googleOAuthClient = new OAuth2Client();
-const geminiApiKey = process.env.GEMINI_API_KEY || process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
+// Server-only. Never read an EXPO_PUBLIC_* key here: those are bundled into the app.
+const geminiApiKey = process.env.GEMINI_API_KEY || '';
 const configuredGeminiScanModels = [...new Set(
   (process.env.GEMINI_SCAN_MODELS || 'gemini-3.6-flash,gemini-3.5-flash-lite')
     .split(',')
@@ -121,6 +125,36 @@ async function requestGemini(url, body) {
   }
 }
 
+// isMongoReady follows the driver's connection events, so it recovers after a
+// network drop (the driver reconnects by itself). If the very first connect
+// fails, connectMongo keeps retrying with backoff instead of staying down
+// until someone restarts the server.
+const MONGO_RETRY_START_MS = 2000;
+const MONGO_RETRY_MAX_MS = 60 * 1000;
+let mongoRetryDelayMs = MONGO_RETRY_START_MS;
+let adminAccountEnsured = false;
+
+function onMongoUp(event) {
+  const wasReady = isMongoReady;
+  isMongoReady = true;
+  mongoRetryDelayMs = MONGO_RETRY_START_MS;
+  if (!wasReady) console.log(`✅ MongoDB ${event}`);
+  if (!adminAccountEnsured) {
+    adminAccountEnsured = true;
+    ensureAdminAccount().catch((error) => {
+      adminAccountEnsured = false;
+      console.error('❌ Admin account setup failed:', error.message);
+    });
+  }
+}
+
+mongoose.connection.on('connected', () => onMongoUp('connected'));
+mongoose.connection.on('reconnected', () => onMongoUp('reconnected'));
+mongoose.connection.on('disconnected', () => {
+  if (isMongoReady) console.warn('⚠️ MongoDB disconnected; the driver will try to reconnect');
+  isMongoReady = false;
+});
+
 async function connectMongo() {
   if (!uri) return;
   try {
@@ -128,11 +162,11 @@ async function connectMongo() {
       dbName,
       serverSelectionTimeoutMS: 10000,
     });
-    isMongoReady = true;
-    console.log('✅ MongoDB connected successfully');
   } catch (err) {
-    console.error('❌ MongoDB connection error:', err.message);
     isMongoReady = false;
+    console.error(`❌ MongoDB connection error: ${err.message} (retrying in ${mongoRetryDelayMs / 1000}s)`);
+    setTimeout(connectMongo, mongoRetryDelayMs);
+    mongoRetryDelayMs = Math.min(mongoRetryDelayMs * 2, MONGO_RETRY_MAX_MS);
   }
 }
 
@@ -295,6 +329,9 @@ const UserFood = mongoose.model('UserFood', userFoodSchema, 'user.foods');
 // Flexible schema: the "foods" collection holds ~1,167 Thai food-composition
 // records with many optional micronutrient fields, so we don't lock it down.
 const foodSchema = new mongoose.Schema({}, { strict: false });
+// foodId is always stored as a string; the unique index makes duplicate admin
+// inserts fail with E11000 (reported as "foodId already exists").
+foodSchema.index({ foodId: 1 }, { unique: true });
 const Food = mongoose.model('Food', foodSchema, 'foods');
 
 // Nutrient fields stored per 100g edible portion (see thaiFoods_full.json / seed-foods.js)
@@ -334,12 +371,53 @@ function normalizeFoodLog(log) {
 }
 
 // Helper Functions
+// Passwords: salted scrypt, stored as "scrypt$<salt hex>$<hash hex>".
+// Older accounts hold an unsalted HMAC-SHA256 (keyed with AUTH_SECRET); those
+// still verify and are rehashed on the next successful login.
+const SCRYPT_KEYLEN = 64;
+
 function hashPassword(password) {
-  return crypto.createHmac('sha256', authSecret).update(password).digest('hex');
+  const salt = crypto.randomBytes(16);
+  const hash = crypto.scryptSync(String(password), salt, SCRYPT_KEYLEN);
+  return `scrypt$${salt.toString('hex')}$${hash.toString('hex')}`;
+}
+
+function isLegacyPasswordHash(storedPassword) {
+  return typeof storedPassword === 'string' && !storedPassword.startsWith('scrypt$');
+}
+
+function safeEqualHex(a, b) {
+  const left = Buffer.from(String(a), 'hex');
+  const right = Buffer.from(String(b), 'hex');
+  return left.length > 0 && left.length === right.length && crypto.timingSafeEqual(left, right);
 }
 
 function verifyPassword(inputPassword, storedPassword) {
-  return Boolean(storedPassword) && hashPassword(inputPassword) === storedPassword;
+  if (!storedPassword) return false;
+  if (isLegacyPasswordHash(storedPassword)) {
+    const legacy = crypto.createHmac('sha256', authSecret).update(String(inputPassword)).digest('hex');
+    return safeEqualHex(legacy, storedPassword);
+  }
+  const [, saltHex, hashHex] = storedPassword.split('$');
+  if (!saltHex || !hashHex) return false;
+  const hash = crypto.scryptSync(String(inputPassword), Buffer.from(saltHex, 'hex'), SCRYPT_KEYLEN);
+  return safeEqualHex(hash.toString('hex'), hashHex);
+}
+
+// Constant-time string comparison (for the ADMIN_PASSWORD from .env).
+function safeEqualText(a, b) {
+  const digest = (value) => crypto.createHash('sha256').update(String(value)).digest();
+  return crypto.timingSafeEqual(digest(a), digest(b)) && String(a) === String(b);
+}
+
+// Call after a successful verifyPassword: moves legacy hashes to scrypt.
+async function upgradePasswordHashIfNeeded(user, password) {
+  if (!isLegacyPasswordHash(user.password)) return;
+  try {
+    await User.updateOne({ _id: user._id }, { $set: { password: hashPassword(password) } });
+  } catch (error) {
+    console.warn('Password hash upgrade failed:', error.message);
+  }
 }
 
 function parseAppleOAuthState(state) {
@@ -504,32 +582,73 @@ async function ensureAdminAccount() {
   return admin;
 }
 
-function createAdminToken(email) {
-  const payload = Buffer.from(JSON.stringify({ email, role: 'admin', exp: Date.now() + 8 * 60 * 60 * 1000 })).toString('base64url');
+function signToken(claims) {
+  const payload = Buffer.from(JSON.stringify(claims)).toString('base64url');
   const signature = crypto.createHmac('sha256', authSecret).update(payload).digest('base64url');
   return `${payload}.${signature}`;
 }
 
-function requireAdmin(req, res, next) {
+// Returns the claims of a validly signed, unexpired Bearer token, or null.
+function readBearerToken(req) {
   const token = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
   const [payload, signature] = token.split('.');
-  if (!payload || !signature) return res.status(401).json({ error: 'admin authentication required' });
+  if (!payload || !signature) return null;
 
   const expected = crypto.createHmac('sha256', authSecret).update(payload).digest('base64url');
   if (signature.length !== expected.length || !crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) {
-    return res.status(401).json({ error: 'invalid admin token' });
+    return null;
   }
-
   try {
     const claims = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
-    if (claims.role !== 'admin' || !claims.email || claims.exp < Date.now()) {
-      return res.status(401).json({ error: 'expired admin token' });
-    }
+    return claims && claims.exp > Date.now() ? claims : null;
+  } catch {
+    return null;
+  }
+}
+
+function createAdminToken(email) {
+  return signToken({ email, role: 'admin', exp: Date.now() + 8 * 60 * 60 * 1000 });
+}
+
+const USER_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+
+function createUserToken(user) {
+  return signToken({
+    sub: String(user.id || user._id),
+    email: user.email,
+    role: 'user',
+    exp: Date.now() + USER_TOKEN_TTL_MS,
+  });
+}
+
+function requireAdmin(req, res, next) {
+  const claims = readBearerToken(req);
+  if (!claims) return res.status(401).json({ error: 'admin authentication required' });
+  if (claims.role !== 'admin' || !claims.email) return res.status(401).json({ error: 'invalid admin token' });
+  req.admin = claims;
+  return next();
+}
+
+// Any signed-in user (or admin). Sets req.user = { id, email } for users.
+function requireUser(req, res, next) {
+  const claims = readBearerToken(req);
+  if (claims?.role === 'user' && claims.sub) {
+    req.user = { id: claims.sub, email: String(claims.email || '').toLowerCase() };
+    return next();
+  }
+  if (claims?.role === 'admin' && claims.email) {
     req.admin = claims;
     return next();
-  } catch {
-    return res.status(401).json({ error: 'invalid admin token' });
   }
+  return res.status(401).json({ error: 'authentication required', code: 'AUTH_REQUIRED' });
+}
+
+// For /:userId routes: only that user, or an admin, may access the data.
+function requireSelf(req, res, next) {
+  return requireUser(req, res, () => {
+    if (req.admin || req.user.id === req.params.userId) return next();
+    return res.status(403).json({ error: 'you can only access your own data' });
+  });
 }
 
 async function seedDemoData() {
@@ -596,6 +715,50 @@ async function seedDemoData() {
   return { user, profile, logs };
 }
 
+// In-memory fixed-window rate limiter for sign-in/sign-up (per server process).
+// Counts every attempt; keyed by IP, plus the email for login so one account
+// can't be brute-forced from many addresses without hitting the IP limit too.
+function rateLimit({ name, windowMs, max, keyFn }) {
+  const hits = new Map();
+  setInterval(() => {
+    const now = Date.now();
+    for (const [key, entry] of hits) if (entry.resetAt <= now) hits.delete(key);
+  }, windowMs).unref();
+
+  return (req, res, next) => {
+    const key = `${name}:${keyFn(req)}`;
+    const now = Date.now();
+    const entry = hits.get(key);
+    if (!entry || entry.resetAt <= now) {
+      hits.set(key, { count: 1, resetAt: now + windowMs });
+      return next();
+    }
+    entry.count += 1;
+    if (entry.count > max) {
+      const retryAfterSec = Math.ceil((entry.resetAt - now) / 1000);
+      res.set('Retry-After', String(retryAfterSec));
+      return res.status(429).json({
+        error: `พยายามบ่อยเกินไป กรุณารอ ${Math.ceil(retryAfterSec / 60)} นาทีแล้วลองใหม่`,
+        code: 'RATE_LIMITED',
+      });
+    }
+    return next();
+  };
+}
+
+const MINUTE_MS = 60 * 1000;
+const clientIp = (req) => req.ip || req.socket?.remoteAddress || 'unknown';
+const loginEmail = (req) => String(req.body?.email || '').trim().toLowerCase();
+const loginIpLimit = rateLimit({ name: 'login-ip', windowMs: 15 * MINUTE_MS, max: 30, keyFn: clientIp });
+const loginAccountLimit = rateLimit({
+  name: 'login-account', windowMs: 15 * MINUTE_MS, max: 10, keyFn: (req) => `${clientIp(req)}:${loginEmail(req)}`,
+});
+const adminLoginLimit = rateLimit({
+  name: 'admin-login', windowMs: 15 * MINUTE_MS, max: 5, keyFn: (req) => `${clientIp(req)}:${loginEmail(req)}`,
+});
+const registerLimit = rateLimit({ name: 'register', windowMs: 60 * MINUTE_MS, max: 5, keyFn: clientIp });
+const oauthLimit = rateLimit({ name: 'oauth', windowMs: 15 * MINUTE_MS, max: 30, keyFn: clientIp });
+
 // API Routes
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', mongo: isMongoReady });
@@ -608,19 +771,6 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-app.get('/api/food/analyze', (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: 'This endpoint is for browsing. To analyze food, send a POST request to /api/food/scan or /api/food/upload.',
-    supportedMethods: {
-      scan: 'POST /api/food/scan',
-      upload: 'POST /api/food/upload',
-      aiScan: 'POST /api/ai/scan',
-    },
-    note: 'GET does not accept an image body, so use POST for actual analysis.',
-  });
-});
-
 app.get('/api/diagnostics', (req, res) => {
   res.json({
     geminiApiKeyLoaded: !!geminiApiKey,
@@ -628,56 +778,8 @@ app.get('/api/diagnostics', (req, res) => {
   });
 });
 
-app.post('/api/food/scan', upload.single('image'), processAndSaveFood);
-
-app.post('/api/food/upload', upload.single('image'), async (req, res) => {
-  if (!req.file || !req.file.buffer) {
-    return res.status(400).json({ success: false, message: 'Image file is required' });
-  }
-
-  try {
-    const savedLog = await processFoodUpload(req.file.buffer, req.file.mimetype, {
-      userId: req.body.userId,
-      imageUrl: req.body.imageUrl,
-    });
-
-    return res.status(201).json({ success: true, data: savedLog });
-  } catch (error) {
-    console.error('Food upload error:', error);
-    return res.status(500).json({ success: false, message: error.message || 'Failed to process food upload' });
-  }
-});
-
-app.post('/api/fatsecret/token', async (req, res) => {
-  if (!fatSecretClientId || !fatSecretClientSecret) {
-    return res.status(500).json({ error: 'FatSecret credentials are not configured' });
-  }
-
-  try {
-    const basicAuth = Buffer.from(`${fatSecretClientId}:${fatSecretClientSecret}`).toString('base64');
-    const body = new URLSearchParams({ grant_type: 'client_credentials', scope: 'basic' }).toString();
-
-    const tokenResponse = await fetch(fatSecretOAuthUrl, {
-      method: 'POST',
-      headers: {
-        Authorization: `Basic ${basicAuth}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body,
-    });
-
-    const tokenData = await tokenResponse.json();
-    if (!tokenResponse.ok) {
-      return res.status(tokenResponse.status).json({ error: tokenData.error || tokenData });
-    }
-
-    return res.json(tokenData);
-  } catch (error) {
-    return res.status(500).json({ error: error.message || 'Failed to fetch FatSecret token' });
-  }
-});
-
-app.get('/api/seed-demo', async (req, res) => {
+// Seeding writes to the database, so it is admin-only.
+app.get('/api/seed-demo', requireAdmin, async (req, res) => {
   try {
     const data = await seedDemoData();
     res.json({ message: 'Demo data created successfully', data });
@@ -686,7 +788,7 @@ app.get('/api/seed-demo', async (req, res) => {
   }
 });
 
-app.post('/api/seed-demo', async (req, res) => {
+app.post('/api/seed-demo', requireAdmin, async (req, res) => {
   try {
     const data = await seedDemoData();
     res.json({ message: 'Demo data created successfully', data });
@@ -695,7 +797,7 @@ app.post('/api/seed-demo', async (req, res) => {
   }
 });
 
-app.post('/api/auth/oauth/:provider', async (req, res) => {
+app.post('/api/auth/oauth/:provider', oauthLimit, async (req, res) => {
   try {
     const { provider } = req.params;
     if (!['google', 'apple'].includes(provider)) {
@@ -709,7 +811,7 @@ app.post('/api/auth/oauth/:provider', async (req, res) => {
       ? await verifyGoogleIdentityToken(idToken)
       : await verifyAppleIdentityToken(idToken);
     const user = await findOrCreateOAuthUser(identity);
-    return res.json({ user });
+    return res.json({ user: { ...user, token: createUserToken(user) } });
   } catch (error) {
     console.error('OAuth sign-in failed:', error.message);
     return res.status(error.status || 401).json({ error: error.message || 'OAuth sign-in failed' });
@@ -797,7 +899,7 @@ app.post('/api/auth/apple/callback', async (req, res) => {
   }
 });
 
-app.post('/api/auth/apple/exchange', async (req, res) => {
+app.post('/api/auth/apple/exchange', oauthLimit, async (req, res) => {
   try {
     const ticket = String(req.body.ticket || '');
     if (!ticket || ticket.length > 200) {
@@ -818,6 +920,7 @@ app.post('/api/auth/apple/exchange', async (req, res) => {
         email: user.email,
         displayName: user.displayName,
         role: user.role || 'user',
+        token: createUserToken(user),
       },
     });
   } catch (error) {
@@ -826,7 +929,7 @@ app.post('/api/auth/apple/exchange', async (req, res) => {
   }
 });
 
-app.post('/api/auth/register', async (req, res) => {
+app.post('/api/auth/register', registerLimit, async (req, res) => {
   try {
     const email = String(req.body.email || '').trim().toLowerCase();
     const password = String(req.body.password || '');
@@ -841,7 +944,9 @@ app.post('/api/auth/register', async (req, res) => {
     if (existing) return res.status(409).json({ error: 'email already exists' });
 
     const user = await User.create({ email, password: hashPassword(password), displayName });
-    return res.json({ user: { id: user._id.toString(), email: user.email, displayName: user.displayName } });
+    return res.json({
+      user: { id: user._id.toString(), email: user.email, displayName: user.displayName, token: createUserToken(user) },
+    });
   } catch (error) {
     if (error?.code === 11000) return res.status(409).json({ error: 'email already exists' });
     console.error('Account registration failed:', error.message);
@@ -849,11 +954,11 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', loginIpLimit, loginAccountLimit, async (req, res) => {
   try {
     const email = String(req.body.email || '').trim().toLowerCase();
     const password = String(req.body.password || '');
-    const configuredAdmin = email === adminEmail && password === adminPassword;
+    const configuredAdmin = email === adminEmail && safeEqualText(password, adminPassword);
 
     if (configuredAdmin) {
       const user = isMongoReady && mongoose.connection.readyState === 1
@@ -877,8 +982,15 @@ app.post('/api/auth/login', async (req, res) => {
     if (!user || !verifyPassword(password, user.password)) {
       return res.status(401).json({ error: 'invalid credentials' });
     }
+    await upgradePasswordHashIfNeeded(user, password);
 
-    const signedInUser = { id: user._id.toString(), email: user.email, displayName: user.displayName, role: user.role || 'user' };
+    const signedInUser = {
+      id: user._id.toString(),
+      email: user.email,
+      displayName: user.displayName,
+      role: user.role || 'user',
+      token: createUserToken(user),
+    };
     if (user.role === 'admin') signedInUser.adminToken = createAdminToken(user.email);
     return res.json({ user: signedInUser });
   } catch (error) {
@@ -887,16 +999,18 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-app.post('/api/admin/login', async (req, res) => {
+app.post('/api/admin/login', adminLoginLimit, async (req, res) => {
   try {
     const email = String(req.body.email || '').trim().toLowerCase();
     const password = String(req.body.password || '');
-    const configuredAdmin = email === adminEmail && password === adminPassword;
+    const configuredAdmin = email === adminEmail && safeEqualText(password, adminPassword);
     const databaseAdmin = await User.findOne({ email, role: 'admin' });
 
-    if (!configuredAdmin && (!databaseAdmin || !verifyPassword(password, databaseAdmin.password))) {
+    const databaseAdminOk = Boolean(databaseAdmin) && verifyPassword(password, databaseAdmin.password);
+    if (!configuredAdmin && !databaseAdminOk) {
       return res.status(401).json({ error: 'invalid admin credentials' });
     }
+    if (databaseAdminOk) await upgradePasswordHashIfNeeded(databaseAdmin, password);
 
     return res.json({
       token: createAdminToken(email),
@@ -1181,7 +1295,8 @@ app.get('/api/admin/foods', requireAdmin, async (req, res) => {
 
 app.post('/api/admin/foods', requireAdmin, async (req, res) => {
   try {
-    const { foodId, nameTh, nameEn, kcal, protein_g, carbAvailable_g, fat_g } = req.body;
+    const { nameTh, nameEn, kcal, protein_g, carbAvailable_g, fat_g } = req.body;
+    const foodId = String(req.body.foodId ?? '').trim();
     if (!foodId || !nameTh) return res.status(400).json({ error: 'foodId and nameTh are required' });
     const food = await Food.create({ foodId, nameTh, nameEn, kcal, protein_g, carbAvailable_g, fat_g });
     return res.status(201).json({ food });
@@ -1213,7 +1328,7 @@ app.delete('/api/admin/foods/:foodId', requireAdmin, async (req, res) => {
   }
 });
 
-app.get('/api/profiles/:userId', async (req, res) => {
+app.get('/api/profiles/:userId', requireSelf, async (req, res) => {
   try {
     const profile = await Profile.findOne({ userId: req.params.userId });
     res.json({ profile });
@@ -1222,7 +1337,7 @@ app.get('/api/profiles/:userId', async (req, res) => {
   }
 });
 
-app.put('/api/profiles/:userId', async (req, res) => {
+app.put('/api/profiles/:userId', requireSelf, async (req, res) => {
   try {
     const payload = { ...req.body, userId: req.params.userId, updatedAt: new Date() };
     const profile = await Profile.findOneAndUpdate({ userId: req.params.userId }, payload, { upsert: true, new: true, setDefaultsOnInsert: true });
@@ -1232,7 +1347,7 @@ app.put('/api/profiles/:userId', async (req, res) => {
   }
 });
 
-app.delete('/api/profiles/:userId', async (req, res) => {
+app.delete('/api/profiles/:userId', requireSelf, async (req, res) => {
   try {
     const profile = await Profile.findOneAndDelete({ userId: req.params.userId });
     res.json({ profile });
@@ -1241,7 +1356,7 @@ app.delete('/api/profiles/:userId', async (req, res) => {
   }
 });
 
-app.get('/api/weights/:userId', async (req, res) => {
+app.get('/api/weights/:userId', requireSelf, async (req, res) => {
   try {
     const weights = await WeightLog.find({ userId: req.params.userId }).sort({ dateKey: 1 });
     return res.json({ weights });
@@ -1250,7 +1365,7 @@ app.get('/api/weights/:userId', async (req, res) => {
   }
 });
 
-app.put('/api/weights/:userId/:dateKey', async (req, res) => {
+app.put('/api/weights/:userId/:dateKey', requireSelf, async (req, res) => {
   try {
     const weightKg = Number(req.body.weightKg);
     if (!Number.isFinite(weightKg) || weightKg < 20 || weightKg > 400) {
@@ -1267,7 +1382,7 @@ app.put('/api/weights/:userId/:dateKey', async (req, res) => {
   }
 });
 
-app.delete('/api/users/:userId/data', async (req, res) => {
+app.delete('/api/users/:userId/data', requireSelf, async (req, res) => {
   try {
     const { userId } = req.params;
     await Promise.all([
@@ -1282,7 +1397,7 @@ app.delete('/api/users/:userId/data', async (req, res) => {
   }
 });
 
-app.get('/api/logs/:userId', async (req, res) => {
+app.get('/api/logs/:userId', requireSelf, async (req, res) => {
   try {
     const logs = await Log.find({ userId: req.params.userId }).sort({ createdAt: -1 });
     res.json({ logs: logs.map(normalizeFoodLog) });
@@ -1291,7 +1406,7 @@ app.get('/api/logs/:userId', async (req, res) => {
   }
 });
 
-app.post('/api/logs/:userId', async (req, res) => {
+app.post('/api/logs/:userId', requireSelf, async (req, res) => {
   try {
     const { userId } = req.params;
     const dateKey = String(req.body.dateKey || req.body.entry?.date || new Date().toISOString().slice(0, 10));
@@ -1348,16 +1463,17 @@ app.post('/api/logs/:userId', async (req, res) => {
   }
 });
 
-app.patch('/api/logs/:userId/:logId', async (req, res) => {
+app.patch('/api/logs/:userId/:logId', requireSelf, async (req, res) => {
   try {
-    const log = await Log.findOneAndUpdate({ userId: req.params.userId, _id: req.params.logId }, req.body, { new: true });
+    const { userId: _ignoredUserId, _id: _ignoredId, ...updates } = req.body || {};
+    const log = await Log.findOneAndUpdate({ userId: req.params.userId, _id: req.params.logId }, updates, { new: true });
     res.json({ log });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-app.delete('/api/logs/:userId/:logId', async (req, res) => {
+app.delete('/api/logs/:userId/:logId', requireSelf, async (req, res) => {
   try {
     const { userId, logId } = req.params;
     const log = await Log.findOneAndDelete({ userId, _id: logId });
@@ -1375,29 +1491,38 @@ app.delete('/api/logs/:userId/:logId', async (req, res) => {
 // ---------------------------------------------------------------------------
 
 // GET /api/foods/search?q=ข้าว&limit=20
-// Searches nameTh, nameEn and scientificName with a case-insensitive partial match.
-// Works for food names, fruits, and dish/ingredient descriptions alike, since the
-// dataset's "name" fields already include ingredient wording (e.g. "ข้าวผัดกระเพราหมูสับ").
+// Searches nameTh, nameEn and scientificName with a case-insensitive partial match,
+// under any listed spelling ("กระเพรา" = "กะเพรา") and everyday-name alias
+// ("ข้าวสวย" → "ข้าวเจ้า, นึ่ง"; see server/thaiFoodAliases.js). Rows are ranked in
+// server/foodMatching before `limit` is applied, so the best match is never cut off.
+const SEARCH_PREFIX_POOL = 300;
+const SEARCH_CONTAINS_POOL = 600;
+
 app.get('/api/foods/search', async (req, res) => {
   try {
-    const q = (req.query.q || '').trim();
+    const q = (req.query.q || '').trim().slice(0, 100);
     const limit = Math.min(parseInt(req.query.limit, 10) || 20, 100);
 
     if (!q) {
       return res.json({ results: [], count: 0 });
     }
 
-    const regex = new RegExp(escapeRegex(q), 'i');
-    const results = await Food.find({
-      $or: [{ nameTh: regex }, { nameEn: regex }, { scientificName: regex }],
-    })
-      .limit(limit)
-      .lean();
-
-    // Rank names that start with the query above names that merely contain it
-    const qLower = q.toLowerCase();
-    const startsWith = (s) => (s || '').toLowerCase().startsWith(qLower);
-    results.sort((a, b) => (startsWith(b.nameTh) || startsWith(b.nameEn)) - (startsWith(a.nameTh) || startsWith(a.nameEn)));
+    const thaiSources = thaiNameVariants(q).map((variant) => spellingRegexSource(variant.name));
+    const rawSource = escapeRegex(q);
+    const anyName = (prefix) => [
+      ...thaiSources.map((source) => ({ nameTh: new RegExp(prefix + source, 'i') })),
+      { nameEn: new RegExp(prefix + rawSource, 'i') },
+    ];
+    // Names starting with the query hold the exact/variant matches; fetch them
+    // separately so a long list of "contains" hits can't crowd them out.
+    const [prefixHits, containsHits] = await Promise.all([
+      Food.find({ $or: anyName('^') }).limit(SEARCH_PREFIX_POOL).lean(),
+      Food.find({ $or: [...anyName(''), { scientificName: new RegExp(rawSource, 'i') }] })
+        .limit(SEARCH_CONTAINS_POOL)
+        .lean(),
+    ]);
+    const pool = [...new Map([...prefixHits, ...containsHits].map((food) => [String(food._id), food])).values()];
+    const results = rankSearchResults(pool, q, limit);
 
     res.json({ results, count: results.length });
   } catch (error) {
@@ -1479,11 +1604,44 @@ app.post('/api/nutrition/calculate', async (req, res) => {
 // AI VISION FOOD SCAN ENDPOINT
 // ---------------------------------------------------------------------------
 const SCAN_LOW_CONFIDENCE = 0.7;
+
+// Database candidates for one AI-detected dish: pre-filter in MongoDB on the
+// whole names (the AI's name, its aliases and table aliases) and on any Thai
+// word/word-pair or whole English word, then rank in server/foodMatching.
+// The whole-name query runs separately so word hits can't crowd out the best rows.
+async function findFoodCandidates(nameTh, nameEn, limit = 5, aliases = []) {
+  const { names, terms } = candidateSearchTerms(nameTh, aliases);
+  const conditions = [
+    ...terms.map((term) => ({ nameTh: new RegExp(spellingRegexSource(term)) })),
+    ...englishWords(nameEn).map((word) => ({ nameEn: new RegExp(`\\b${escapeRegex(word)}\\b`, 'i') })),
+  ];
+  if (!conditions.length) return [];
+  const [nameHits, termHits] = await Promise.all([
+    names.length
+      ? Food.find({ $or: names.map((name) => ({ nameTh: new RegExp(spellingRegexSource(name)) })) }).limit(300).lean()
+      : [],
+    Food.find({ $or: conditions }).limit(1500).lean(),
+  ]);
+  const pool = [...new Map([...nameHits, ...termHits].map((food) => [String(food._id), food])).values()];
+  return rankFoodCandidates(pool, nameTh, nameEn, limit, { aliases });
+}
 const SCAN_PROMPT_MAX_LENGTH = 4000;
 // The JSON response schema is fixed in code; admins only edit the instructions.
 const DEFAULT_SCAN_PROMPT = `
 วิเคราะห์อาหารทุกชนิดที่มองเห็นแยกเป็นรายการ ไม่รวมอาหารต่างชนิดเป็นเมนูเดียว
-ประเมินกรัมเป็นช่วง min/likely/max โดยย้ำว่าเป็นค่าประมาณจากภาพ ไม่ใช่การชั่งจริง
+การตั้งชื่อ (name_th) ให้ตรงกับตารางคุณค่าทางโภชนาการอาหารไทย:
+- ขึ้นต้นด้วยชนิดอาหารหลัก ตามด้วยส่วนประกอบหรือวิธีปรุง คั่นด้วยจุลภาค เช่น "ข้าวผัด, หมู" "ส้มตำ, ปลาร้า" "ก๋วยเตี๋ยวเส้นเล็ก, หมู, น้ำ"
+- สะกดตามพจนานุกรม เช่น กะเพรา ก๋วยเตี๋ยว ผัดไทย ซีอิ๊ว กะทิ
+- ข้าวสวยให้ใช้ "ข้าวเจ้า, นึ่ง" ข้าวเหนียวให้ใช้ "ข้าวเหนียว, นึ่ง"
+- กับข้าวราดบนข้าวในจานเดียว (ข้าวราดแกง ข้าวราดกะเพรา) ให้เป็นรายการเดียวชื่อ "ข้าวราด..." เช่น "ข้าวราดผัดกะเพราไก่"
+- ข้าวที่ผัดหรือหุงรวมกับเครื่อง (ข้าวผัด ข้าวมันไก่ ข้าวหมก) เป็นรายการเดียว
+- ข้าวแยกถ้วยหรือแยกจานจากกับข้าว ให้แยกเป็นรายการข้าวกับรายการกับข้าว
+- ใส่ชื่ออื่นที่คนไทยเรียกกันทั่วไปใน aliases (ไม่เกิน 3 ชื่อ) เช่น "ข้าวสวย" "ชาไทย" "กะเพราไก่"
+ประเมินกรัมเป็นช่วง min/likely/max โดยเทียบกับภาชนะไทยทั่วไป และย้ำว่าเป็นค่าประมาณจากภาพ ไม่ใช่การชั่งจริง:
+- ข้าวสวย 1 ทัพพี ประมาณ 55-60 กรัม ข้าวราดแกง 1 จาน ข้าวประมาณ 150-200 กรัม
+- ก๋วยเตี๋ยวน้ำ 1 ชาม ประมาณ 350-450 กรัม รวมน้ำซุป แกง/ต้ม 1 ถ้วย ประมาณ 200-250 กรัม
+- อาหารจานเดียว (ข้าวผัด ผัดไทย) 1 จาน ประมาณ 250-350 กรัม เครื่องดื่ม 1 แก้ว ประมาณ 250-400 กรัม
+- ใช้ช้อน ส้อม ตะเกียบ หรือมือในภาพเป็นตัวเทียบขนาดถ้ามี และระบุใน reference_object
 ใส่กรอบภาพเป็น [ymin, xmin, ymax, xmax] ช่วง 0-1000 หากระบุตำแหน่งได้
 ประมาณสารอาหารสำหรับน้ำหนัก likely ของแต่ละรายการ และตอบ JSON ตาม schema เท่านั้น
 หากไม่แน่ใจชื่อ ให้ใช้ชื่อที่ใกล้เคียงและลด confidence ห้ามแต่งข้อมูลอ้างอิงหรือค่าความแม่นยำ
@@ -1567,9 +1725,11 @@ app.put('/api/admin/ai-scan-config', requireAdmin, async (req, res) => {
   }
 });
 
-app.post('/api/ai/scan', async (req, res) => {
+app.post('/api/ai/scan', requireUser, async (req, res) => {
   try {
-    const { imageBase64, mimeType = 'image/jpeg', userId = null, storeImage = false } = req.body || {};
+    const { imageBase64, mimeType = 'image/jpeg', storeImage = false } = req.body || {};
+    // From the token, not the body, so the daily quota can't be dodged. Admin scans have no user.
+    const userId = req.user?.id || null;
     if (typeof imageBase64 !== 'string' || !imageBase64.trim()) {
       return res.status(400).json({ error: 'imageBase64 is required' });
     }
@@ -1583,7 +1743,6 @@ app.post('/api/ai/scan', async (req, res) => {
     }
 
     // Daily free-scan quota (Admin → Settings). Failed scans don't count.
-    // Scans sent without a userId can't be attributed, so they aren't limited.
     const { maxFreeScansPerDay } = await getSystemSettings();
     if (maxFreeScansPerDay > 0 && userId && isMongoReady) {
       const usedToday = await ScanLog.countDocuments({
@@ -1648,6 +1807,7 @@ app.post('/api/ai/scan', async (req, res) => {
                     properties: {
                       name_th: { type: 'STRING' },
                       name_en: { type: 'STRING' },
+                      aliases: { type: 'ARRAY', items: { type: 'STRING' } },
                       box_2d: { type: 'ARRAY', items: { type: 'NUMBER' } },
                       cooking_method: { type: 'STRING' },
                       estimated_grams: {
@@ -1757,19 +1917,22 @@ app.post('/api/ai/scan', async (req, res) => {
           rawItem.box_2d.every((value) => Number.isFinite(Number(value)))
           ? rawItem.box_2d.map(Number)
           : null;
-        const regex = new RegExp(escapeRegex(nameTh), 'i');
+        const nameEn = String(rawItem.name_en || '').trim();
+        const aliases = (Array.isArray(rawItem.aliases) ? rawItem.aliases : [])
+          .map((alias) => String(alias || '').trim())
+          .filter((alias) => alias && alias.length <= 80 && alias !== nameTh)
+          .slice(0, 5);
         let candidates = [];
         try {
-          candidates = await Food.find({
-            $or: [{ nameTh: regex }, { nameEn: regex }],
-          }).limit(5).lean();
+          candidates = await findFoodCandidates(nameTh, nameEn, 5, aliases);
         } catch (matchError) {
           console.warn('Food candidate lookup failed:', matchError.message);
         }
 
         items.push({
           name_th: nameTh,
-          name_en: String(rawItem.name_en || ''),
+          name_en: nameEn,
+          aliases,
           box_2d: box,
           cooking_method: String(rawItem.cooking_method || ''),
           estimated_grams: {
@@ -1789,6 +1952,11 @@ app.post('/api/ai/scan', async (req, res) => {
             foodId: String(food.foodId),
             nameTh: food.nameTh,
             nameEn: food.nameEn,
+            matchType: food.matchType,
+            matchScore: food.matchScore,
+            // The app pre-selects this candidate instead of the AI's own estimate.
+            confident: isConfidentMatch(food),
+            estimated: Array.isArray(food.estimated) ? food.estimated : [],
             per100g: {
               kcal: food.kcal,
               protein_g: food.protein_g,
@@ -1831,10 +1999,13 @@ app.post('/api/ai/scan', async (req, res) => {
   }
 });
 
-app.get('/api/scan-images/:scanId', async (req, res) => {
+app.get('/api/scan-images/:scanId', requireUser, async (req, res) => {
   try {
     const scan = await ScanImage.findById(req.params.scanId).lean();
-    if (!scan) return res.status(404).json({ error: 'scan image not found' });
+    // Same 404 for "not yours" so scan ids can't be probed.
+    if (!scan || (!req.admin && scan.userId !== req.user.id)) {
+      return res.status(404).json({ error: 'scan image not found' });
+    }
     res.json({ scan });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -1846,19 +2017,30 @@ app.get('/api/scan-images/:scanId', async (req, res) => {
 // ---------------------------------------------------------------------------
 const handleCreateTicket = async (req, res) => {
   try {
-    const { userId, userEmail, topic, detail } = req.body;
-    if (!userEmail || !topic) {
+    const { topic, detail } = req.body;
+    // Signed-in users file tickets as themselves; only an admin may name another email.
+    const userId = req.user ? req.user.id : String(req.body.userId || '');
+    const userEmail = req.user ? req.user.email : String(req.body.userEmail || '');
+    if (!userEmail || typeof topic !== 'string' || !topic.trim()) {
       return res.status(400).json({ error: 'userEmail and topic are required' });
     }
-    const ticketId = `TK-${Math.floor(1000 + Math.random() * 9000)}`;
-    const ticket = await Ticket.create({
-      ticketId,
-      userId: userId || '',
+    const fields = {
+      userId,
       userEmail: userEmail.trim().toLowerCase(),
-      topic: topic.trim(),
-      detail: (detail || '').trim(),
+      topic: topic.trim().slice(0, 200),
+      detail: String(detail || '').trim().slice(0, 5000),
       status: 'Open',
-    });
+    };
+    // 8 random hex chars (~4 billion ids); retry on the rare unique-index collision.
+    let ticket;
+    for (let attempt = 0; !ticket; attempt += 1) {
+      const ticketId = `TK-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
+      try {
+        ticket = await Ticket.create({ ...fields, ticketId });
+      } catch (error) {
+        if (error?.code !== 11000 || attempt >= 4) throw error;
+      }
+    }
     res.status(201).json({ ticket });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -1867,8 +2049,9 @@ const handleCreateTicket = async (req, res) => {
 
 const handleGetTickets = async (req, res) => {
   try {
-    const { email } = req.query;
-    const filter = email ? { userEmail: email.trim().toLowerCase() } : {};
+    // Users always get their own tickets; admins get all, or one email via ?email=.
+    const email = req.user ? req.user.email : String(req.query.email || '').trim().toLowerCase();
+    const filter = email ? { userEmail: email } : {};
     const tickets = await Ticket.find(filter).sort({ createdAt: -1 }).lean();
     res.json({ tickets });
   } catch (error) {
@@ -1904,14 +2087,10 @@ const handleDeleteTicket = async (req, res) => {
   }
 };
 
-// Users may list their own tickets by email; listing every ticket is admin-only.
-const requireAdminForAllTickets = (req, res, next) =>
-  (req.query.email ? next() : requireAdmin(req, res, next));
-
-app.post('/tickets', handleCreateTicket);
-app.post('/api/tickets', handleCreateTicket);
-app.get('/tickets', requireAdminForAllTickets, handleGetTickets);
-app.get('/api/tickets', requireAdminForAllTickets, handleGetTickets);
+app.post('/tickets', requireUser, handleCreateTicket);
+app.post('/api/tickets', requireUser, handleCreateTicket);
+app.get('/tickets', requireUser, handleGetTickets);
+app.get('/api/tickets', requireUser, handleGetTickets);
 app.patch('/tickets/:id', requireAdmin, handleUpdateTicket);
 app.patch('/api/tickets/:id', requireAdmin, handleUpdateTicket);
 app.delete('/tickets/:id', requireAdmin, handleDeleteTicket);
@@ -1930,12 +2109,9 @@ app.delete('/api/tickets/:id', requireAdmin, handleDeleteTicket);
 const port = process.env.PORT || 3001;
 
 async function startServer() {
+  // Wait for the first attempt so early requests don't race the connection;
+  // the admin account is ensured from the 'connected' handler.
   await connectMongo();
-  try {
-    await ensureAdminAccount();
-  } catch (error) {
-    console.error('❌ Admin account setup failed:', error.message);
-  }
 
   const server = app.listen(port, () => {
     console.log(`🚀 Server listening on port ${port}`);
@@ -1943,12 +2119,18 @@ async function startServer() {
 
   server.on('error', (err) => {
     if (err.code === 'EADDRINUSE') {
-      console.error(`⚠️ Port ${port} is currently in use.`);
-      console.error('👉 Please run "taskkill /f /im node.exe" in CMD or change PORT in .env file.');
+      console.error(`⚠️ Port ${port} is currently in use (another server is probably still running).`);
+      console.error(`👉 Stop that server, or find it with "netstat -ano | findstr :${port}" and end only that PID, or change PORT in .env.`);
     } else {
       console.error('❌ Server error:', err);
     }
   });
 }
 
-startServer();
+// Start only when run directly (`node server.js`); tests require the app
+// and connect it to their own database.
+if (require.main === module) {
+  startServer();
+}
+
+module.exports = { app };

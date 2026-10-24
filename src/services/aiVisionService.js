@@ -1,4 +1,5 @@
 import { API_BASE_URL } from '../config';
+import { authHeaders } from './atlasService';
 
 /** Analyze a food image with automatic retry mechanism for 503/transient errors. */
 export async function analyzeFoodImage(
@@ -18,7 +19,7 @@ export async function analyzeFoodImage(
     try {
       const response = await fetch(`${API_BASE_URL}/ai/scan`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ imageBase64: cleanBase64, mimeType, userId, storeImage }),
       });
 
@@ -26,6 +27,10 @@ export async function analyzeFoodImage(
 
       // 1. ตรวจสอบสถานะ HTTP Response
       if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('เซสชันหมดอายุ กรุณาออกจากระบบแล้วเข้าสู่ระบบใหม่');
+        }
+
         // Maintenance mode is also a 503, but retrying won't help and its message is already user-facing.
         const isUnavailable =
           (response.status === 503 && data.code !== 'MAINTENANCE') ||

@@ -15,6 +15,8 @@ import {
   saveLog,
   saveProfile,
   saveWeight,
+  setAuthToken,
+  setUnauthorizedHandler,
 } from '../services/atlasService';
 
 const STORAGE_KEYS = {
@@ -165,7 +167,13 @@ export function AppProvider({ children }) {
         }
         if (rawLogs) setLogsByDay(JSON.parse(rawLogs));
         if (rawWeights) setWeightsByDay(JSON.parse(rawWeights));
-        if (persistedUser) setUser(persistedUser);
+        // Sessions saved before the server issued tokens can't call the API: sign in again.
+        if (persistedUser && isRemoteUser(persistedUser) && !persistedUser.token) {
+          await AsyncStorage.removeItem(STORAGE_KEYS.user);
+        } else if (persistedUser) {
+          setAuthToken(persistedUser.token);
+          setUser(persistedUser);
+        }
       } catch (e) {
         console.warn('Failed to load persisted state', e);
       } finally {
@@ -189,6 +197,7 @@ export function AppProvider({ children }) {
   }, [user?.id]);
 
   const persistUser = useCallback(async (next) => {
+    setAuthToken(next?.token);
     if (next?.id !== user?.id) {
       setProfile(null);
       setLogsByDay({});
@@ -239,6 +248,7 @@ export function AppProvider({ children }) {
       email: existingUser.email,
       displayName: existingUser.displayName || displayNameFromEmail(existingUser.email),
       role: existingUser.role || 'user',
+      token: existingUser.token,
     };
 
     await persistUser(nextUser);
@@ -263,6 +273,7 @@ export function AppProvider({ children }) {
       id: created.id,
       email: created.email,
       displayName: created.displayName,
+      token: created.token,
     });
     return created;
   }, [persistUser]);
@@ -273,6 +284,7 @@ export function AppProvider({ children }) {
       email: existingUser.email,
       displayName: existingUser.displayName || displayNameFromEmail(existingUser.email),
       role: existingUser.role || 'user',
+      token: existingUser.token,
     };
 
     if (nextUser.role === 'admin') {
@@ -299,12 +311,21 @@ export function AppProvider({ children }) {
   }, [finishOAuthLogin]);
 
   const clearSessionData = useCallback(async () => {
+    setAuthToken(null);
     await AsyncStorage.multiRemove(Object.values(STORAGE_KEYS));
     setProfile(null);
     setUser(null);
     setLogsByDay({});
     setWeightsByDay({});
   }, []);
+
+  // The server rejected our token (expired after 30 days, or AUTH_SECRET changed).
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      clearSessionData().catch((error) => console.warn('Failed to clear expired session', error));
+    });
+    return () => setUnauthorizedHandler(null);
+  }, [clearSessionData]);
 
   const logout = useCallback(async () => {
     await clearSessionData();
@@ -367,18 +388,24 @@ export function AppProvider({ children }) {
     [logsByDay, persistLogs, user]
   );
 
+  // Today's weigh-in is also the profile's current weight, so goals stay in step.
+  // ProfileScreen passes syncProfile: false because it saves the profile itself.
   const logWeight = useCallback(
-    async (weightKg, dateKey = todayKey()) => {
+    async (weightKg, dateKey = todayKey(), { syncProfile = true } = {}) => {
       if (isRemoteUser(user)) await saveWeight(user.id, dateKey, weightKg);
       const next = { ...weightsByDay, [dateKey]: weightKg };
       await persistWeights(next);
+      if (syncProfile && profile && dateKey === todayKey() && Number(profile.weightKg) !== Number(weightKg)) {
+        await updateProfile({ weightKg });
+      }
     },
-    [weightsByDay, persistWeights, user]
+    [weightsByDay, persistWeights, user, profile, updateProfile]
   );
 
   const resetAllData = useCallback(async () => {
     if (isRemoteUser(user)) await clearUserData(user.id);
     const dataKeys = user?.id ? Object.values(userDataStorageKeys(user.id)) : [];
+    setAuthToken(null);
     await AsyncStorage.multiRemove([...Object.values(STORAGE_KEYS), ...dataKeys]);
     setProfile(null);
     setUser(null);

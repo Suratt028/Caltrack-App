@@ -3,7 +3,8 @@ import { View, Pressable, ActivityIndicator } from 'react-native';
 import { Text } from '../AppText';
 import styles from '../../style/screens/AdminScreenStyles';
 import { colors } from '../../theme/colors';
-import { Title, Card, Badge, formatDate, confirmAction, notify } from './AdminCommon';
+import { Title, Card, Badge, formatDate, notify } from './AdminCommon';
+import { confirmAsync } from '../../utils/confirm';
 import { fetchAllTickets, updateTicketStatus, deleteTicket } from '../../services/atlasService';
 
 export default function Support({ token }) {
@@ -41,7 +42,7 @@ export default function Support({ token }) {
   };
 
   const handleDelete = async (ticketId) => {
-    if (!(await confirmAction('คุณต้องการลบตั๋วรายงานนี้ใช่หรือไม่?'))) return;
+    if (!(await confirmAsync({ title: 'คุณต้องการลบตั๋วรายงานนี้ใช่หรือไม่?', confirmLabel: 'ลบ' }))) return;
     try {
       await deleteTicket(ticketId, token);
       await loadTickets();

@@ -72,6 +72,7 @@ export default function OnboardingScreen() {
   const [activityLevel, setActivityLevel] = useState(null);
   const [goal, setGoal] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const [touched, setTouched] = useState({});
 
   const step = STEPS[stepIndex].key;
@@ -105,16 +106,22 @@ export default function OnboardingScreen() {
       return;
     }
     setSubmitting(true);
-    await completeOnboarding({
-      gender,
-      age: Number(age),
-      heightCm: Number(heightCm),
-      weightKg: Number(weightKg),
-      activityLevel,
-      goal,
-      targetWeightKg: Number(weightKg),
-    });
-    setSubmitting(false);
+    setSubmitError('');
+    try {
+      await completeOnboarding({
+        gender,
+        age: Number(age),
+        heightCm: Number(heightCm),
+        weightKg: Number(weightKg),
+        activityLevel,
+        goal,
+        targetWeightKg: Number(weightKg),
+      });
+    } catch (error) {
+      setSubmitError(error?.message || 'บันทึกข้อมูลไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const back = () => {
@@ -239,7 +246,11 @@ export default function OnboardingScreen() {
         </ScrollView>
 
         <View style={styles.footer}>
-          <Text style={styles.requirementHint}>{requirementText()}</Text>
+          {submitError ? (
+            <Text style={styles.fieldError}>{submitError}</Text>
+          ) : (
+            <Text style={styles.requirementHint}>{requirementText()}</Text>
+          )}
           <View style={styles.footerRow}>
             {stepIndex > 0 && (
               <PrimaryButton title="ย้อนกลับ" variant="outline" onPress={back} style={{ flex: 1 }} />

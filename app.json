@@ -18,8 +18,9 @@
     "android": {
       "package": "com.example.caltrack",
       "permissions": [
-        "android.permission.CAMERA",
-        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.CAMERA"
+      ],
+      "blockedPermissions": [
         "android.permission.RECORD_AUDIO"
       ],
       "adaptiveIcon": {
@@ -36,7 +37,9 @@
       [
         "expo-image-picker",
         {
-          "cameraPermission": "CalTrack ใช้กล้องเพื่อถ่ายรูปอาหารสำหรับให้ AI ช่วยประเมินแคลอรี่"
+          "cameraPermission": "CalTrack ใช้กล้องเพื่อถ่ายรูปอาหารสำหรับให้ AI ช่วยประเมินแคลอรี่",
+          "photosPermission": "CalTrack ใช้คลังภาพเพื่อเลือกรูปอาหารสำหรับให้ AI ช่วยประเมินแคลอรี่",
+          "microphonePermission": false
         }
       ],
       "expo-apple-authentication",

@@ -25,13 +25,14 @@ import ReportScreen from './ReportScreen';
 const formatSigned = (value) => `${value > 0 ? '+' : ''}${value}`;
 
 export default function ProfileScreen() {
-  const { profile, updateProfile, resetAllData, logout, user } = useApp();
+  const { profile, updateProfile, logWeight, resetAllData, logout, user } = useApp();
   const [displayName, setDisplayName] = useState(profile.displayName || user?.displayName || '');
   const [weightKg, setWeightKg] = useState(String(profile.weightKg));
   const [activityLevel, setActivityLevel] = useState(profile.activityLevel);
   const [selectedGoal, setSelectedGoal] = useState(profile.goal);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const [showReport, setShowReport] = useState(false);
 
   // Keep the form in sync if the profile changes elsewhere.
@@ -82,22 +83,23 @@ export default function ProfileScreen() {
   const save = async () => {
     if (!weightValid || !selectedGoal || saving) return;
     setSaving(true);
+    setSaveError('');
     try {
+      const weightChanged = Number(profile.weightKg) !== weightValue;
       await updateProfile({
         displayName: displayName.trim() || profile.displayName || user?.displayName || 'ผู้ใช้ CalTrack',
         weightKg: weightValue,
         activityLevel,
         goal: selectedGoal,
       });
+      // Record the new weight as today's weigh-in so the weight trend matches.
+      if (weightChanged) await logWeight(weightValue, undefined, { syncProfile: false });
       setSaved(true);
+    } catch (error) {
+      setSaveError(error?.message || 'บันทึกเป้าหมายไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
     } finally {
       setSaving(false);
     }
-  };
-
-  const clearGoal = () => {
-    setSelectedGoal(null);
-    clearSaved();
   };
 
   const confirmReset = () => {
@@ -320,15 +322,13 @@ export default function ProfileScreen() {
               accessibilityHint="บันทึกชื่อ น้ำหนัก ระดับกิจกรรม และเป้าหมายที่เลือกไว้"
               style={styles.actionBtn}
             />
-            <PrimaryButton
-              title="ล้างเป้าหมาย"
-              variant="outline"
-              icon="trash-outline"
-              onPress={clearGoal}
-              accessibilityHint="ลบเป้าหมายที่เลือกไว้ชั่วคราว"
-              style={styles.actionBtn}
-            />
           </View>
+
+          {!!saveError && (
+            <View style={styles.savedWrap}>
+              <Banner tone="error" message={saveError} onDismiss={() => setSaveError('')} />
+            </View>
+          )}
 
           {saved && (
             <View style={styles.savedWrap}>

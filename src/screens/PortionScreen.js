@@ -23,8 +23,12 @@ const MEAL_OPTIONS = [
   { value: 'snack', label: 'ว่าง' },
 ];
 
-const UNITS = ['จาน', 'ถ้วย', 'ช้อน', 'กรัม'];
-const UNIT_OPTIONS = UNITS.map((unit) => ({ value: unit, label: unit }));
+// The food database is per 100 g with no per-dish weights, so household units
+// use standard approximations. The gram total is always shown to the user.
+const UNIT_GRAMS = { จาน: 250, ถ้วย: 240, ช้อนโต๊ะ: 15, กรัม: 1 };
+const UNIT_OPTIONS = Object.keys(UNIT_GRAMS).map((unit) => ({ value: unit, label: unit }));
+const UNIT_HINT = 'โดยประมาณ: 1 จาน ≈ 250 ก. · 1 ถ้วย ≈ 240 ก. · 1 ช้อนโต๊ะ ≈ 15 ก. เลือก “กรัม” หากชั่งได้';
+const roundToHalf = (value) => Math.round(value * 2) / 2;
 
 const round1 = (value) => Math.round(value * 10) / 10;
 
@@ -35,7 +39,11 @@ const round1 = (value) => Math.round(value * 10) / 10;
  */
 export default function PortionScreen({ navigation, route }) {
   const { addFoodLog } = useApp();
-  const [food, setFood] = useState(route?.params?.food || null);
+  // On web the food object only survives in-app navigation; after a reload the
+  // URL holds "[object Object]", so fall back to loading by foodId.
+  const routeFoodParam = route?.params?.food;
+  const routeFood = routeFoodParam && typeof routeFoodParam === 'object' ? routeFoodParam : null;
+  const [food, setFood] = useState(routeFood);
   const [foodLoading, setFoodLoading] = useState(false);
   const [foodError, setFoodError] = useState('');
 
@@ -43,9 +51,9 @@ export default function PortionScreen({ navigation, route }) {
   const [amount, setAmount] = useState(1);
   const [unit, setUnit] = useState('จาน');
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
   useEffect(() => {
-    const routeFood = route?.params?.food;
     const foodId = route?.params?.foodId;
     if (routeFood) {
       setFood(routeFood);
@@ -76,7 +84,7 @@ export default function PortionScreen({ navigation, route }) {
     return () => {
       active = false;
     };
-  }, [route?.params?.food, route?.params?.foodId]);
+  }, [routeFood, route?.params?.foodId]);
 
   const backRight = (
     <Pressable
@@ -106,7 +114,8 @@ export default function PortionScreen({ navigation, route }) {
     fat: Number(per100.fat) || 0,
   };
 
-  const grams = unit === 'กรัม' ? Math.round(amount) : Math.round(amount * 100);
+  const isGrams = unit === 'กรัม';
+  const grams = Math.round(amount * UNIT_GRAMS[unit]);
   const multiplier = grams / 100;
   const scaled = {
     kcal: Math.round(base.kcal * multiplier),
@@ -114,20 +123,28 @@ export default function PortionScreen({ navigation, route }) {
     carbs: round1(base.carbs * multiplier),
     fat: round1(base.fat * multiplier),
   };
+  // Missing values are saved as 0 but shown as "—" with a notice, so nobody mistakes them for real zeros.
+  const isMissing = (key) => per100[key] == null || !Number.isFinite(Number(per100[key]));
+  const missingNutrients = ['kcal', 'protein', 'carbs', 'fat'].filter(isMissing);
+  const shown = (key, value, unitLabel = '') => (isMissing(key) ? '—' : `${value}${unitLabel}`);
+  const estimatedFields = Array.isArray(food?.estimated) ? food.estimated : [];
+  const NUTRIENT_LABELS = { kcal: 'พลังงาน', protein: 'โปรตีน', carbs: 'คาร์บ', fat: 'ไขมัน' };
 
+  // Keep the same total weight when switching units.
   const changeUnit = (nextUnit) => {
+    const nextAmount = grams / UNIT_GRAMS[nextUnit];
     setUnit(nextUnit);
-    // Switching into grams seeds the amount with the serving weight.
-    if (nextUnit === 'กรัม') {
-      setAmount(Math.min(2000, Math.max(0.5, Math.round(Number(food?.grams) || 100))));
-    } else {
-      setAmount(1);
-    }
+    setAmount(
+      nextUnit === 'กรัม'
+        ? Math.min(2000, Math.max(1, Math.round(nextAmount)))
+        : Math.min(20, Math.max(0.5, roundToHalf(nextAmount)))
+    );
   };
 
   const confirmSave = async () => {
     if (saving) return;
     setSaving(true);
+    setSaveError('');
     try {
       await addFoodLog({
         name: food.name,
@@ -137,11 +154,15 @@ export default function PortionScreen({ navigation, route }) {
         carbs: scaled.carbs,
         fat: scaled.fat,
         servings: amount,
+        unit,
+        grams,
+        foodId: food.foodId,
         source: 'portion',
       });
       navigation.navigate('Tabs', { screen: 'Home' });
     } catch (error) {
       // Keep the screen open (values intact) so the user can retry saving.
+      setSaveError(error?.message || 'บันทึกไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
     } finally {
       setSaving(false);
     }
@@ -172,7 +193,7 @@ export default function PortionScreen({ navigation, route }) {
     );
   }
 
-  const referenceKcal = Math.round(base.kcal);
+  const referenceKcal = isMissing('kcal') ? '—' : `${estimatedFields.includes('kcal') ? '≈' : ''}${Math.round(base.kcal)}`;
   const servingLine = food.per100g ? 'ต่อ 100 กรัม' : food.serving || 'ต่อ 1 หน่วย';
   const kcalLine = food.per100g ? `${referenceKcal} kcal / 100 กรัม` : `${referenceKcal} kcal`;
 
@@ -196,7 +217,17 @@ export default function PortionScreen({ navigation, route }) {
           </Text>
           <Text style={styles.identityMeta}>{servingLine}</Text>
           <Text style={styles.identityKcal}>{kcalLine}</Text>
+          {estimatedFields.length > 0 && missingNutrients.length === 0 ? (
+            <Text style={styles.identityMeta}>≈ บางค่าคำนวณจากสารอาหารอื่น เพราะตารางข้อมูลต้นทางไม่ได้ระบุไว้</Text>
+          ) : null}
         </Card>
+
+        {missingNutrients.length > 0 ? (
+          <Banner
+            tone="warning"
+            message={`เมนูนี้ไม่มีข้อมูล${missingNutrients.map((key) => NUTRIENT_LABELS[key]).join(' ')} ค่าที่ขาดจะนับเป็น 0 ในบันทึก ลองเลือกเมนูใกล้เคียงอื่นถ้ามี`}
+          />
+        ) : null}
 
         {/* Meal + portion controls */}
         <Card style={styles.sectionCard}>
@@ -208,26 +239,27 @@ export default function PortionScreen({ navigation, route }) {
           <PortionStepper
             amount={amount}
             onChange={setAmount}
-            step={0.5}
-            min={0.5}
-            max={unit === 'กรัม' ? 2000 : 20}
+            step={isGrams ? 10 : 0.5}
+            min={isGrams ? 1 : 0.5}
+            max={isGrams ? 2000 : 20}
             label="จำนวน"
             unit={unit}
           />
 
           <Text style={[styles.fieldLabel, styles.unitLabel]}>หน่วย</Text>
           <SegmentedControl options={UNIT_OPTIONS} value={unit} onChange={changeUnit} label="หน่วย" size="sm" />
+          <Text style={styles.hint}>{UNIT_HINT}</Text>
         </Card>
 
         {/* Live calculation */}
         <View style={styles.calcCard} accessibilityRole="alert" accessibilityLiveRegion="polite">
           <Text style={styles.calcLabel}>ประมาณการ · {grams} กรัม</Text>
           <View style={styles.calcKcalRow}>
-            <Text style={styles.calcKcal}>{scaled.kcal}</Text>
+            <Text style={styles.calcKcal}>{shown('kcal', scaled.kcal)}</Text>
             <Text style={styles.calcKcalUnit}>kcal</Text>
           </View>
           <Text style={styles.calcMacros}>
-            P {scaled.protein}g · C {scaled.carbs}g · F {scaled.fat}g
+            P {shown('protein', scaled.protein, 'g')} · C {shown('carbs', scaled.carbs, 'g')} · F {shown('fat', scaled.fat, 'g')}
           </Text>
           <Text style={styles.calcNote}>ค่าตามปริมาณที่เลือก</Text>
         </View>
@@ -236,8 +268,10 @@ export default function PortionScreen({ navigation, route }) {
           เป็นตัวอย่างก่อนบันทึก ยังไม่รวมในยอดวันนี้ ย้อนกลับได้โดยไม่บันทึกการเปลี่ยนแปลง
         </Text>
 
+        {!!saveError && <Banner tone="error" message={saveError} onDismiss={() => setSaveError('')} />}
+
         <PrimaryButton
-          title={`บันทึก ${amount} ${unit} · ${scaled.kcal} kcal`}
+          title={`บันทึก ${amount} ${unit} · ${shown('kcal', scaled.kcal)} kcal`}
           icon="checkmark"
           onPress={confirmSave}
           loading={saving}

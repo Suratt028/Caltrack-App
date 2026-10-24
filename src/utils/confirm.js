@@ -13,6 +13,7 @@ export function confirmAction({
   cancelLabel = 'ยกเลิก',
   destructive = true,
   onConfirm,
+  onCancel,
 }) {
   if (Platform.OS === 'web') {
     const text = message ? `${title}\n\n${message}` : title;
@@ -20,13 +21,26 @@ export function confirmAction({
       ? window.confirm(text)
       : true;
     if (ok && typeof onConfirm === 'function') onConfirm();
+    if (!ok && typeof onCancel === 'function') onCancel();
     return;
   }
 
-  Alert.alert(title, message, [
-    { text: cancelLabel, style: 'cancel' },
-    { text: confirmLabel, style: destructive ? 'destructive' : 'default', onPress: onConfirm },
-  ]);
+  Alert.alert(
+    title,
+    message,
+    [
+      { text: cancelLabel, style: 'cancel', onPress: onCancel },
+      { text: confirmLabel, style: destructive ? 'destructive' : 'default', onPress: onConfirm },
+    ],
+    { cancelable: true, onDismiss: onCancel }
+  );
+}
+
+/** Promise form: resolves true when confirmed, false when cancelled or dismissed. */
+export function confirmAsync(options) {
+  return new Promise((resolve) => {
+    confirmAction({ ...options, onConfirm: () => resolve(true), onCancel: () => resolve(false) });
+  });
 }
 
 export default confirmAction;
