@@ -22,26 +22,45 @@ export function authHeaders(extra = {}) {
   return authToken ? { ...extra, Authorization: `Bearer ${authToken}` } : extra;
 }
 
-async function requestJson(path, options = {}) {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000);
-  const usesUserToken = !options.headers?.Authorization && Boolean(authToken);
+export const OFFLINE_ERROR_CODE = 'OFFLINE';
+const OFFLINE_MESSAGE = 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่';
+const TIMEOUT_MESSAGE = 'เชื่อมต่อเซิร์ฟเวอร์นานเกินไป กรุณาตรวจสอบว่าเปิด Backend และอยู่เครือข่ายเดียวกัน';
 
-  let response;
+// True for errors from fetchWithTimeout that mean "server unreachable" (no network or timed out).
+export function isOfflineError(error) {
+  return error?.code === OFFLINE_ERROR_CODE;
+}
+
+function offlineError(message, cause) {
+  const error = new Error(message);
+  error.code = OFFLINE_ERROR_CODE;
+  error.cause = cause;
+  return error;
+}
+
+// fetch with a timeout (default 10 s). Network failures and timeouts reject with
+// an error whose code is OFFLINE_ERROR_CODE, so screens can show an offline state.
+export async function fetchWithTimeout(url, options = {}, { timeoutMs = 10000, timeoutMessage = TIMEOUT_MESSAGE } = {}) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    response = await fetch(`${API_BASE_URL}${path}`, {
-      ...options,
-      headers: options.headers || authHeaders({ 'Content-Type': 'application/json' }),
-      signal: controller.signal,
-    });
+    return await fetch(url, { ...options, signal: controller.signal });
   } catch (error) {
-    if (error?.name === 'AbortError') {
-      throw new Error('เชื่อมต่อเซิร์ฟเวอร์นานเกินไป กรุณาตรวจสอบว่าเปิด Backend และอยู่เครือข่ายเดียวกัน');
-    }
-    throw error;
+    if (error?.name === 'AbortError') throw Object.assign(offlineError(timeoutMessage, error), { timedOut: true });
+    // fetch rejects (TypeError "Network request failed") only when the request never got a response.
+    throw offlineError(OFFLINE_MESSAGE, error);
   } finally {
     clearTimeout(timeoutId);
   }
+}
+
+async function requestJson(path, options = {}) {
+  const usesUserToken = !options.headers?.Authorization && Boolean(authToken);
+
+  const response = await fetchWithTimeout(`${API_BASE_URL}${path}`, {
+    ...options,
+    headers: options.headers || authHeaders({ 'Content-Type': 'application/json' }),
+  });
 
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
@@ -162,6 +181,15 @@ export async function saveWeight(userId, dateKey, weightKg) {
 
 export async function clearUserData(userId) {
   return requestJson(`/users/${userId}/data`, { method: 'DELETE' });
+}
+
+// patch: any of name, meal, time, servings, unit, grams, kcal, protein, carbs, fat, fiber, sugar, sodium.
+export async function updateLog(userId, logId, patch) {
+  const payload = await requestJson(`/logs/${userId}/${logId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(patch),
+  });
+  return payload.log;
 }
 
 export async function deleteLog(userId, logId) {
