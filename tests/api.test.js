@@ -48,6 +48,17 @@ describe('auth: register and login', () => {
     assert.match(stored.password, /^scrypt\$[0-9a-f]{32}\$[0-9a-f]{128}$/);
   });
 
+  test('the configured admin gets a user token that opens their own data', async () => {
+    const login = await request('POST', '/api/auth/login', { body: { email: api.env.ADMIN_EMAIL, password: api.env.ADMIN_PASSWORD } });
+    assert.equal(login.status, 200);
+    assert.equal(login.body.user.role, 'admin');
+    assert.ok(login.body.user.adminToken);
+    assert.ok(login.body.user.token, 'the app needs a user token to load the admin\'s profile and logs');
+
+    const logs = await request('GET', `/api/logs/${login.body.user.id}`, { token: login.body.user.token });
+    assert.equal(logs.status, 200);
+  });
+
   test('login rejects a wrong password', async () => {
     const res = await request('POST', '/api/auth/login', { body: { email: 'reg@caltrack.test', password: 'wrong-pass' } });
     assert.equal(res.status, 401);

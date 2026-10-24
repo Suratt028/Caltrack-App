@@ -55,7 +55,8 @@ export async function fetchWithTimeout(url, options = {}, { timeoutMs = 10000, t
 }
 
 async function requestJson(path, options = {}) {
-  const usesUserToken = !options.headers?.Authorization && Boolean(authToken);
+  // A 401 from sign-in/registration means wrong credentials, not an expired session.
+  const usesUserToken = !options.headers?.Authorization && Boolean(authToken) && !path.startsWith('/auth/');
 
   const response = await fetchWithTimeout(`${API_BASE_URL}${path}`, {
     ...options,
@@ -66,7 +67,9 @@ async function requestJson(path, options = {}) {
   if (!response.ok) {
     if (response.status === 401 && usesUserToken && onUnauthorized) onUnauthorized();
     const error = new Error(
-      response.status === 401 ? 'เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่' : payload.error || 'Request failed'
+      response.status === 401 && usesUserToken
+        ? 'เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่'
+        : payload.error || 'Request failed'
     );
     error.status = response.status;
     throw error;
