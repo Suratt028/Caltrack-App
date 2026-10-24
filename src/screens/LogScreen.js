@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { searchNutritionFoods } from '../services/foodService';
+import { isOfflineError } from '../services/atlasService';
 import { useApp } from '../context/AppContext';
 import FoodSearchRow from '../components/FoodSearchRow';
 import Card from '../components/Card';
@@ -13,6 +14,7 @@ import PrimaryButton from '../components/PrimaryButton';
 import { defaultMealForNow } from '../components/MealChips';
 import EmptyState from '../components/EmptyState';
 import Banner from '../components/Banner';
+import OfflineState from '../components/OfflineState';
 import ScreenHeader from '../components/ScreenHeader';
 import SegmentedControl from '../components/SegmentedControl';
 import styles from '../style/screens/LogScreenStyles';
@@ -39,6 +41,9 @@ export default function LogScreen({ navigation }) {
   const [results, setResults] = useState([]);
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState('');
+  // Set (to { timedOut }) when the server couldn't be reached, so we show an offline state.
+  const [searchOffline, setSearchOffline] = useState(null);
+  const [searchAttempt, setSearchAttempt] = useState(0);
   const [manualOpen, setManualOpen] = useState(false);
   const [manualName, setManualName] = useState('');
   const [manualKcal, setManualKcal] = useState('');
@@ -52,11 +57,13 @@ export default function LogScreen({ navigation }) {
       setResults([]);
       setSearching(false);
       setSearchError('');
+      setSearchOffline(null);
       return undefined;
     }
     let cancelled = false;
     setSearching(true);
     setSearchError('');
+    setSearchOffline(null);
     const timer = setTimeout(async () => {
       try {
         const data = await searchNutritionFoods(trimmed, SEARCH_LIMIT);
@@ -64,6 +71,7 @@ export default function LogScreen({ navigation }) {
       } catch (error) {
         if (!cancelled) {
           setResults([]);
+          if (isOfflineError(error)) setSearchOffline({ timedOut: !!error.timedOut });
           setSearchError(error?.message || 'ค้นหาอาหารไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
         }
       } finally {
@@ -74,7 +82,7 @@ export default function LogScreen({ navigation }) {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [query]);
+  }, [query, searchAttempt]);
 
   const goToPortion = (food) => {
     navigation.navigate('Portion', {
@@ -172,6 +180,13 @@ export default function LogScreen({ navigation }) {
             <ActivityIndicator size="small" color={colors.primary} />
             <Text style={styles.loadingText}>กำลังค้นหา…</Text>
           </View>
+        ) : searchOffline ? (
+          <Card style={styles.emptyCard}>
+            <OfflineState
+              timedOut={searchOffline.timedOut}
+              onRetry={() => setSearchAttempt((attempt) => attempt + 1)}
+            />
+          </Card>
         ) : searchError ? (
           <Banner tone="error" message={searchError} />
         ) : results.length === 0 ? (

@@ -60,6 +60,9 @@ export default StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: 10,
   },
+  searchOffline: {
+    marginTop: spacing.sm,
+  },
   noSearchResults: {
     color: colors.inkMuted,
     fontSize: 12,

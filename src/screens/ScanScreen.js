@@ -11,9 +11,11 @@ import Card from '../components/Card';
 import FoodScanReview from '../components/FoodScanReview';
 import MealChips, { defaultMealForNow } from '../components/MealChips';
 import Banner from '../components/Banner';
+import OfflineState from '../components/OfflineState';
 import ScreenHeader from '../components/ScreenHeader';
 import { useApp } from '../context/AppContext';
 import { searchNutritionFoods } from '../services/foodService';
+import { isOfflineError } from '../services/atlasService';
 import { analyzeFoodImage, prepareScanImage } from '../services/aiVisionService';
 import styles from '../style/screens/ScanScreenStyles';
 
@@ -63,6 +65,10 @@ export default function ScanScreen({ navigation }) {
   const [foodResults, setFoodResults] = useState([]);
   const [searchingFoods, setSearchingFoods] = useState(false);
   const [foodSearchError, setFoodSearchError] = useState('');
+  // Set (to { timedOut }) when a request failed because the server couldn't be reached.
+  const [foodSearchOffline, setFoodSearchOffline] = useState(null);
+  const [foodSearchAttempt, setFoodSearchAttempt] = useState(0);
+  const [analysisOffline, setAnalysisOffline] = useState(null);
   const [storeImageConsent, setStoreImageConsent] = useState(false);
 
   useEffect(() => {
@@ -71,6 +77,7 @@ export default function ScanScreen({ navigation }) {
       setFoodResults([]);
       setSearchingFoods(false);
       setFoodSearchError('');
+      setFoodSearchOffline(null);
       return undefined;
     }
 
@@ -78,12 +85,14 @@ export default function ScanScreen({ navigation }) {
     const timer = setTimeout(async () => {
       setSearchingFoods(true);
       setFoodSearchError('');
+      setFoodSearchOffline(null);
       try {
         const results = await searchNutritionFoods(query, 8);
         if (active) setFoodResults(results.slice(0, 8));
       } catch (error) {
         if (active) {
           setFoodResults([]);
+          if (isOfflineError(error)) setFoodSearchOffline({ timedOut: !!error.timedOut });
           setFoodSearchError(error.message || 'ค้นหาฐานข้อมูลอาหารไม่สำเร็จ');
         }
       } finally {
@@ -95,13 +104,14 @@ export default function ScanScreen({ navigation }) {
       active = false;
       clearTimeout(timer);
     };
-  }, [foodQuery]);
+  }, [foodQuery, foodSearchAttempt]);
 
   const runAiAnalysis = async (asset, storeImage) => {
     setAnalyzing(true);
     setResult(null);
     setSaved(false);
     setAnalysisError('');
+    setAnalysisOffline(null);
     setNotice('');
     setLastAsset(asset);
 
@@ -116,6 +126,7 @@ export default function ScanScreen({ navigation }) {
       setResult({ ...aiResult, reviewKey: aiResult.scanId || `scan_${Date.now()}` });
     } catch (err) {
       console.error('Analysis error:', err);
+      if (isOfflineError(err)) setAnalysisOffline({ timedOut: !!err.timedOut });
       setAnalysisError(err.message || 'วิเคราะห์ภาพไม่สำเร็จ กรุณาลองใหม่หรือค้นหาอาหารด้วยตนเอง');
     } finally {
       setAnalyzing(false);
@@ -153,6 +164,7 @@ export default function ScanScreen({ navigation }) {
     setFoodResults([]);
     setSaved(false);
     setAnalysisError('');
+    setAnalysisOffline(null);
     setNotice('');
     setStoreImageConsent(false);
     setResult({
@@ -205,6 +217,7 @@ export default function ScanScreen({ navigation }) {
     setResult(null);
     setSaved(false);
     setAnalysisError('');
+    setAnalysisOffline(null);
     setNotice('');
     setStoreImageConsent(false);
   };
@@ -246,7 +259,15 @@ export default function ScanScreen({ navigation }) {
                 />
                 {searchingFoods && <ActivityIndicator size="small" color={colors.primary} />}
               </View>
-              {Boolean(foodQuery.trim()) && !searchingFoods && foodResults.length === 0 && (
+              {Boolean(foodQuery.trim()) && !searchingFoods && foodSearchOffline && (
+                <View style={styles.searchOffline}>
+                  <OfflineState
+                    timedOut={foodSearchOffline.timedOut}
+                    onRetry={() => setFoodSearchAttempt((attempt) => attempt + 1)}
+                  />
+                </View>
+              )}
+              {Boolean(foodQuery.trim()) && !searchingFoods && !foodSearchOffline && foodResults.length === 0 && (
                 <Text style={styles.noSearchResults}>
                   {foodSearchError || 'ไม่พบอาหารที่ค้นหา ลองใช้ชื่อเมนูอื่น'}
                 </Text>
@@ -341,7 +362,18 @@ export default function ScanScreen({ navigation }) {
 
         {Boolean(analysisError) && !analyzing && (
           <View style={{ marginTop: spacing.md }}>
-            <Banner tone="error" message={analysisError} />
+            {analysisOffline ? (
+              <OfflineState
+                timedOut={analysisOffline.timedOut}
+                message={
+                  analysisOffline.timedOut
+                    ? 'ส่งรูปไปวิเคราะห์ไม่ทันเวลา การเชื่อมต่ออาจช้า ลองวิเคราะห์อีกครั้งได้เลย'
+                    : 'ส่งรูปไปวิเคราะห์ไม่ได้ ตรวจสอบอินเทอร์เน็ตแล้วลองวิเคราะห์อีกครั้ง'
+                }
+              />
+            ) : (
+              <Banner tone="error" message={analysisError} />
+            )}
             <View style={[styles.actionsRow, { marginTop: spacing.md }]}>
               {lastAsset && (
                 <PrimaryButton
