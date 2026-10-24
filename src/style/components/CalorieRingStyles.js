@@ -7,7 +7,8 @@ export default StyleSheet.create({
     justifyContent: 'center',
   },
   centerLabel: {
-    ...StyleSheet.absoluteFillObject,
+    // absoluteFillObject is gone in RN 0.86 (spreading it was a no-op); absoluteFill is the plain object.
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
   },
