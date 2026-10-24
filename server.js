@@ -1234,7 +1234,7 @@ app.patch('/api/admin/users/:userId', requireAdmin, async (req, res) => {
       if (guardError) return res.status(400).json({ error: guardError });
     }
 
-    const user = await User.findByIdAndUpdate(req.params.userId, updates, { new: true, select: '-password' }).lean();
+    const user = await User.findByIdAndUpdate(req.params.userId, updates, { returnDocument: 'after', select: '-password' }).lean();
     if (!user) return res.status(404).json({ error: 'User not found' });
     return res.json({ user });
   } catch (error) {
@@ -1310,7 +1310,7 @@ app.patch('/api/admin/foods/:foodId', requireAdmin, async (req, res) => {
     const updates = { ...req.body };
     delete updates._id;
     delete updates.foodId;
-    const food = await Food.findOneAndUpdate({ foodId: req.params.foodId }, updates, { new: true }).lean();
+    const food = await Food.findOneAndUpdate({ foodId: req.params.foodId }, updates, { returnDocument: 'after' }).lean();
     if (!food) return res.status(404).json({ error: 'food not found' });
     return res.json({ food });
   } catch (error) {
@@ -1340,7 +1340,7 @@ app.get('/api/profiles/:userId', requireSelf, async (req, res) => {
 app.put('/api/profiles/:userId', requireSelf, async (req, res) => {
   try {
     const payload = { ...req.body, userId: req.params.userId, updatedAt: new Date() };
-    const profile = await Profile.findOneAndUpdate({ userId: req.params.userId }, payload, { upsert: true, new: true, setDefaultsOnInsert: true });
+    const profile = await Profile.findOneAndUpdate({ userId: req.params.userId }, payload, { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true });
     res.json({ profile });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -1374,7 +1374,7 @@ app.put('/api/weights/:userId/:dateKey', requireSelf, async (req, res) => {
     const weight = await WeightLog.findOneAndUpdate(
       { userId: req.params.userId, dateKey: req.params.dateKey },
       { $set: { weightKg, updatedAt: new Date() } },
-      { upsert: true, new: true, setDefaultsOnInsert: true },
+      { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true },
     );
     return res.json({ weight });
   } catch (error) {
@@ -1466,7 +1466,7 @@ app.post('/api/logs/:userId', requireSelf, async (req, res) => {
 app.patch('/api/logs/:userId/:logId', requireSelf, async (req, res) => {
   try {
     const { userId: _ignoredUserId, _id: _ignoredId, ...updates } = req.body || {};
-    const log = await Log.findOneAndUpdate({ userId: req.params.userId, _id: req.params.logId }, updates, { new: true });
+    const log = await Log.findOneAndUpdate({ userId: req.params.userId, _id: req.params.logId }, updates, { returnDocument: 'after' });
     res.json({ log });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -2067,7 +2067,7 @@ const handleUpdateTicket = async (req, res) => {
       return res.status(400).json({ error: 'status must be Open, In Progress, or Resolved' });
     }
     const filter = mongoose.Types.ObjectId.isValid(id) ? { $or: [{ _id: id }, { ticketId: id }] } : { ticketId: id };
-    const ticket = await Ticket.findOneAndUpdate(filter, { status }, { new: true });
+    const ticket = await Ticket.findOneAndUpdate(filter, { status }, { returnDocument: 'after' });
     if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
     res.json({ ticket });
   } catch (error) {
