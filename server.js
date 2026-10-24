@@ -1139,6 +1139,8 @@ app.post('/api/auth/login', loginIpLimit, loginAccountLimit, async (req, res) =>
         email: adminEmail,
         displayName: user?.displayName || adminDisplayName,
         role: 'admin',
+        // The app loads the admin's own profile and logs like any user's, so it needs a user token too.
+        ...(user ? { token: createUserToken(user) } : {}),
         adminToken: createAdminToken(adminEmail),
       };
       return res.json({ user: adminUser });

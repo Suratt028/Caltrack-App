@@ -18,6 +18,9 @@ function friendlyAuthError(error) {
   if (msg.toLowerCase().includes('invalid credentials')) {
     return 'อีเมลหรือรหัสผ่านไม่ถูกต้อง';
   }
+  if (msg.toLowerCase().includes('email already exists')) {
+    return 'อีเมลนี้มีบัญชีอยู่แล้ว กรุณาเข้าสู่ระบบแทน';
+  }
   if (msg.toLowerCase().includes('database is unavailable')) {
     return 'ฐานข้อมูลยังไม่พร้อม กรุณาลองใหม่ภายหลัง';
   }
