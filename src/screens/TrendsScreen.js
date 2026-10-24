@@ -7,7 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle, Polyline, Text as SvgText } from 'react-native-svg';
 import { colors, spacing } from '../theme/colors';
 import { useApp } from '../context/AppContext';
-import { lastNDays, todayKey } from '../utils/calculations';
+import { calculateMacroGoals, lastNDays, todayKey } from '../utils/calculations';
 import Card from '../components/Card';
 import PrimaryButton from '../components/PrimaryButton';
 import Banner from '../components/Banner';
@@ -16,7 +16,7 @@ import ScreenHeader from '../components/ScreenHeader';
 import SegmentedControl from '../components/SegmentedControl';
 import TrendStatCard from '../components/TrendStatCard';
 import TrendBarChart from '../components/TrendBarChart';
-import MacroGroupedChart from '../components/MacroGroupedChart';
+import MacroGoalCharts from '../components/MacroGoalCharts';
 import TrendDataTable from '../components/TrendDataTable';
 import styles from '../style/screens/TrendsScreenStyles';
 
@@ -104,6 +104,7 @@ export default function TrendsScreen({ navigation }) {
 
   const today = todayKey();
   const goal = Number(profile?.calorieGoal) > 0 ? Number(profile.calorieGoal) : null;
+  const macroGoals = goal ? profile?.macroGoals || calculateMacroGoals(goal) : null;
   const windowLength = range === '30' ? 30 : 7;
 
   // Selected window: last 7 / 30 days (optionally shifted back) or a custom range.
@@ -155,6 +156,13 @@ export default function TrendsScreen({ navigation }) {
   const prevAvgKcal = completeDays.length
     ? Math.round(completeDays.reduce((sum, day) => sum + day.kcal, 0) / completeDays.length)
     : 0;
+  // Headline average: finished days only, so a half-logged today doesn't drag it down.
+  const headlineAvg = completeDays.length ? prevAvgKcal : avgKcal;
+  const headlineNote = completeDays.length === loggedDays.length
+    ? 'จากวันที่บันทึกเท่านั้น'
+    : completeDays.length
+      ? 'ไม่นับวันนี้ที่ยังไม่ครบวัน · จากวันที่บันทึกเท่านั้น'
+      : 'มีแค่วันนี้ที่ยังไม่ครบวัน';
   const selectedDay = dayData.length ? dayData[dayData.length - 1] : null;
 
   const firstDay = days[0];
@@ -216,9 +224,10 @@ export default function TrendsScreen({ navigation }) {
     () =>
       dayData.map((day) => ({
         date: day.date,
+        partial: day.date === today,
         macros: { protein: day.protein, carbs: day.carbs, fat: day.fat },
       })),
-    [dayData]
+    [dayData, today]
   );
   const tableRows = useMemo(
     () => dayData.map((day) => ({ ...day, isToday: day.date === today })),
@@ -380,18 +389,18 @@ export default function TrendsScreen({ navigation }) {
                 </View>
               </View>
               <View style={styles.summaryValueRow}>
-                <Text style={styles.summaryValue}>{formatNumber(avgKcal)}</Text>
+                <Text style={styles.summaryValue}>{formatNumber(headlineAvg)}</Text>
                 <Text style={styles.summaryUnit}>kcal</Text>
               </View>
-              <Text style={styles.mintNote}>รวมวันนี้ที่ยังไม่ครบวัน · จากข้อมูลที่บันทึกเท่านั้น</Text>
+              <Text style={styles.mintNote}>{headlineNote}</Text>
             </Card>
 
             {/* Stat cards */}
             <View style={styles.statRow}>
               <TrendStatCard
                 title="พลังงานเฉลี่ยต่อวัน"
-                value={`${formatNumber(avgKcal)} kcal`}
-                body="รวมวันนี้ที่ยังไม่ครบวัน · จากข้อมูลที่บันทึกเท่านั้น"
+                value={`${formatNumber(headlineAvg)} kcal`}
+                body={headlineNote}
                 style={isLgUp ? styles.statCardWide : styles.statCard}
               />
               <TrendStatCard
@@ -401,9 +410,9 @@ export default function TrendsScreen({ navigation }) {
                 style={isLgUp ? styles.statCardWide : styles.statCard}
               />
               <TrendStatCard
-                title="เฉลี่ยวันที่บันทึกก่อนหน้า"
-                value={`${formatNumber(prevAvgKcal)} kcal`}
-                body="เฉลี่ยเฉพาะวันที่มีข้อมูล และไม่รวมวันนี้"
+                title="เฉลี่ยรวมวันนี้"
+                value={`${formatNumber(avgKcal)} kcal`}
+                body="รวมวันนี้ที่ยังบันทึกไม่ครบวันด้วย"
                 style={isLgUp ? styles.statCardWide : styles.statCard}
               />
             </View>
@@ -422,18 +431,11 @@ export default function TrendsScreen({ navigation }) {
               />
             </Card>
 
-            {/* Macro grouped chart */}
+            {/* One mini chart per macro, each against its own goal */}
             <Card style={styles.chartCard}>
-              <Text style={styles.cardTitle}>สารอาหารในแต่ละวัน</Text>
-              <Text style={styles.cardNote}>
-                ปริมาณเป็นกรัม ไม่ใช่สัดส่วนพลังงาน ดูตัวเลขรายวันได้จากตารางด้านล่าง
-              </Text>
-              <MacroGroupedChart
-                data={macroData}
-                axisUnit="กรัม"
-                title="สารอาหารในแต่ละวัน"
-                description="กราฟแท่งกลุ่มแสดงโปรตีน คาร์บ และไขมันในแต่ละวัน หน่วยกรัม"
-              />
+              <Text style={styles.cardTitle}>{macroGoals ? 'สารอาหารเทียบเป้าหมาย' : 'สารอาหารในแต่ละวัน'}</Text>
+              <Text style={styles.cardNote}>หน่วยกรัม ดูตัวเลขรายวันได้จากตารางด้านล่าง</Text>
+              <MacroGoalCharts data={macroData} goals={macroGoals} />
               {selectedDay && (
                 <Text style={styles.selectedDay}>
                   {`วันที่ ${shortDateFull(selectedDay.date)} · โปรตีน ${formatNumber(selectedDay.protein)} / คาร์บ ${formatNumber(

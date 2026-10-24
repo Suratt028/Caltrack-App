@@ -34,9 +34,15 @@ const MEAL_OPTIONS = [
  * Log search screen (mirrors the web LogSearchScreen): pick a meal, search the
  * real food service, jump to the portion screen with "+", or add a food manually.
  */
-export default function LogScreen({ navigation }) {
+export default function LogScreen({ navigation, route }) {
   const { addFoodLog } = useApp();
-  const [meal, setMeal] = useState(defaultMealForNow);
+  const requestedMeal = route?.params?.meal;
+  const [meal, setMeal] = useState(() => requestedMeal || defaultMealForNow());
+
+  // Home's per-meal "+" opens this tab with that meal preselected.
+  useEffect(() => {
+    if (requestedMeal) setMeal(requestedMeal);
+  }, [requestedMeal, route?.params?.requestedAt]);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [searching, setSearching] = useState(false);

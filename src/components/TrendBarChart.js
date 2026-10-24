@@ -111,14 +111,30 @@ export default function TrendBarChart({
               const showDay = i % stepEvery === 0 || datum.highlight || isLast;
               return (
                 <React.Fragment key={datum.date}>
-                  <Rect
-                    x={cx - barW / 2}
-                    y={y(value)}
-                    width={barW}
-                    height={barH}
-                    rx={6}
-                    fill={datum.highlight ? colors.primary : colors.barPast}
-                  />
+                  {/* Today is still in progress: outline it instead of the
+                      strongest fill, so it doesn't read as the key result. */}
+                  {datum.highlight ? (
+                    <Rect
+                      x={cx - barW / 2 + 1}
+                      y={y(value) + 1}
+                      width={barW - 2}
+                      height={Math.max(barH - 2, 1)}
+                      rx={6}
+                      fill="none"
+                      stroke={colors.primary}
+                      strokeWidth={2}
+                      strokeDasharray="5,4"
+                    />
+                  ) : (
+                    <Rect
+                      x={cx - barW / 2}
+                      y={y(value)}
+                      width={barW}
+                      height={barH}
+                      rx={6}
+                      fill={colors.barPast}
+                    />
+                  )}
                   {showValue && (
                     <SvgText
                       x={cx}
@@ -147,7 +163,8 @@ export default function TrendBarChart({
               );
             })}
 
-            {/* goal reference line — gold, never red */}
+            {/* goal reference line — dark dashed so it never blends into a
+                gridline (the axis max is often the goal itself); never red */}
             {safeGoal != null && safeGoal <= maxY && (
               <React.Fragment key="goal-line">
                 <Line
@@ -155,7 +172,8 @@ export default function TrendBarChart({
                   y1={y(safeGoal)}
                   x2={width - PAD.right}
                   y2={y(safeGoal)}
-                  stroke={colors.carbs}
+                  stroke={colors.ink}
+                  strokeOpacity={0.7}
                   strokeWidth={1.5}
                   strokeDasharray="6,5"
                 />
@@ -163,8 +181,9 @@ export default function TrendBarChart({
                   <SvgText
                     x={width - PAD.right}
                     y={Math.max(y(safeGoal) - 6, 12)}
-                    fontSize={10}
-                    fill={colors.carbStrong}
+                    fontSize={11}
+                    fontWeight="600"
+                    fill={colors.ink}
                     textAnchor="end"
                   >
                     {goalLabel}

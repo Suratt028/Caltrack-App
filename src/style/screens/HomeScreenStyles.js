@@ -13,34 +13,44 @@ export default StyleSheet.create({
   },
 
   /* ------------------------------- header -------------------------------- */
-  headerRow: {
+  greetingSmall: {
+    ...typography.body,
+    color: colors.inkMuted,
+    marginBottom: spacing.sm,
+  },
+  dateSwitcher: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: 4,
     marginBottom: spacing.md,
   },
-  headerText: {
-    flex: 1,
-    minWidth: 0,
+  dateArrow: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  greeting: {
-    ...typography.h1,
+  dateCenter: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  dateTitle: {
+    ...typography.h3,
     color: colors.ink,
   },
   dateText: {
-    ...typography.body,
     fontSize: 13,
     color: colors.inkMuted,
-    marginTop: spacing.xs,
   },
-  leafBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.mint,
-    alignItems: 'center',
+  backToToday: {
+    alignSelf: 'center',
+    minHeight: 32,
     justifyContent: 'center',
+    marginTop: -spacing.sm,
+    marginBottom: spacing.sm,
   },
   leafBtnPressed: {
     opacity: 0.75,
@@ -188,11 +198,35 @@ export default StyleSheet.create({
   mealGroup: {
     marginBottom: spacing.md,
   },
+  mealGroupHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    minHeight: 44,
+    marginBottom: spacing.xs,
+    paddingLeft: spacing.xs,
+  },
   mealGroupTitle: {
+    ...typography.bodyBold,
+    flex: 1,
+    color: colors.ink,
+  },
+  mealGroupEmpty: {
+    fontSize: 13,
+    fontWeight: '400',
+    color: colors.inkMuted,
+  },
+  mealGroupKcal: {
     ...typography.label,
     color: colors.inkMuted,
-    marginBottom: spacing.sm,
-    paddingHorizontal: spacing.xs,
+  },
+  mealAddBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.sm,
+    backgroundColor: colors.mint,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   /* ---------------------------- reflective card -------------------------- */
@@ -202,43 +236,5 @@ export default StyleSheet.create({
     color: colors.primaryDark,
     lineHeight: 20,
     marginTop: spacing.sm,
-  },
-
-  /* ------------------------------ goal card ------------------------------ */
-  goalKcal: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: colors.ink,
-    marginTop: spacing.sm,
-  },
-  goalMacros: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-    marginTop: spacing.md,
-  },
-  goalMacroItem: {
-    fontSize: 13,
-    color: colors.inkMuted,
-    backgroundColor: colors.surfaceMuted,
-    borderRadius: radius.pill,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-  },
-  goalDisclaimer: {
-    fontSize: 12,
-    color: colors.inkMuted,
-    marginTop: spacing.md,
-  },
-  goalLinkRow: {
-    marginTop: spacing.sm,
-    minHeight: 44,
-    justifyContent: 'center',
-    alignSelf: 'flex-start',
-  },
-
-  /* ------------------------------- actions ------------------------------- */
-  actions: {
-    gap: spacing.sm,
   },
 });

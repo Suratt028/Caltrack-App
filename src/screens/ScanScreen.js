@@ -43,8 +43,20 @@ function FoodBoxOverlays({ items = [] }) {
           pointerEvents: 'none', // แก้จาก prop pointerEvents บน View มาไว้ใน style
         }}
       >
-        <Text style={{ alignSelf: 'flex-start', backgroundColor: colors.primary, color: '#fff', fontSize: 10 }}>
-          {item.name_th}
+        {/* Same number as the item's card in the review below. */}
+        <Text
+          style={{
+            alignSelf: 'flex-start',
+            minWidth: 22,
+            textAlign: 'center',
+            backgroundColor: colors.primary,
+            color: '#fff',
+            fontSize: 13,
+            fontWeight: '700',
+          }}
+          accessibilityLabel={`รายการที่ ${index + 1} ${item.name_th || ''}`}
+        >
+          {index + 1}
         </Text>
       </View>
     );
@@ -419,11 +431,6 @@ export default function ScanScreen({ navigation }) {
                     {isRealAi ? 'วิเคราะห์โดย Vision AI' : 'เลือกจากฐานข้อมูล'}
                   </Text>
                 </View>
-                {Boolean(imageUri) && (
-                  <Text style={styles.resultConfidence}>
-                    ผลการระบุชื่อและน้ำหนักเป็นค่าประมาณ โปรดยืนยันรายการและปริมาณก่อนบันทึก
-                  </Text>
-                )}
                 <View style={styles.mealSection}>
                   <MealChips value={meal} onChange={setMeal} />
                 </View>
