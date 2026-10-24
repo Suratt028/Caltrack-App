@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import PrimaryButton from '../components/PrimaryButton';
 import Banner from '../components/Banner';
 import { useApp } from '../context/AppContext';
+import { requestPasswordReset, resetPassword } from '../services/atlasService';
 import { colors } from '../theme/colors';
 import styles from '../style/screens/AuthScreenStyles';
 
@@ -20,6 +21,15 @@ function friendlyAuthError(error) {
   }
   if (msg.toLowerCase().includes('email already exists')) {
     return 'อีเมลนี้มีบัญชีอยู่แล้ว กรุณาเข้าสู่ระบบแทน';
+  }
+  if (msg.toLowerCase().includes('invalid or expired code')) {
+    return 'รหัสยืนยันไม่ถูกต้องหรือหมดอายุแล้ว กรุณาตรวจสอบหรือขอรหัสใหม่';
+  }
+  if (msg.toLowerCase().includes('password reset email is not configured')) {
+    return 'ระบบยังไม่ได้ตั้งค่าการส่งอีเมล กรุณาติดต่อผู้ดูแลระบบ';
+  }
+  if (msg.toLowerCase().includes('could not send the reset code')) {
+    return 'ส่งอีเมลไม่สำเร็จ กรุณาลองใหม่ภายหลัง';
   }
   if (msg.toLowerCase().includes('database is unavailable')) {
     return 'ฐานข้อมูลยังไม่พร้อม กรุณาลองใหม่ภายหลัง';
@@ -42,10 +52,16 @@ export default function AuthScreen() {
   const [displayName, setDisplayName] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [toast, setToast] = useState('');
   const toastTimer = useRef(null);
+  // Forgot password: 'email' asks for the address, 'code' takes the emailed code + new password.
+  const [resetStep, setResetStep] = useState('email');
+  const [resetCode, setResetCode] = useState('');
 
   const isSignup = mode === 'signup';
+  const isForgot = mode === 'forgot';
+  const isLogin = mode === 'login';
   const trimmedEmail = email.trim();
   // Field-level messages only appear once the person starts typing.
   const emailError = trimmedEmail.length > 0 && !EMAIL_PATTERN.test(trimmedEmail)
@@ -54,7 +70,23 @@ export default function AuthScreen() {
   const passwordError = password.length > 0 && password.length < 6
     ? 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร'
     : '';
-  const canSubmit = trimmedEmail.length > 3 && password.length >= 6 && !submitting;
+  const cleanCode = resetCode.replace(/\D/g, '');
+  const emailValid = EMAIL_PATTERN.test(trimmedEmail);
+  let canSubmit = trimmedEmail.length > 3 && password.length >= 6 && !submitting;
+  if (isForgot) {
+    canSubmit = resetStep === 'email'
+      ? emailValid && !submitting
+      : emailValid && cleanCode.length === 6 && password.length >= 6 && !submitting;
+  }
+
+  const switchMode = (next) => {
+    setError('');
+    setNotice('');
+    setPassword('');
+    setResetCode('');
+    setResetStep('email');
+    setMode(next);
+  };
 
   // เคลียร์ timer ตอนออกจากหน้านี้
   useEffect(() => {
@@ -74,6 +106,26 @@ export default function AuthScreen() {
     showToast('อยู่ในส่วนที่กำลังพัฒนา');
   };
 
+  const sendResetCode = async () => {
+    await requestPasswordReset(trimmedEmail);
+    setResetCode('');
+    setResetStep('code');
+    setNotice(`ถ้า ${trimmedEmail} มีบัญชีอยู่ เราได้ส่งรหัส 6 หลักไปทางอีเมลแล้ว (ใช้ได้ 15 นาที)`);
+  };
+
+  const resendResetCode = async () => {
+    if (submitting) return;
+    setError('');
+    setSubmitting(true);
+    try {
+      await sendResetCode();
+    } catch (e) {
+      setError(friendlyAuthError(e));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const submit = async () => {
     if (!canSubmit) return;
     setError('');
@@ -81,7 +133,13 @@ export default function AuthScreen() {
     const cleanEmail = trimmedEmail;
 
     try {
-      if (isSignup) {
+      if (isForgot && resetStep === 'email') {
+        await sendResetCode();
+      } else if (isForgot) {
+        await resetPassword(cleanEmail, cleanCode, password);
+        // The new password works right away, so sign straight in.
+        await login(cleanEmail, password);
+      } else if (isSignup) {
         await register(cleanEmail, password, displayName.trim());
       } else {
         // Admin accounts get their adminToken from /auth/login (stored by AppContext).
@@ -116,10 +174,20 @@ export default function AuthScreen() {
               <Text style={styles.brandTagline}>บันทึกอาหารง่าย ๆ เข้าใจโภชนาการของตัวเอง</Text>
             </View>
 
-            <Text style={styles.eyebrow}>{isSignup ? 'เริ่มต้นเส้นทางสุขภาพ' : 'ยินดีต้อนรับกลับ'}</Text>
-            <Text style={styles.title}>{isSignup ? 'สร้างบัญชีใหม่' : 'เข้าสู่ระบบ'}</Text>
+            <Text style={styles.eyebrow}>
+              {isSignup ? 'เริ่มต้นเส้นทางสุขภาพ' : isForgot ? 'กู้คืนบัญชี' : 'ยินดีต้อนรับกลับ'}
+            </Text>
+            <Text style={styles.title}>
+              {isSignup ? 'สร้างบัญชีใหม่' : isForgot ? 'ลืมรหัสผ่าน' : 'เข้าสู่ระบบ'}
+            </Text>
             <Text style={styles.subtitle}>
-              {isSignup ? 'ข้อมูลจะซิงค์กับคลาวด์ ใช้ได้ทุกอุปกรณ์' : 'เข้าสู่ระบบเพื่อดูข้อมูลของคุณ'}
+              {isSignup
+                ? 'ข้อมูลจะซิงค์กับคลาวด์ ใช้ได้ทุกอุปกรณ์'
+                : isForgot
+                  ? resetStep === 'email'
+                    ? 'กรอกอีเมลที่ใช้สมัคร เราจะส่งรหัสยืนยันไปให้'
+                    : 'กรอกรหัสจากอีเมล แล้วตั้งรหัสผ่านใหม่'
+                  : 'เข้าสู่ระบบเพื่อดูข้อมูลของคุณ'}
             </Text>
 
             <View style={styles.formCard}>
@@ -137,7 +205,7 @@ export default function AuthScreen() {
                 </>
               )}
 
-              <Text style={styles.fieldLabel}>อีเมล / เบอร์โทรศัพท์</Text>
+              <Text style={styles.fieldLabel}>{isForgot ? 'อีเมล' : 'อีเมล / เบอร์โทรศัพท์'}</Text>
               <TextInput
                 style={[styles.input, !!emailError && styles.inputError]}
                 value={email}
@@ -150,27 +218,80 @@ export default function AuthScreen() {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
+                editable={!(isForgot && resetStep === 'code')}
               />
               {!!emailError && <Text style={styles.fieldError}>{emailError}</Text>}
 
-              <Text style={styles.fieldLabel}>รหัสผ่าน</Text>
-              <TextInput
-                style={[styles.input, !!passwordError && styles.inputError]}
-                value={password}
-                onChangeText={(text) => {
-                  setPassword(text);
-                  if (error) setError('');
-                }}
-                placeholder="อย่างน้อย 6 ตัวอักษร"
-                placeholderTextColor={colors.inkFaint}
-                secureTextEntry
-                autoCapitalize="none"
-              />
-              {!!passwordError && <Text style={styles.fieldError}>{passwordError}</Text>}
+              {isForgot && resetStep === 'code' && (
+                <>
+                  <Text style={styles.fieldLabel}>รหัสยืนยัน 6 หลัก</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={resetCode}
+                    onChangeText={(text) => {
+                      setResetCode(text.replace(/\D/g, '').slice(0, 6));
+                      if (error) setError('');
+                    }}
+                    placeholder="123456"
+                    placeholderTextColor={colors.inkFaint}
+                    keyboardType="number-pad"
+                    maxLength={6}
+                    autoComplete="one-time-code"
+                    textContentType="oneTimeCode"
+                  />
+                </>
+              )}
 
-              {!isSignup && (
+              {!(isForgot && resetStep === 'email') && (
+                <>
+                  <Text style={styles.fieldLabel}>{isForgot ? 'รหัสผ่านใหม่' : 'รหัสผ่าน'}</Text>
+                  <TextInput
+                    style={[styles.input, !!passwordError && styles.inputError]}
+                    value={password}
+                    onChangeText={(text) => {
+                      setPassword(text);
+                      if (error) setError('');
+                    }}
+                    placeholder="อย่างน้อย 6 ตัวอักษร"
+                    placeholderTextColor={colors.inkFaint}
+                    secureTextEntry
+                    autoCapitalize="none"
+                    autoComplete={isForgot ? 'new-password' : undefined}
+                  />
+                  {!!passwordError && <Text style={styles.fieldError}>{passwordError}</Text>}
+                </>
+              )}
+
+              {isLogin && (
                 <View style={[styles.rowBetween, styles.rowEnd]}>
-                  <Text style={styles.linkText}>ลืมรหัสผ่าน?</Text>
+                  <Pressable
+                    onPress={() => switchMode('forgot')}
+                    accessibilityRole="button"
+                    accessibilityLabel="ลืมรหัสผ่าน"
+                    hitSlop={8}
+                  >
+                    <Text style={styles.linkText}>ลืมรหัสผ่าน?</Text>
+                  </Pressable>
+                </View>
+              )}
+
+              {isForgot && resetStep === 'code' && (
+                <View style={[styles.rowBetween, styles.rowEnd]}>
+                  <Pressable
+                    onPress={resendResetCode}
+                    disabled={submitting}
+                    accessibilityRole="button"
+                    accessibilityLabel="ส่งรหัสยืนยันอีกครั้ง"
+                    hitSlop={8}
+                  >
+                    <Text style={styles.linkText}>ส่งรหัสอีกครั้ง</Text>
+                  </Pressable>
+                </View>
+              )}
+
+              {!!notice && !error && (
+                <View style={styles.errorBox}>
+                  <Banner tone="success" message={notice} />
                 </View>
               )}
 
@@ -182,21 +303,27 @@ export default function AuthScreen() {
 
               <View style={styles.buttonGroup}>
                 <PrimaryButton
-                  title={isSignup ? 'สมัครสมาชิก' : 'เข้าสู่ระบบ'}
+                  title={
+                    isSignup
+                      ? 'สมัครสมาชิก'
+                      : isForgot
+                        ? resetStep === 'email' ? 'ส่งรหัสยืนยัน' : 'ตั้งรหัสผ่านใหม่'
+                        : 'เข้าสู่ระบบ'
+                  }
                   onPress={submit}
                   disabled={!canSubmit}
                   loading={submitting}
                 />
               </View>
 
-              {!isSignup && (
+              {isLogin && (
                 <Text style={styles.helperText}>
                   ข้อมูลของคุณจะถูกเก็บไว้อย่างปลอดภัย และใช้เพื่อคำนวณเป้าหมายโภชนาการเท่านั้น
                 </Text>
               )}
             </View>
 
-            {!isSignup && (
+            {isLogin && (
               <View style={styles.dividerRow}>
                 <View style={styles.dividerLine} />
                 <Text style={styles.dividerText}>หรือ</Text>
@@ -204,7 +331,7 @@ export default function AuthScreen() {
               </View>
             )}
 
-            {!isSignup && (
+            {isLogin && (
               <View style={styles.socialRow}>
                 <Pressable
                   style={styles.socialButton}
@@ -228,17 +355,14 @@ export default function AuthScreen() {
             )}
 
             <Pressable
-              onPress={() => {
-                setError('');
-                setMode(isSignup ? 'login' : 'signup');
-              }}
+              onPress={() => switchMode(isLogin ? 'signup' : 'login')}
               accessibilityRole="button"
-              accessibilityLabel={isSignup ? 'ไปหน้าเข้าสู่ระบบ' : 'ไปหน้าสมัครสมาชิก'}
+              accessibilityLabel={isLogin ? 'ไปหน้าสมัครสมาชิก' : 'ไปหน้าเข้าสู่ระบบ'}
               style={{ marginTop: 18 }}
             >
               <Text style={styles.footerText}>
-                {isSignup ? 'มีบัญชีอยู่แล้ว? ' : 'ยังไม่มีบัญชี? '}
-                <Text style={styles.footerLink}>{isSignup ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก'}</Text>
+                {isSignup ? 'มีบัญชีอยู่แล้ว? ' : isForgot ? 'จำรหัสผ่านได้แล้ว? ' : 'ยังไม่มีบัญชี? '}
+                <Text style={styles.footerLink}>{isLogin ? 'สมัครสมาชิก' : 'เข้าสู่ระบบ'}</Text>
               </Text>
             </Pressable>
           </View>
