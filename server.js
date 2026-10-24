@@ -8,6 +8,7 @@ const { OAuth2Client } = require('google-auth-library');
 const { addNutritionTotals, scaleNutrition } = require('./server/nutritionMath');
 const { getGeminiScanError } = require('./server/geminiScanError');
 const { requestWithGeminiFallback } = require('./server/geminiScanRequest');
+const { createPasswordResetMailer } = require('./server/passwordResetMail');
 const {
   candidateSearchTerms,
   englishWords,
@@ -261,6 +262,14 @@ const oauthTicketSchema = new mongoose.Schema({
   expiresAt: { type: Date, required: true, expires: 0 },
 });
 
+// One pending "forgot password" code per account; Mongo drops it at expiresAt.
+const passwordResetSchema = new mongoose.Schema({
+  userId: { type: String, required: true, unique: true },
+  codeHash: { type: String, required: true },
+  attempts: { type: Number, default: 0 },
+  expiresAt: { type: Date, required: true, expires: 0 },
+});
+
 const userFoodSchema = new mongoose.Schema({
   userId: { type: String, required: true },
   logId: { type: mongoose.Schema.Types.ObjectId },
@@ -324,6 +333,7 @@ function startOfLocalDay(date = new Date()) {
 }
 const Ticket = mongoose.model('Ticket', ticketSchema, 'tickets');
 const OAuthTicket = mongoose.model('OAuthTicket', oauthTicketSchema, 'oauthTickets');
+const PasswordReset = mongoose.model('PasswordReset', passwordResetSchema, 'passwordResets');
 const UserFood = mongoose.model('UserFood', userFoodSchema, 'user.foods');
 
 // Flexible schema: the "foods" collection holds ~1,167 Thai food-composition
@@ -928,6 +938,8 @@ const adminLoginLimit = rateLimit({
 });
 const registerLimit = rateLimit({ name: 'register', windowMs: 60 * MINUTE_MS, max: 5, keyFn: clientIp });
 const oauthLimit = rateLimit({ name: 'oauth', windowMs: 15 * MINUTE_MS, max: 30, keyFn: clientIp });
+const forgotPasswordLimit = rateLimit({ name: 'forgot-password', windowMs: 15 * MINUTE_MS, max: 5, keyFn: clientIp });
+const resetPasswordLimit = rateLimit({ name: 'reset-password', windowMs: 15 * MINUTE_MS, max: 20, keyFn: clientIp });
 
 // API Routes
 app.get('/health', (req, res) => {
@@ -1121,6 +1133,83 @@ app.post('/api/auth/register', registerLimit, async (req, res) => {
     if (error?.code === 11000) return res.status(409).json({ error: 'email already exists' });
     console.error('Account registration failed:', error.message);
     return res.status(500).json({ error: 'account registration failed' });
+  }
+});
+
+// Forgot password: email a 6-digit code, then trade the code for a new password.
+const RESET_CODE_TTL_MS = 15 * MINUTE_MS;
+const RESET_CODE_MAX_ATTEMPTS = 5;
+let sendPasswordResetCode = createPasswordResetMailer();
+
+// Tests swap in a sender that captures the code instead of mailing it.
+function setPasswordResetSender(sender) {
+  sendPasswordResetCode = sender;
+}
+
+const resetCodeHash = (userId, code) =>
+  crypto.createHmac('sha256', authSecret).update(`${userId}:${code}`).digest('hex');
+
+app.post('/api/auth/forgot-password', forgotPasswordLimit, async (req, res) => {
+  try {
+    const email = String(req.body.email || '').trim().toLowerCase();
+    if (!email) return res.status(400).json({ error: 'email is required' });
+    if (!sendPasswordResetCode) return res.status(503).json({ error: 'password reset email is not configured' });
+    if (!isMongoReady || mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ error: 'database is unavailable; please try again later' });
+    }
+
+    // Same reply whether or not the account exists, so this can't be used to probe emails.
+    // The .env admin signs in with ADMIN_PASSWORD, so a reset code would not help it.
+    const user = await User.findOne({ email });
+    if (user && email !== adminEmail) {
+      const userId = user._id.toString();
+      const code = String(crypto.randomInt(0, 1000000)).padStart(6, '0');
+      await PasswordReset.findOneAndUpdate(
+        { userId },
+        { codeHash: resetCodeHash(userId, code), attempts: 0, expiresAt: new Date(Date.now() + RESET_CODE_TTL_MS) },
+        { upsert: true }
+      );
+      await sendPasswordResetCode({ to: user.email, code, minutes: RESET_CODE_TTL_MS / MINUTE_MS });
+    }
+    return res.json({ ok: true });
+  } catch (error) {
+    console.error('Password reset email failed:', error.message);
+    return res.status(500).json({ error: 'could not send the reset code' });
+  }
+});
+
+app.post('/api/auth/reset-password', resetPasswordLimit, async (req, res) => {
+  try {
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const code = String(req.body.code || '').trim();
+    const password = String(req.body.password || '');
+    if (!email || !code || !password) return res.status(400).json({ error: 'email, code and password are required' });
+    if (password.length < 6) return res.status(400).json({ error: 'password must be at least 6 characters' });
+    if (!isMongoReady || mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ error: 'database is unavailable; please try again later' });
+    }
+
+    const invalidCode = () => res.status(400).json({ error: 'invalid or expired code', code: 'INVALID_RESET_CODE' });
+    const user = await User.findOne({ email });
+    if (!user) return invalidCode();
+    const reset = await PasswordReset.findOne({ userId: user._id.toString() });
+    if (!reset || reset.expiresAt <= new Date() || reset.attempts >= RESET_CODE_MAX_ATTEMPTS) return invalidCode();
+
+    if (!safeEqualHex(resetCodeHash(reset.userId, code), reset.codeHash)) {
+      // Too many wrong guesses burns the code; the user has to request a new one.
+      const updated = await PasswordReset.findOneAndUpdate({ _id: reset._id }, { $inc: { attempts: 1 } }, { returnDocument: 'after' });
+      if (updated && updated.attempts >= RESET_CODE_MAX_ATTEMPTS) await PasswordReset.deleteOne({ _id: reset._id });
+      return invalidCode();
+    }
+
+    // Delete first so the same code can't be used twice by concurrent requests.
+    const consumed = await PasswordReset.findOneAndDelete({ _id: reset._id, codeHash: reset.codeHash });
+    if (!consumed) return invalidCode();
+    await User.updateOne({ _id: user._id }, { $set: { password: hashPassword(password) } });
+    return res.json({ ok: true });
+  } catch (error) {
+    console.error('Password reset failed:', error.message);
+    return res.status(500).json({ error: 'password reset failed' });
   }
 });
 
@@ -2309,4 +2398,4 @@ if (require.main === module) {
   startServer();
 }
 
-module.exports = { app };
+module.exports = { app, setPasswordResetSender };

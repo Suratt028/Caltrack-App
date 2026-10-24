@@ -94,6 +94,21 @@ export async function loginUser(email, password) {
   return payload.user;
 }
 
+// Emails a 6-digit code. The server answers the same way for unknown emails.
+export async function requestPasswordReset(email) {
+  return requestJson('/auth/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  });
+}
+
+export async function resetPassword(email, code, password) {
+  return requestJson('/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify({ email, code, password }),
+  });
+}
+
 export async function loginWithOAuth(provider, idToken) {
   const payload = await requestJson(`/auth/oauth/${provider}`, {
     method: 'POST',
