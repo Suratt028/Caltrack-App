@@ -22,9 +22,21 @@ import styles from '../style/screens/HomeScreenStyles';
 
 const formatNumber = (v) => Math.round(Number(v) || 0).toLocaleString('th-TH');
 
+// Entries store an ISO timestamp (older ones "HH:mm"); compare and show as local "HH:mm".
+function clockTime(value) {
+  if (!value) return '';
+  const match = /^(\d{1,2}):(\d{2})$/.exec(String(value));
+  if (match) return `${match[1].padStart(2, '0')}:${match[2]}`;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+}
+const latestOf = (entries) =>
+  entries.reduce((latest, entry) => (!latest || clockTime(entry.time) > clockTime(latest.time) ? entry : latest), null);
+
 const MEAL_ORDER = MEALS.reduce((acc, meal, index) => ({ ...acc, [meal.key]: index }), {});
 const sortEntries = (a, b) =>
-  (MEAL_ORDER[a.meal] ?? 99) - (MEAL_ORDER[b.meal] ?? 99) || String(a.time || '').localeCompare(String(b.time || ''));
+  (MEAL_ORDER[a.meal] ?? 99) - (MEAL_ORDER[b.meal] ?? 99) || clockTime(a.time).localeCompare(clockTime(b.time));
 
 // "พฤหัสบดี 29 ตุลาคม 2569" (th-TH's own long format adds "วัน…ที่").
 function longThaiDate(date) {
@@ -147,10 +159,7 @@ export default function HomeScreen({ navigation, route }) {
 
   const loggedMeals = MEALS.filter((meal) => dayEntries.some((entry) => entry.meal === meal.key));
   const emptyMeals = MEALS.filter((meal) => meal.key !== 'snack' && !loggedMeals.includes(meal));
-  const latestEntry = (logsByDay[todayKey()] || []).reduce(
-    (latest, entry) => (!latest || String(entry.time || '') > String(latest.time || '') ? entry : latest),
-    null
-  );
+  const latestEntry = latestOf(logsByDay[todayKey()] || []);
 
   /* ------------------------------ sections ------------------------------ */
 
@@ -365,7 +374,7 @@ export default function HomeScreen({ navigation, route }) {
 
   const goalCard = hasGoal ? (
     <Card style={styles.block}>
-      <Text style={styles.cardTitle}>เป้าหมายของคุณ</Text>
+      <Text style={styles.cardTitle}>เป้าหมายในโปรไฟล์</Text>
       <Text style={styles.cardBody}>
         พลังงาน {formatNumber(calorieGoal)} kcal ต่อวัน{'\n'}
         โปรตีน {formatNumber(macroGoals.protein)} · คาร์บ {formatNumber(macroGoals.carbs)} · ไขมัน{' '}
@@ -384,18 +393,52 @@ export default function HomeScreen({ navigation, route }) {
   /* ------------------------------- layouts ------------------------------ */
 
   if (isDesktop) {
+    // Latest meal of the selected day, shown beside the "next meal" card.
+    const lastMeal = latestOf(dayEntries);
+    const lastMealCard = (
+      <Card style={[styles.block, styles.lastMealCard]}>
+        <View style={styles.lastMealArt}>
+          <Ionicons
+            name={lastMeal ? MEAL_ICON[lastMeal.meal] || 'restaurant-outline' : 'restaurant-outline'}
+            size={52}
+            color={colors.primary}
+          />
+        </View>
+        {lastMeal ? (
+          <>
+            <Text style={styles.lastMealMeta}>
+              {MEAL_LABEL[lastMeal.meal] || 'อาหาร'}
+              {clockTime(lastMeal.time) ? ` · ${clockTime(lastMeal.time)}` : ''}
+            </Text>
+            <Text style={styles.cardTitle} numberOfLines={2}>{lastMeal.name}</Text>
+            <Text style={styles.lastMealBody}>
+              {formatNumber(lastMeal.kcal)} kcal{'\n'}บันทึกอยู่ในยอด{dayWord}แล้ว
+            </Text>
+          </>
+        ) : (
+          <>
+            <Text style={styles.cardTitle}>มื้อล่าสุด</Text>
+            <Text style={styles.lastMealBody}>ยังไม่มีรายการ{dayWord}{'\n'}มื้อที่บันทึกล่าสุดจะแสดงตรงนี้</Text>
+          </>
+        )}
+      </Card>
+    );
+
     return (
       <Screen>
         {header}
         {noticeBanner}
         <View style={styles.columns}>
-          <View style={styles.colNarrow}>
+          <View style={styles.colLeft}>
             {energyCard}
             {reflectCard}
             {goalCard}
           </View>
-          <View style={styles.colWide}>
-            {nextMealCard}
+          <View style={styles.colRight}>
+            <View style={styles.columnsTight}>
+              <View style={styles.colNext}>{nextMealCard}</View>
+              <View style={styles.colLast}>{lastMealCard}</View>
+            </View>
             {foodList}
           </View>
         </View>

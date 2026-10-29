@@ -37,6 +37,23 @@ export default StyleSheet.create({
   colNarrow: { flex: 4, minWidth: 0 },
   colWide: { flex: 6, minWidth: 0 },
   colHalf: { flex: 1, minWidth: 0 },
+  // Desktop grid: left column ≈ 1/3, right area holds next-meal + last-meal.
+  colLeft: { flex: 34, minWidth: 0 },
+  colRight: { flex: 66, minWidth: 0 },
+  columnsTight: { flexDirection: 'row', alignItems: 'stretch', gap: spacing.mdl },
+  colNext: { flex: 64, minWidth: 0 },
+  colLast: { flex: 36, minWidth: 0 },
+  lastMealCard: { flex: 1, padding: spacing.md },
+  lastMealArt: {
+    aspectRatio: 1.25,
+    borderRadius: radius.md,
+    backgroundColor: colors.mint,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.smd,
+  },
+  lastMealMeta: { ...typography.small, color: colors.inkMuted },
+  lastMealBody: { ...typography.small, color: colors.inkMuted, marginTop: spacing.xs },
 
   /* -------------------------------- cards -------------------------------- */
   cardHead: {

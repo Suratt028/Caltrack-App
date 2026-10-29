@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from './AppText';
 import { colors } from '../theme/colors';
 import { useApp } from '../context/AppContext';
+import { confirmAction } from '../utils/confirm';
 import styles from '../style/components/AppNavBarStyles';
 
 // Tab metadata: label, and outline / filled icon pair.
@@ -123,14 +124,77 @@ function TopBar({ state, navigation }) {
   );
 }
 
-/** Desktop: left side navigation. */
+/**
+ * Desktop: full-width header above the side navigation — brand, tagline and
+ * an account menu (profile / sign out). Rendered outside the tab navigator,
+ * so it gets the stack navigation and opens the Profile tab through it.
+ */
+export function DesktopTopBar({ onOpenProfile }) {
+  const { profile, user, logout } = useApp();
+  const [open, setOpen] = useState(false);
+  const name = profile?.displayName || user?.displayName || 'บัญชีของฉัน';
+
+  const signOut = () => {
+    setOpen(false);
+    confirmAction({
+      title: 'ออกจากระบบ?',
+      message: 'ข้อมูลที่บันทึกไว้ในบัญชีจะยังอยู่ เข้าสู่ระบบอีกครั้งเมื่อไหร่ก็ได้',
+      confirmLabel: 'ออกจากระบบ',
+      onConfirm: logout,
+    });
+  };
+
+  return (
+    <View style={styles.desktopTop}>
+      <Brand />
+      <Text style={styles.tagline} numberOfLines={1}>เพื่อนดูแลโภชนาการในทุกวันของคุณ</Text>
+      <View style={styles.menuAnchor}>
+        <Pressable
+          onPress={() => setOpen((value) => !value)}
+          accessibilityRole="button"
+          accessibilityLabel={`เมนูบัญชี ${name}`}
+          accessibilityState={{ expanded: open }}
+          style={({ pressed }) => [styles.profileChip, open && styles.profileChipActive, pressed && styles.pressed]}
+        >
+          <View style={styles.avatar}>
+            <Ionicons name="person-outline" size={18} color={colors.primary} />
+          </View>
+          <Text style={styles.profileName} numberOfLines={1}>{name}</Text>
+          <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={16} color={colors.ink} />
+        </Pressable>
+        {open && (
+          <View style={styles.menu} accessibilityRole="menu">
+            <Pressable
+              onPress={() => {
+                setOpen(false);
+                onOpenProfile();
+              }}
+              accessibilityRole="menuitem"
+              style={({ pressed }) => [styles.menuItem, pressed && styles.menuItemPressed]}
+            >
+              <Ionicons name="person-outline" size={18} color={colors.primaryDark} />
+              <Text style={styles.menuText}>โปรไฟล์และเป้าหมาย</Text>
+            </Pressable>
+            <Pressable
+              onPress={signOut}
+              accessibilityRole="menuitem"
+              style={({ pressed }) => [styles.menuItem, pressed && styles.menuItemPressed]}
+            >
+              <Ionicons name="log-out-outline" size={18} color={colors.primaryDark} />
+              <Text style={styles.menuText}>ออกจากระบบ</Text>
+            </Pressable>
+          </View>
+        )}
+      </View>
+    </View>
+  );
+}
+
+/** Desktop: left side navigation (the brand lives in DesktopTopBar). */
 function SideBar({ state, navigation }) {
   const onPress = useTabPress(state, navigation);
   return (
     <View style={styles.sideBar}>
-      <View style={styles.sideBrand}>
-        <Brand />
-      </View>
       <View style={styles.sideItems} accessibilityRole="tablist">
         {state.routes.map((route, index) => {
           const item = NAV_ITEMS[route.name];

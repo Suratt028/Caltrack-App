@@ -36,6 +36,7 @@ export default StyleSheet.create({
   },
   navigatorWide: {
     flex: 1,
+    justifyContent: 'flex-end',
   },
   navBtn: {
     width: 44,
@@ -46,6 +47,33 @@ export default StyleSheet.create({
     backgroundColor: colors.card,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  // Wide screens: plain chevrons around a right-aligned range label.
+  navBtnPlain: {
+    borderWidth: 0,
+    backgroundColor: 'transparent',
+  },
+  navLabelWide: {
+    flexGrow: 0,
+    flexShrink: 1,
+    flexBasis: 'auto',
+    paddingHorizontal: spacing.xs,
+    color: colors.ink,
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  dateChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    minHeight: 44,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.md,
+    backgroundColor: colors.surface,
+  },
+  dateChipText: {
+    ...typography.label,
+    color: colors.ink,
   },
   navBtnPressed: {
     backgroundColor: colors.mint,

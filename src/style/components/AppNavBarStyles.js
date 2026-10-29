@@ -85,9 +85,47 @@ export default StyleSheet.create({
   },
   profileName: { ...typography.label, color: colors.ink, flexShrink: 1 },
 
+  /* top (desktop) */
+  desktopTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+    minHeight: 76,
+    paddingHorizontal: spacing.lg,
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    zIndex: 10,
+  },
+  tagline: { ...typography.small, color: colors.inkMuted, flexShrink: 1, textAlign: 'center' },
+  menuAnchor: { position: 'relative', zIndex: 20 },
+  menu: {
+    position: 'absolute',
+    top: 52,
+    right: 0,
+    minWidth: 220,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingVertical: spacing.xs,
+    boxShadow: '0px 10px 24px rgba(27, 61, 47, 0.14)',
+    elevation: 8,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.smd,
+    minHeight: touch.min,
+    paddingHorizontal: spacing.md,
+  },
+  menuItemPressed: { backgroundColor: colors.mint },
+  menuText: { ...typography.bodySm, color: colors.ink },
+
   /* side (desktop) */
   sideBar: {
-    width: 232,
+    width: 220,
     backgroundColor: colors.surface,
     borderRightWidth: 1,
     borderRightColor: colors.border,
@@ -95,7 +133,6 @@ export default StyleSheet.create({
     paddingTop: spacing.lg,
     paddingBottom: spacing.lg,
   },
-  sideBrand: { paddingHorizontal: spacing.sm, marginBottom: spacing.xl },
   sideItems: { gap: spacing.xs },
   sideItem: {
     flexDirection: 'row',

@@ -2,10 +2,10 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Platform } from 'react-native';
+import { Platform, View } from 'react-native';
 import { colors } from '../theme/colors';
 import { useLayout } from '../theme/layout';
-import AppNavBar, { NAV_ITEMS } from '../components/AppNavBar';
+import AppNavBar, { DesktopTopBar, NAV_ITEMS } from '../components/AppNavBar';
 
 import HomeScreen from '../screens/HomeScreen';
 import LogScreen from '../screens/LogScreen';
@@ -43,10 +43,10 @@ const TAB_POSITION = { mobile: 'bottom', tablet: 'top', desktop: 'left' };
 
 // The four primary destinations from the design. Scanning is a step of
 // logging, so it lives in the stack (Home, Log and recovery link to it).
-function Tabs() {
+function Tabs({ navigation }) {
   const { layout } = useLayout();
 
-  return (
+  const tabs = (
     <Tab.Navigator
       tabBar={(props) => <AppNavBar {...props} layout={layout} />}
       screenOptions={{
@@ -61,6 +61,17 @@ function Tabs() {
       <Tab.Screen name="Trends" component={TrendsScreen} options={{ title: NAV_ITEMS.Trends.label }} />
       <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: NAV_ITEMS.Profile.label }} />
     </Tab.Navigator>
+  );
+
+  if (layout !== 'desktop') return tabs;
+
+  // Desktop: full-width header (brand · tagline · account menu) above the
+  // side navigation and the page.
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+      <DesktopTopBar onOpenProfile={() => navigation.navigate('Tabs', { screen: 'Profile' })} />
+      <View style={{ flex: 1 }}>{tabs}</View>
+    </View>
   );
 }
 

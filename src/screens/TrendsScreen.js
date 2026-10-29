@@ -17,7 +17,7 @@ import ScreenHeader from '../components/ScreenHeader';
 import SegmentedControl from '../components/SegmentedControl';
 import TrendStatCard from '../components/TrendStatCard';
 import TrendBarChart from '../components/TrendBarChart';
-import MacroGoalCharts from '../components/MacroGoalCharts';
+import MacroBarChart from '../components/MacroBarChart';
 import TrendDataTable from '../components/TrendDataTable';
 import styles from '../style/screens/TrendsScreenStyles';
 
@@ -224,7 +224,9 @@ export default function TrendsScreen({ navigation }) {
       dayData.map((day) => ({
         date: day.date,
         partial: day.date === today,
-        macros: { protein: day.protein, carbs: day.carbs, fat: day.fat },
+        protein: day.protein,
+        carbs: day.carbs,
+        fat: day.fat,
       })),
     [dayData, today]
   );
@@ -270,7 +272,22 @@ export default function TrendsScreen({ navigation }) {
 
   return (
     <Screen>
-        <ScreenHeader title="แนวโน้มของคุณ" subtitle="มองเห็นจังหวะการกิน ไม่ใช่คะแนนตัดสิน" />
+        <ScreenHeader
+          title="แนวโน้มของคุณ"
+          subtitle={
+            isSmUp
+              ? 'มองเห็นจังหวะการกินจากข้อมูลที่คุณบันทึก ไม่ใช่คะแนนตัดสิน'
+              : 'มองเห็นจังหวะการกิน ไม่ใช่คะแนนตัดสิน'
+          }
+          right={
+            isSmUp ? (
+              <View style={styles.dateChip} accessible accessibilityLabel={`วันนี้ ${shortDateFull(today)}`}>
+                <Ionicons name="calendar-outline" size={16} color={colors.primary} />
+                <Text style={styles.dateChipText}>{shortDateFull(today)}</Text>
+              </View>
+            ) : null
+          }
+        />
 
         {/* Range picker + date navigator */}
         <View style={[styles.controlsRow, isSmUp && styles.controlsRowWide]}>
@@ -292,11 +309,11 @@ export default function TrendsScreen({ navigation }) {
               onPress={() => moveRange(-1)}
               accessibilityRole="button"
               accessibilityLabel="ช่วงก่อนหน้า"
-              style={({ pressed }) => [styles.navBtn, pressed && styles.navBtnPressed]}
+              style={({ pressed }) => [styles.navBtn, isSmUp && styles.navBtnPlain, pressed && styles.navBtnPressed]}
             >
               <Ionicons name="chevron-back" size={20} color={colors.ink} />
             </Pressable>
-            <Text style={styles.navLabel} numberOfLines={1}>
+            <Text style={[styles.navLabel, isSmUp && styles.navLabelWide]} numberOfLines={1}>
               {rangeLabel || 'กำหนดช่วงเอง'}
             </Text>
             <Pressable
@@ -306,6 +323,7 @@ export default function TrendsScreen({ navigation }) {
               accessibilityLabel="ช่วงถัดไป"
               style={({ pressed }) => [
                 styles.navBtn,
+                isSmUp && styles.navBtnPlain,
                 pressed && canGoForward && styles.navBtnPressed,
                 !canGoForward && styles.navBtnDisabled,
               ]}
@@ -443,18 +461,23 @@ export default function TrendsScreen({ navigation }) {
               />
             </Card>
 
-            {/* One mini chart per macro, each against its own goal */}
+            {/* Grouped protein / carbs / fat bars per logged day */}
             <Card style={[styles.chartCard, isLgUp && styles.chartCol]}>
-              <Text style={styles.cardTitle}>{macroGoals ? 'สารอาหารเทียบเป้าหมาย' : 'สารอาหารในแต่ละวัน'}</Text>
-              <Text style={styles.cardNote}>หน่วยกรัม ดูตัวเลขรายวันได้จากตารางด้านล่าง</Text>
-              <MacroGoalCharts data={macroData} goals={macroGoals} />
+              <Text style={styles.cardTitle}>สารอาหารในแต่ละวัน</Text>
+              <MacroBarChart data={macroData} />
               {selectedDay && (
                 <Text style={styles.selectedDay}>
-                  {`วันที่ ${shortDateFull(selectedDay.date)} · โปรตีน ${formatNumber(selectedDay.protein)} / คาร์บ ${formatNumber(
+                  {`${shortDateFull(selectedDay.date)} · โปรตีน ${formatNumber(selectedDay.protein)} / คาร์บ ${formatNumber(
                     selectedDay.carbs
                   )} / ไขมัน ${formatNumber(selectedDay.fat)} กรัม`}
                 </Text>
               )}
+              <Text style={styles.cardNote}>
+                {macroGoals
+                  ? `เป้าหมายจากโปรไฟล์ โปรตีน ${formatNumber(macroGoals.protein)} · คาร์บ ${formatNumber(macroGoals.carbs)} · ไขมัน ${formatNumber(macroGoals.fat)} กรัม\n`
+                  : ''}
+                ปริมาณเป็นกรัม ไม่ใช่สัดส่วนพลังงาน ดูตัวเลขรายวันได้จากตารางด้านล่าง
+              </Text>
             </Card>
 
             </View>
@@ -476,7 +499,8 @@ export default function TrendsScreen({ navigation }) {
             {/* Data table (accessible alternative) */}
             <Card style={styles.tableCard}>
               <TrendDataTable
-                title={goal ? `เป้าหมายโปรไฟล์ ${formatNumber(goal)} kcal` : 'ข้อมูลที่บันทึก'}
+                title="ตัวเลขรายวัน"
+                meta={goal ? `เป้าหมายจากโปรไฟล์ ${formatNumber(goal)} kcal` : undefined}
                 rows={tableRows}
                 showYear={showYear}
               />
