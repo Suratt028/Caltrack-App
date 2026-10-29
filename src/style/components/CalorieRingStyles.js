@@ -11,28 +11,23 @@ export default StyleSheet.create({
     ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 18,
   },
   value: {
+    // fontSize / lineHeight are set from the ring size. Noto Sans Thai's ascent
+    // is tall, so the line box stays ≥ 1.3× the size or the digits clip on iOS.
+    fontWeight: '700',
     color: colors.ink,
-    // Noto Sans Thai's ascent is tall: at the 42px stat size a tighter line box
-    // clips the top of the digits on iOS.
-    lineHeight: 58,
+    letterSpacing: -0.6,
   },
   unit: {
     fontSize: 13,
-    fontWeight: '700',
+    lineHeight: 20,
     color: colors.inkMuted,
-  },
-  unitOver: {
-    color: colors.carbStrong,
   },
   caption: {
-    marginTop: 6,
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 13,
+    lineHeight: 20,
     color: colors.inkMuted,
-  },
-  captionOver: {
-    color: colors.carbStrong,
   },
 });

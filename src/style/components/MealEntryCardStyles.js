@@ -1,68 +1,71 @@
 import { StyleSheet } from 'react-native';
-import { colors, radius, spacing, shadows } from '../../theme/colors';
+import { colors, radius, spacing, shadows, touch, typography } from '../../theme/colors';
 
 export default StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: 12,
-    marginBottom: spacing.sm,
+    borderRadius: radius.lg,
+    paddingVertical: spacing.md,
+    paddingLeft: spacing.mdl,
+    paddingRight: spacing.sm,
+    marginBottom: spacing.smd,
     ...shadows.soft,
   },
+  body: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   iconTile: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.md,
+    width: 48,
+    height: 48,
+    borderRadius: radius.sm,
     backgroundColor: colors.mint,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: spacing.sm + 2,
+    marginRight: spacing.md,
   },
   main: {
     flex: 1,
     minWidth: 0,
   },
   meta: {
-    fontSize: 11.5,
-    fontWeight: '600',
+    ...typography.small,
     color: colors.inkMuted,
   },
   name: {
-    fontSize: 15,
-    fontWeight: '700',
+    ...typography.h3,
     color: colors.ink,
-    marginTop: 1,
   },
   subtitle: {
-    fontSize: 12,
+    ...typography.bodySm,
     color: colors.inkMuted,
-    marginTop: 1,
+  },
+  kcalCol: {
+    alignItems: 'flex-end',
+    marginLeft: spacing.smd,
   },
   kcal: {
-    fontSize: 17,
-    fontWeight: '700',
+    ...typography.statSm,
+    fontSize: 20,
     color: colors.ink,
-    marginLeft: spacing.sm,
   },
   kcalUnit: {
-    fontSize: 11,
-    fontWeight: '400',
+    ...typography.small,
     color: colors.inkMuted,
   },
   removeBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: touch.min,
+    height: touch.min,
+    borderRadius: radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.surfaceMuted,
     marginLeft: spacing.xs,
   },
   removeBtnPressed: {
-    opacity: 0.7,
+    backgroundColor: colors.surfaceMuted,
   },
 });

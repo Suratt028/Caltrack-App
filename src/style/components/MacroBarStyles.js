@@ -1,24 +1,50 @@
 import { StyleSheet } from 'react-native';
-import { colors } from '../../theme/colors';
+import { colors, radius, spacing, typography } from '../../theme/colors';
 
 export default StyleSheet.create({
-  row: { marginBottom: 14 },
-  labelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 },
-  label: { fontSize: 13, fontWeight: '700', color: colors.ink },
-  value: { fontSize: 12, fontWeight: '600', color: colors.inkMuted },
-  valueStrong: { color: colors.ink, fontWeight: '800', fontSize: 13 },
-  valueOver: { color: colors.carbStrong },
-  track: {
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.mint,
-    overflow: 'hidden',
+  wrap: {
+    flex: 1,
+    minWidth: 0,
   },
-  fill: { height: '100%', borderRadius: 4 },
-  overHint: {
-    marginTop: 4,
-    fontSize: 11,
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  dot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+  },
+  label: {
+    ...typography.small,
+    color: colors.inkMuted,
+  },
+  value: {
+    ...typography.statSm,
+    fontSize: 20,
+    color: colors.ink,
+    marginTop: spacing.xs,
+  },
+  unit: {
+    fontSize: 13,
     fontWeight: '600',
-    color: colors.carbStrong,
+    color: colors.ink,
+  },
+  track: {
+    height: 6,
+    borderRadius: radius.pill,
+    backgroundColor: colors.border,
+    overflow: 'hidden',
+    marginTop: spacing.sm,
+  },
+  fill: {
+    height: '100%',
+    borderRadius: radius.pill,
+  },
+  goal: {
+    ...typography.small,
+    color: colors.inkMuted,
+    marginTop: spacing.sm,
   },
 });

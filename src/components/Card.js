@@ -2,7 +2,11 @@ import React, { useEffect, useRef } from 'react';
 import { Animated, Platform } from 'react-native';
 import styles from '../style/components/CardStyles';
 
-export default function Card({ children, style }) {
+/**
+ * Surface container. tone "surface" is the white card; "mint" the soft green
+ * card used for supportive notes and summaries; "dashed" an empty slot.
+ */
+export default function Card({ children, style, tone = 'surface' }) {
   const entrance = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -17,6 +21,7 @@ export default function Card({ children, style }) {
     <Animated.View
       style={[
         styles.card,
+        styles[tone],
         { opacity: entrance, transform: [{ translateY: entrance.interpolate({ inputRange: [0, 1], outputRange: [8, 0] }) }] },
         style,
       ]}
@@ -25,4 +30,3 @@ export default function Card({ children, style }) {
     </Animated.View>
   );
 }
-

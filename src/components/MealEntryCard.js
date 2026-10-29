@@ -3,17 +3,8 @@ import { View, Pressable } from 'react-native';
 import { Text } from './AppText';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
-import { MEAL_LABEL } from './MealChips';
+import { MEAL_ICON, MEAL_LABEL } from './MealChips';
 import styles from '../style/components/MealEntryCardStyles';
-
-// One icon per meal, mirroring the web MealCard (coffee / utensils / soup /
-// cookie). soup/cookie aren't in this Ionicons build, so closest matches.
-const MEAL_ICON = {
-  breakfast: 'cafe-outline',
-  lunch: 'restaurant-outline',
-  dinner: 'fast-food-outline',
-  snack: 'ice-cream-outline',
-};
 
 const formatNumber = (value) => Math.round(Number(value) || 0).toLocaleString('th-TH');
 
@@ -28,7 +19,8 @@ function formatTime(value) {
 
 /**
  * A single logged food entry for the Home screen: mint meal tile, meal label +
- * time, name, serving line, kcal on the right, and an optional remove button.
+ * time, name, serving line (plus macros when `detailed`), kcal on the right,
+ * and an optional remove button.
  */
 export default function MealEntryCard({
   meal,
@@ -39,6 +31,10 @@ export default function MealEntryCard({
   unit,
   grams,
   kcal,
+  protein,
+  carbs,
+  fat,
+  detailed = false,
   onRemove,
 }) {
   const label = mealLabel || MEAL_LABEL[meal] || 'อาหาร';
@@ -52,45 +48,44 @@ export default function MealEntryCard({
   if (unit === 'กรัม' && gramCount > 0) servingLabel = `${gramCount} กรัม`;
   else if (unit && servingCount > 0) servingLabel = `${servingCount} ${unit}${gramCount > 0 ? ` (≈${gramCount} ก.)` : ''}`;
   else if (servingCount > 0 && servingCount !== 1) servingLabel = `${servingCount} หน่วย`;
-  const accessibilityLabel = [
-    label,
-    timeLabel || null,
-    name,
-    servingLabel || null,
-    `${calories} แคลอรี่`,
-  ]
+  const macroLabel = detailed
+    ? `โปรตีน ${formatNumber(protein)} / คาร์บ ${formatNumber(carbs)} / ไขมัน ${formatNumber(fat)} กรัม`
+    : '';
+  const detailLine = [servingLabel, macroLabel].filter(Boolean).join(' · ');
+  const accessibilityLabel = [label, timeLabel || null, name, detailLine || null, `${formatNumber(calories)} กิโลแคลอรี`]
     .filter(Boolean)
     .join(' ');
 
   return (
-    <View style={styles.card} accessible accessibilityLabel={accessibilityLabel}>
-      <View style={styles.iconTile}>
-        <Ionicons name={iconName} size={20} color={colors.primary} />
+    <View style={styles.card}>
+      <View style={styles.body} accessible accessibilityLabel={accessibilityLabel}>
+        <View style={styles.iconTile}>
+          <Ionicons name={iconName} size={22} color={colors.primary} />
+        </View>
+        <View style={styles.main}>
+          <Text style={styles.meta} numberOfLines={1}>
+            {label}
+            {timeLabel ? ` · ${timeLabel}` : ''}
+          </Text>
+          <Text style={styles.name} numberOfLines={2}>{name}</Text>
+          {detailLine ? (
+            <Text style={styles.subtitle} numberOfLines={2}>{detailLine}</Text>
+          ) : null}
+        </View>
+        <View style={styles.kcalCol}>
+          <Text style={styles.kcal}>{formatNumber(calories)}</Text>
+          <Text style={styles.kcalUnit}>kcal</Text>
+        </View>
       </View>
-      <View style={styles.main}>
-        <Text style={styles.meta} numberOfLines={1}>
-          {label}
-          {timeLabel ? ` · ${timeLabel}` : ''}
-        </Text>
-        <Text style={styles.name} numberOfLines={1}>{name}</Text>
-        {servingLabel ? (
-          <Text style={styles.subtitle} numberOfLines={1}>{servingLabel}</Text>
-        ) : null}
-      </View>
-      <Text style={styles.kcal}>
-        {formatNumber(calories)}
-        <Text style={styles.kcalUnit}> kcal</Text>
-      </Text>
       {!!onRemove && (
         <Pressable
           onPress={onRemove}
-          hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel={`ลบ ${name}`}
-          accessibilityHint="ลบรายการนี้ออกจากบันทึกวันนี้"
+          accessibilityHint="ลบรายการนี้ออกจากบันทึก"
           style={({ pressed }) => [styles.removeBtn, pressed && styles.removeBtnPressed]}
         >
-          <Ionicons name="close" size={18} color={colors.inkMuted} />
+          <Ionicons name="trash-outline" size={18} color={colors.inkMuted} />
         </Pressable>
       )}
     </View>

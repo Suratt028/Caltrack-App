@@ -3,40 +3,41 @@ import { View } from 'react-native';
 import { Text } from './AppText';
 import styles from '../style/components/MacroBarStyles';
 
-export default function MacroBar({ label, consumed, goal, color, unit = 'g' }) {
+const formatNumber = (value) => Math.round(Number(value) || 0).toLocaleString('th-TH');
+
+/**
+ * One macro column on the energy card: dot + name, grams eaten, a progress
+ * bar and "จาก X กรัม". Over the goal the bar is full and the caption says so
+ * in words (no alarm colour).
+ */
+export default function MacroBar({ label, consumed, goal, color }) {
   const safeConsumed = Math.max(Number(consumed) || 0, 0);
   const safeGoal = Number(goal) || 0;
   const over = safeGoal > 0 && safeConsumed > safeGoal;
   const pct = safeGoal > 0 ? Math.min(safeConsumed / safeGoal, 1) : 0;
-  const percentLabel = safeGoal > 0 ? Math.round((safeConsumed / safeGoal) * 100) : 0;
 
   return (
     <View
-      style={styles.row}
+      style={styles.wrap}
       accessible
-      accessibilityLabel={`${label} ${Math.round(safeConsumed)} จาก ${Math.round(safeGoal)} ${unit === 'g' ? 'กรัม' : unit}`}
+      accessibilityLabel={`${label} ${formatNumber(safeConsumed)} จาก ${formatNumber(safeGoal)} กรัม${
+        over ? ` มากกว่าเป้า ${formatNumber(safeConsumed - safeGoal)} กรัม` : ''
+      }`}
     >
       <View style={styles.labelRow}>
-        <Text style={styles.label}>{label}</Text>
-        <Text style={styles.value}>
-          <Text style={[styles.valueStrong, over && styles.valueOver]}>
-            {Math.round(safeConsumed)}
-          </Text>
-          /{Math.round(safeGoal)} {unit}
-          {safeGoal > 0 ? ` · ${percentLabel}%` : ''}
-        </Text>
+        <View style={[styles.dot, { backgroundColor: color }]} />
+        <Text style={styles.label} numberOfLines={1}>{label}</Text>
       </View>
+      <Text style={styles.value} numberOfLines={1}>
+        {formatNumber(safeConsumed)}
+        <Text style={styles.unit}> กรัม</Text>
+      </Text>
       <View style={styles.track}>
-        <View
-          style={[
-            styles.fill,
-            { width: `${pct * 100}%`, backgroundColor: color },
-          ]}
-        />
+        <View style={[styles.fill, { width: `${pct * 100}%`, backgroundColor: color }]} />
       </View>
-      {over && (
-        <Text style={styles.overHint}>เกินเป้าหมายอยู่ {Math.round(safeConsumed - safeGoal)} {unit}</Text>
-      )}
+      <Text style={styles.goal} numberOfLines={2}>
+        {over ? `มากกว่าเป้า ${formatNumber(safeConsumed - safeGoal)} กรัม` : `จาก ${formatNumber(safeGoal)} กรัม`}
+      </Text>
     </View>
   );
 }

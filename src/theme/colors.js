@@ -58,42 +58,63 @@ export const colors = {
   white: '#FFFFFF',
 };
 
+// Corner radii. Cards use `lg`, buttons/inputs `button`/`input`, icon tiles `icon`.
 export const radius = {
+  xs: 8,
   sm: 14,
   md: 16,
   lg: 22,
+  xl: 28,
   button: 15,
   input: 14,
   icon: 14,
   pill: 999,
 };
 
+// 4-pt grid. Screens use `screenX` gutters (16 on phones, 24+ on wide screens).
 export const spacing = {
+  xxs: 2,
   xs: 4,
   sm: 8,
+  smd: 12,
   md: 16,
+  mdl: 20,
   lg: 24,
   xl: 32,
   xxl: 48,
 };
 
+// Type scale. Every size carries an explicit lineHeight: Noto Sans Thai needs
+// ~1.45× room for tone marks and vowels above/below the line, otherwise they clip.
 export const typography = {
-  display: { fontSize: 32, fontWeight: '800', letterSpacing: -0.4 },
-  h1: { fontSize: 26, fontWeight: '700', letterSpacing: -0.2 },
-  h2: { fontSize: 20, fontWeight: '700', letterSpacing: -0.1 },
-  h3: { fontSize: 17, fontWeight: '700', letterSpacing: -0.1 },
-  body: { fontSize: 15, fontWeight: '400' },
-  bodyBold: { fontSize: 15, fontWeight: '600' },
-  label: { fontSize: 13, fontWeight: '600' },
-  caption: { fontSize: 12, fontWeight: '600', letterSpacing: 0.6 },
-  stat: { fontSize: 42, fontWeight: '800', letterSpacing: -0.8 },
+  display: { fontSize: 32, lineHeight: 44, fontWeight: '700', letterSpacing: -0.4 },
+  h1: { fontSize: 26, lineHeight: 38, fontWeight: '700', letterSpacing: -0.2 },
+  h2: { fontSize: 20, lineHeight: 30, fontWeight: '700', letterSpacing: -0.1 },
+  h3: { fontSize: 17, lineHeight: 26, fontWeight: '700', letterSpacing: -0.1 },
+  body: { fontSize: 15, lineHeight: 23, fontWeight: '400' },
+  bodyBold: { fontSize: 15, lineHeight: 23, fontWeight: '600' },
+  bodySm: { fontSize: 13.5, lineHeight: 21, fontWeight: '400' },
+  label: { fontSize: 13, lineHeight: 20, fontWeight: '600' },
+  small: { fontSize: 12, lineHeight: 18, fontWeight: '400' },
+  caption: { fontSize: 12, lineHeight: 18, fontWeight: '600', letterSpacing: 0.6 },
+  // Big numbers (no Thai glyphs above the line, so a tighter lineHeight is safe).
+  stat: { fontSize: 40, lineHeight: 50, fontWeight: '700', letterSpacing: -0.8 },
+  statMd: { fontSize: 28, lineHeight: 38, fontWeight: '700', letterSpacing: -0.4 },
+  statSm: { fontSize: 22, lineHeight: 30, fontWeight: '700', letterSpacing: -0.2 },
 };
 
 // Shared elevation/shadow presets so cards feel like one family.
 export const shadows = {
+  none: { boxShadow: 'none', elevation: 0 },
   soft: { boxShadow: '0px 4px 16px rgba(31, 58, 47, 0.06)', elevation: 1 },
   card: { boxShadow: '0px 4px 16px rgba(31, 58, 47, 0.06)', elevation: 2 },
   raised: { boxShadow: '0px 10px 22px rgba(27, 61, 47, 0.22)', elevation: 6 },
 };
 
-export default { colors, radius, spacing, typography, shadows };
+// Minimum touch targets (iOS 44 pt / Android 48 dp).
+export const touch = {
+  min: 44,
+  comfortable: 48,
+};
+
+export default { colors, radius, spacing, typography, shadows, touch };

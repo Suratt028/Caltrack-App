@@ -24,7 +24,9 @@ export default StyleSheet.create({
   },
   segmentWrap: {
     width: '100%',
-    maxWidth: 320,
+  },
+  segmentWrapWide: {
+    maxWidth: 360,
   },
   navigator: {
     flexDirection: 'row',
@@ -165,22 +167,34 @@ export default StyleSheet.create({
   // Stat cards
   statRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-    marginBottom: spacing.md,
-  },
-  statCard: {
-    flexBasis: '100%',
-    flexGrow: 1,
+    gap: spacing.md,
+    marginBottom: spacing.mdl,
   },
   statCardWide: {
-    flexBasis: '30%',
-    flexGrow: 1,
+    flex: 1,
+    minWidth: 0,
   },
 
   // Chart cards
+  chartRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.mdl,
+  },
+  chartCol: {
+    flex: 1,
+    minWidth: 0,
+  },
   chartCard: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.mdl,
+  },
+  flexShrink: {
+    flexShrink: 1,
+  },
+  reminderHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
   },
   cardTitle: {
     ...typography.h3,
