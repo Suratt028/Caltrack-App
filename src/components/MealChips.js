@@ -4,14 +4,19 @@ import { Text } from './AppText';
 import styles from '../style/components/MealChipsStyles';
 
 // Single source of truth for meal options (shared by Log + Scan screens).
+// `short` is the segmented-control wording (เช้า · กลางวัน · เย็น · ว่าง);
+// `icon` the Ionicons glyph used on meal tiles (sunrise, sun, moon, cup).
 export const MEALS = [
-  { key: 'breakfast', label: 'มื้อเช้า' },
-  { key: 'lunch', label: 'มื้อเที่ยง' },
-  { key: 'dinner', label: 'มื้อเย็น' },
-  { key: 'snack', label: 'ของว่าง' },
+  { key: 'breakfast', label: 'มื้อเช้า', short: 'เช้า', icon: 'partly-sunny-outline' },
+  { key: 'lunch', label: 'มื้อกลางวัน', short: 'กลางวัน', icon: 'sunny-outline' },
+  { key: 'dinner', label: 'มื้อเย็น', short: 'เย็น', icon: 'moon-outline' },
+  { key: 'snack', label: 'ของว่าง', short: 'ว่าง', icon: 'cafe-outline' },
 ];
 
 export const MEAL_LABEL = MEALS.reduce((acc, meal) => ({ ...acc, [meal.key]: meal.label }), {});
+export const MEAL_ICON = MEALS.reduce((acc, meal) => ({ ...acc, [meal.key]: meal.icon }), {});
+// Options for <SegmentedControl> on Log, Portion and Scan.
+export const MEAL_OPTIONS = MEALS.map((meal) => ({ value: meal.key, label: meal.short }));
 
 /** Suggest the meal that best matches the current time of day. */
 export function defaultMealForNow(date = new Date()) {

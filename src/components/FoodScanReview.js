@@ -8,6 +8,7 @@ import { searchNutritionFoods } from '../services/foodService';
 import { calculateNutrition } from '../services/nutritionService';
 import PrimaryButton from './PrimaryButton';
 import Banner from './Banner';
+import NutrientTrio from './NutrientTrio';
 import styles from '../style/components/FoodScanReviewStyles';
 
 const MAX_GRAMS = 5000;
@@ -329,14 +330,18 @@ export default function FoodScanReview({ analysis, onConfirm, onReset }) {
     setQueries((previous) => ({ ...previous, [id]: '' }));
   };
 
+  const totalGrams = includedItems.reduce(
+    (sum, item) => sum + (validGrams(item.grams) ? Number(item.grams) : 0),
+    0
+  );
   const ctaTitle = includedItems.length === 0
     ? 'เลือกอย่างน้อย 1 รายการ'
-    : `บันทึก ${includedItems.length} รายการ${totals.kcal != null ? ` · ${formatKcal(totals.kcal)} kcal` : ''}`;
+    : `ยืนยันและบันทึก${includedItems.length > 1 ? ` ${includedItems.length} รายการ` : ''}${totals.kcal != null ? ` ${formatKcal(totals.kcal)} kcal` : ''}`;
 
   return (
     <View>
-      <Text style={styles.title}>ใช่เมนูเหล่านี้ไหม?</Text>
-      <Text style={styles.helper}>AI ประเมินจากภาพ ค่าจริงอาจต่างตามสูตรและปริมาณ</Text>
+      <Text style={styles.title}>อาหารที่คาดว่าเป็น · แก้ไขได้</Text>
+      <Text style={styles.helper}>แตะชื่อเมนูที่ใกล้เคียง หรือค้นหาเมนูอื่น แล้วปรับปริมาณให้ตรงกับที่ทาน</Text>
 
       {items.map((item, index) => {
         const nutrition = item.included ? getItemNutrition(item) : null;
@@ -543,28 +548,16 @@ export default function FoodScanReview({ analysis, onConfirm, onReset }) {
       </Pressable>
 
       {includedItems.length > 0 && (
-        <View style={styles.totalsCard}>
+        <View style={styles.totalsCard} accessibilityLiveRegion="polite">
           <View style={styles.totalsHeader}>
-            <Text style={styles.totalsTitle}>รวม {includedItems.length} รายการ</Text>
-            <Text style={styles.totalsKcal}>
-              {formatKcal(totals.kcal)}
-              <Text style={styles.totalsKcalUnit}> kcal</Text>
+            <Text style={styles.totalsTitle}>
+              {includedItems.length > 1 ? `รวม ${includedItems.length} รายการ` : 'ประมาณการ'}
+              {totalGrams > 0 ? ` · ${formatAmount(totalGrams, 0)} กรัม` : ''}
             </Text>
+            <Text style={styles.totalsKcal}>{formatKcal(totals.kcal)} kcal</Text>
           </View>
-          <View style={styles.totalsMacroRow}>
-            <View style={styles.macroItem}>
-              <View style={[styles.macroDot, { backgroundColor: colors.protein }]} />
-              <Text style={styles.macroText}>โปรตีน {formatAmount(totals.protein, 0)} ก.</Text>
-            </View>
-            <View style={styles.macroItem}>
-              <View style={[styles.macroDot, { backgroundColor: colors.carbs }]} />
-              <Text style={styles.macroText}>คาร์บ {formatAmount(totals.carbs, 0)} ก.</Text>
-            </View>
-            <View style={styles.macroItem}>
-              <View style={[styles.macroDot, { backgroundColor: colors.fat }]} />
-              <Text style={styles.macroText}>ไขมัน {formatAmount(totals.fat, 0)} ก.</Text>
-            </View>
-          </View>
+          <NutrientTrio protein={totals.protein} carbs={totals.carbs} fat={totals.fat} style={styles.totalsTrio} />
+          <Text style={styles.totalsNote}>ค่าตามปริมาณที่เลือก · แก้ไขได้ก่อนบันทึก</Text>
         </View>
       )}
 
@@ -607,7 +600,7 @@ export default function FoodScanReview({ analysis, onConfirm, onReset }) {
         accessibilityRole="button"
         style={({ pressed }) => [styles.cancelBtn, pressed && styles.pressed]}
       >
-        <Text style={styles.cancelText}>ยกเลิกและถ่ายใหม่</Text>
+        <Text style={styles.cancelText}>ทิ้งผลนี้และเลือกรูปใหม่</Text>
       </Pressable>
     </View>
   );

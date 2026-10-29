@@ -1,14 +1,25 @@
 import { StyleSheet } from 'react-native';
-import { colors, spacing, typography } from '../../theme/colors';
+import { colors, radius, spacing, typography } from '../../theme/colors';
 
 export default StyleSheet.create({
   wrap: {
     width: '100%',
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginBottom: spacing.smd,
+  },
   title: {
-    ...typography.bodyBold,
+    ...typography.h3,
     color: colors.ink,
-    marginBottom: spacing.sm,
+  },
+  meta: {
+    ...typography.small,
+    color: colors.inkMuted,
   },
   table: {
     width: '100%',
@@ -18,54 +29,52 @@ export default StyleSheet.create({
     width: '100%',
   },
   headRow: {
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    paddingBottom: 6,
-    marginBottom: 2,
-    alignItems: 'flex-start',
+    backgroundColor: colors.bg,
+    borderRadius: radius.sm,
+    paddingVertical: spacing.smd,
+    paddingHorizontal: spacing.smd,
+    marginBottom: spacing.xs,
+    alignItems: 'center',
   },
   bodyRow: {
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
-    paddingVertical: 7,
+    paddingVertical: spacing.smd,
+    paddingHorizontal: spacing.smd,
     alignItems: 'center',
   },
   lastRow: {
     borderBottomWidth: 0,
   },
   headCell: {
-    fontSize: 10,
-    lineHeight: 13,
-    fontWeight: '600',
+    ...typography.small,
     color: colors.inkMuted,
     paddingRight: 4,
   },
   cell: {
-    fontSize: 12,
-    color: colors.inkMuted,
+    ...typography.bodySm,
+    color: colors.ink,
     paddingRight: 4,
     fontVariant: ['tabular-nums'],
   },
   dateHead: {
-    flex: 2.4,
+    flex: 2,
     textAlign: 'left',
   },
   dateCell: {
-    flex: 2.4,
+    flex: 2,
     textAlign: 'left',
-    color: colors.ink,
   },
   numCell: {
-    flex: 1,
+    flex: 1.5,
     textAlign: 'right',
   },
   numCellLast: {
-    flex: 1,
+    flex: 1.5,
     textAlign: 'right',
     paddingRight: 0,
   },
   strong: {
     fontWeight: '700',
-    color: colors.ink,
   },
 });

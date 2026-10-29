@@ -19,12 +19,17 @@ const shortDate = (key, withYear) => {
  * One row per day with tabular, right-aligned values; the header row is
  * separated by a border and today's row is labelled "· วันนี้".
  */
-export default function TrendDataTable({ title = '', rows = [], showYear = false }) {
+export default function TrendDataTable({ title = '', meta = '', rows = [], showYear = false }) {
   if (!rows.length) return null;
 
   return (
     <View style={styles.wrap}>
-      {!!title && <Text style={styles.title}>{title}</Text>}
+      {(!!title || !!meta) && (
+        <View style={styles.titleRow}>
+          {!!title && <Text style={styles.title} accessibilityRole="header">{title}</Text>}
+          {!!meta && <Text style={styles.meta}>{meta}</Text>}
+        </View>
+      )}
 
       <View style={styles.table}>
         <View style={[styles.row, styles.headRow]}>

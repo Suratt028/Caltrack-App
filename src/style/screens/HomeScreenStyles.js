@@ -1,240 +1,150 @@
 import { StyleSheet } from 'react-native';
-import { colors, spacing, typography, radius } from '../../theme/colors';
+import { colors, spacing, typography, radius, shadows, touch } from '../../theme/colors';
 
 export default StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: colors.bg,
-  },
-  content: {
-    padding: 20,
-    paddingTop: 20,
-    paddingBottom: 48,
-  },
+  pressed: { opacity: 0.75 },
+  block: { marginBottom: spacing.mdl },
+  banner: { marginBottom: spacing.md },
 
   /* ------------------------------- header -------------------------------- */
-  greetingSmall: {
-    ...typography.body,
-    color: colors.inkMuted,
-    marginBottom: spacing.sm,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: spacing.smd,
+    marginBottom: spacing.mdl,
   },
-  dateSwitcher: {
+  headerText: { flex: 1, minWidth: 0 },
+  title: { ...typography.h1, color: colors.ink },
+  subtitle: { ...typography.bodySm, color: colors.inkMuted },
+  dayPill: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.surface,
     borderRadius: radius.md,
-    padding: 4,
-    marginBottom: spacing.md,
+    ...shadows.soft,
   },
-  dateArrow: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.sm,
+  dayPillCenter: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 6,
+    paddingHorizontal: 2,
   },
-  dateCenter: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  dateTitle: {
-    ...typography.h3,
-    color: colors.ink,
-  },
-  dateText: {
-    fontSize: 13,
-    color: colors.inkMuted,
-  },
-  backToToday: {
-    alignSelf: 'center',
-    minHeight: 32,
-    justifyContent: 'center',
-    marginTop: -spacing.sm,
-    marginBottom: spacing.sm,
-  },
-  leafBtnPressed: {
-    opacity: 0.75,
-  },
-  banner: {
-    marginBottom: spacing.md,
-  },
+  dayPillText: { ...typography.label, color: colors.ink },
 
-  /* ------------------------------ shared --------------------------------- */
-  block: {
-    marginBottom: spacing.md,
-  },
-  mintCard: {
+  /* -------------------------------- layout ------------------------------- */
+  columns: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.lg },
+  colNarrow: { flex: 4, minWidth: 0 },
+  colWide: { flex: 6, minWidth: 0 },
+  colHalf: { flex: 1, minWidth: 0 },
+  // Desktop grid: left column ≈ 1/3, right area holds next-meal + last-meal.
+  colLeft: { flex: 34, minWidth: 0 },
+  colRight: { flex: 66, minWidth: 0 },
+  columnsTight: { flexDirection: 'row', alignItems: 'stretch', gap: spacing.mdl },
+  colNext: { flex: 64, minWidth: 0 },
+  colLast: { flex: 36, minWidth: 0 },
+  lastMealCard: { flex: 1, padding: spacing.md },
+  lastMealArt: {
+    aspectRatio: 1.25,
+    borderRadius: radius.md,
     backgroundColor: colors.mint,
-    borderColor: colors.mint,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.smd,
   },
-  sectionTitle: {
-    ...typography.h3,
-    color: colors.ink,
-  },
-  linkText: {
-    ...typography.label,
-    fontSize: 12,
-    color: colors.primary,
-  },
+  lastMealMeta: { ...typography.small, color: colors.inkMuted },
+  lastMealBody: { ...typography.small, color: colors.inkMuted, marginTop: spacing.xs },
 
-  /* ---------------------------- energy card ------------------------------ */
-  energyHeader: {
+  /* -------------------------------- cards -------------------------------- */
+  cardHead: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.sm,
   },
+  cardTitle: { ...typography.h3, color: colors.ink },
+  cardTitleLg: { ...typography.h2, color: colors.ink },
+  cardBody: { ...typography.body, color: colors.inkMuted, marginTop: spacing.sm },
+  cardActions: { marginTop: spacing.mdl },
+  linkHit: { minHeight: touch.min, justifyContent: 'center' },
+  linkText: { ...typography.label, color: colors.primary },
+  linkTextStrong: { ...typography.bodyBold, fontWeight: '700', color: colors.primaryDark },
+
+  /* ----------------------------- energy card ----------------------------- */
   energyRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.md,
+    gap: spacing.mdl,
+    marginTop: spacing.xs,
+  },
+  energyStats: { flex: 1, minWidth: 0, gap: spacing.md },
+  statLabel: { ...typography.bodySm, color: colors.inkMuted },
+  statValue: { ...typography.statMd, color: colors.ink },
+  statValueSm: { ...typography.statSm, color: colors.ink },
+  statUnit: { fontSize: 13, fontWeight: '600', color: colors.ink },
+  overNote: {
     marginTop: spacing.md,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.smd,
+    borderRadius: radius.sm,
+    backgroundColor: colors.warnBg,
   },
-  energyStats: {
-    flex: 1,
-    minWidth: 0,
-    gap: spacing.md,
-    alignItems: 'flex-start',
-  },
-  statLabel: {
-    fontSize: 12,
-    color: colors.inkMuted,
-  },
-  statValue: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: colors.ink,
-    marginTop: 2,
-  },
-  statValueSm: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.ink,
-    marginTop: 2,
-  },
-  statUnit: {
-    fontSize: 12,
-    fontWeight: '400',
-    color: colors.inkMuted,
-  },
-  overText: {
-    ...typography.label,
-    fontSize: 13,
-    color: colors.carbStrong,
-    marginTop: spacing.md,
-    textAlign: 'center',
-  },
-  divider: {
-    height: 1,
-    backgroundColor: colors.border,
-    marginVertical: spacing.md,
-  },
-  macroGrid: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  macroCell: {
-    flex: 1,
-    minWidth: 0,
-  },
+  overText: { ...typography.label, color: colors.carbStrong, textAlign: 'center' },
+  divider: { height: 1, backgroundColor: colors.border, marginVertical: spacing.mdl },
+  macroGrid: { flexDirection: 'row', gap: spacing.md },
 
-  /* ----------------------------- no-goal cards --------------------------- */
+  /* ------------------------------ no goal -------------------------------- */
+  welcomeCard: { padding: spacing.lg },
   sproutTile: {
-    width: 48,
-    height: 48,
+    width: 64,
+    height: 64,
     borderRadius: radius.md,
     backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.sm,
+    marginBottom: spacing.mdl,
   },
-  noGoalTitle: {
-    ...typography.h3,
-    color: colors.ink,
-    marginTop: spacing.xs,
-  },
-  noGoalDesc: {
-    ...typography.body,
-    fontSize: 13.5,
-    color: colors.primaryDark,
-    lineHeight: 20,
-    marginTop: spacing.xs,
-  },
-  noGoalCta: {
+  welcomeTitle: { ...typography.h1, fontSize: 24, lineHeight: 36, color: colors.ink },
+  welcomeBody: { ...typography.body, color: colors.inkMuted, marginTop: spacing.smd },
+  welcomeCta: { marginTop: spacing.mdl },
+  bigKcal: { ...typography.statMd, fontSize: 32, lineHeight: 44, color: colors.ink, marginTop: spacing.sm },
+  explainBox: {
     marginTop: spacing.md,
-    alignSelf: 'stretch',
+    padding: spacing.md,
+    borderRadius: radius.md,
+    backgroundColor: colors.mint,
   },
-  bigKcal: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: colors.ink,
-    marginTop: spacing.sm,
-  },
-  bigKcalUnit: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: colors.inkMuted,
-  },
-  explainText: {
-    ...typography.body,
-    fontSize: 13,
-    color: colors.inkMuted,
-    lineHeight: 20,
-    marginTop: spacing.sm,
-  },
+  explainTitle: { ...typography.bodyBold, fontWeight: '700', color: colors.ink },
+  explainText: { ...typography.small, color: colors.inkMuted, marginTop: spacing.xxs },
 
-  /* --------------------------- food today list --------------------------- */
-  foodHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'baseline',
-    marginBottom: spacing.sm,
-  },
-  countText: {
-    fontSize: 12,
-    color: colors.inkMuted,
-  },
-  mealGroup: {
-    marginBottom: spacing.md,
-  },
-  mealGroupHeader: {
+  /* ------------------------------ actions -------------------------------- */
+  actions: { gap: spacing.smd },
+  latestRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    minHeight: 44,
-    marginBottom: spacing.xs,
-    paddingLeft: spacing.xs,
+    marginTop: spacing.md,
   },
-  mealGroupTitle: {
-    ...typography.bodyBold,
-    flex: 1,
-    color: colors.ink,
-  },
-  mealGroupEmpty: {
-    fontSize: 13,
-    fontWeight: '400',
-    color: colors.inkMuted,
-  },
-  mealGroupKcal: {
-    ...typography.label,
-    color: colors.inkMuted,
-  },
-  mealAddBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.sm,
-    backgroundColor: colors.mint,
+  latestText: { ...typography.bodySm, color: colors.inkMuted, flex: 1 },
+
+  /* ----------------------------- food list ------------------------------- */
+  mealSlot: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: spacing.md,
+    minHeight: 72,
+    paddingHorizontal: spacing.mdl,
+    paddingVertical: spacing.smd,
+    marginBottom: spacing.smd,
+    borderRadius: radius.lg,
+    borderWidth: 1.5,
+    borderColor: colors.border,
   },
+  mealSlotText: { flex: 1, minWidth: 0 },
+  mealSlotTitle: { ...typography.bodyBold, fontWeight: '700', color: colors.ink },
+  mealSlotBody: { ...typography.small, color: colors.inkMuted },
 
   /* ---------------------------- reflective card -------------------------- */
-  reflectBody: {
-    ...typography.body,
-    fontSize: 13.5,
-    color: colors.primaryDark,
-    lineHeight: 20,
-    marginTop: spacing.sm,
-  },
+  reflectHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  reflectBody: { ...typography.body, color: colors.primaryDark, marginTop: spacing.smd },
 });

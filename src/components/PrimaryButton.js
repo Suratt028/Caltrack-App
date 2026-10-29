@@ -5,6 +5,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import styles from '../style/components/PrimaryButtonStyles';
 
+// Text/icon colour per variant. "soft" is the mint secondary action from the
+// design (e.g. "สแกนอาหารด้วย AI"); "outline" a quiet tertiary; "ghost" a link.
+const FOREGROUND = {
+  solid: colors.white,
+  soft: colors.primaryDark,
+  outline: colors.primaryDark,
+  ghost: colors.primary,
+};
+
 export default function PrimaryButton({
   title,
   onPress,
@@ -14,36 +23,36 @@ export default function PrimaryButton({
   style,
   icon,
   accessibilityHint,
+  accessibilityLabel,
   compact = false,
 }) {
-  const isSolid = variant === 'solid';
   const isDisabled = disabled || loading;
-  const iconColor = isSolid ? colors.white : colors.primary;
+  const foreground = FOREGROUND[variant] || FOREGROUND.solid;
 
   return (
     <Pressable
       onPress={onPress}
       disabled={isDisabled}
       accessibilityRole="button"
-      accessibilityLabel={title}
+      accessibilityLabel={accessibilityLabel || title}
       accessibilityHint={accessibilityHint}
       accessibilityState={{ disabled: isDisabled, busy: loading }}
       style={({ pressed }) => [
         styles.base,
         compact && styles.compact,
-        isSolid ? styles.solid : styles.outline,
+        styles[variant] || styles.solid,
         isDisabled && styles.disabled,
         pressed && !isDisabled && styles.pressed,
         style,
       ]}
-      android_ripple={isSolid ? { color: 'rgba(255,255,255,0.18)' } : { color: 'rgba(33,99,76,0.10)' }}
+      android_ripple={variant === 'solid' ? { color: 'rgba(255,255,255,0.18)' } : { color: 'rgba(33,99,76,0.10)' }}
     >
       {loading ? (
-        <ActivityIndicator color={isSolid ? colors.white : colors.primary} />
+        <ActivityIndicator color={foreground} />
       ) : (
         <View style={styles.content}>
-          {!!icon && <Ionicons name={icon} size={18} color={iconColor} style={styles.icon} />}
-          <Text style={[styles.text, isSolid ? styles.textSolid : styles.textOutline]} numberOfLines={1}>
+          {!!icon && <Ionicons name={icon} size={20} color={foreground} style={styles.icon} />}
+          <Text style={[styles.text, { color: foreground }]} numberOfLines={2}>
             {title}
           </Text>
         </View>

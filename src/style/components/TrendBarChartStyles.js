@@ -1,20 +1,50 @@
 import { StyleSheet } from 'react-native';
-import { colors, spacing } from '../../theme/colors';
+import { colors, spacing, typography } from '../../theme/colors';
 
 export default StyleSheet.create({
   wrap: {
     width: '100%',
   },
+  legend: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  legendText: {
+    ...typography.small,
+    color: colors.inkMuted,
+  },
+  legendGoal: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  legendDash: {
+    width: 14,
+    height: 0,
+    borderTopWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: colors.ink,
+  },
+  legendGoalText: {
+    ...typography.small,
+    fontWeight: '600',
+    color: colors.primaryDark,
+  },
   canvas: {
     width: '100%',
-    minHeight: 176,
+    minHeight: 210,
     alignItems: 'flex-start',
   },
   caption: {
-    fontSize: 11.5,
-    lineHeight: 16,
+    ...typography.small,
     color: colors.inkMuted,
-    marginTop: spacing.sm,
+    textAlign: 'center',
+    marginTop: spacing.xs,
   },
   // Visually hidden but still announced by screen readers.
   srOnly: {

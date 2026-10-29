@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, ScrollView, Pressable, Modal } from 'react-native';
+import { View, Pressable, Modal } from 'react-native';
 import { Text } from '../components/AppText';
 import { TextInput } from '../components/AppTextInput';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import Screen from '../components/Screen';
 import { colors, spacing } from '../theme/colors';
 import { useApp } from '../context/AppContext';
 import {
@@ -122,8 +122,7 @@ export default function ProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+    <Screen variant="flow">
         <ScreenHeader
           title="โปรไฟล์และเป้าหมาย"
           subtitle="ตั้งเป้าให้เหมาะกับคุณ ไม่มีค่าที่ถูกต้องเพียงค่าเดียว"
@@ -387,11 +386,10 @@ export default function ProfileScreen() {
             การล้างข้อมูลจะลบโปรไฟล์ บันทึกอาหาร และน้ำหนักทั้งหมดอย่างถาวร
           </Text>
         </View>
-      </ScrollView>
 
       <Modal visible={showReport} animationType="slide" onRequestClose={() => setShowReport(false)}>
         <ReportScreen onClose={() => setShowReport(false)} />
       </Modal>
-    </SafeAreaView>
+    </Screen>
   );
 }

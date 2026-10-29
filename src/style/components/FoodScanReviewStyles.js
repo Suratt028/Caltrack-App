@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { colors, radius, spacing, typography } from '../../theme/colors';
+import { colors, radius, spacing, shadows, typography } from '../../theme/colors';
 
 export default StyleSheet.create({
   title: {
@@ -7,10 +7,8 @@ export default StyleSheet.create({
     color: colors.ink,
   },
   helper: {
-    ...typography.body,
-    fontSize: 13,
+    ...typography.bodySm,
     color: colors.inkMuted,
-    lineHeight: 19,
     marginTop: spacing.xs,
     marginBottom: spacing.md,
   },
@@ -21,11 +19,10 @@ export default StyleSheet.create({
   /* ------------------------------ item card ------------------------------ */
   itemCard: {
     backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderWidth: 1,
     borderRadius: radius.lg,
-    padding: spacing.md,
+    padding: spacing.mdl,
     marginBottom: spacing.md,
+    ...shadows.soft,
   },
   itemCardExcluded: {
     backgroundColor: colors.surfaceMuted,
@@ -80,7 +77,7 @@ export default StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    minHeight: 40,
+    minHeight: 44,
     maxWidth: '100%',
     paddingHorizontal: 14,
     borderRadius: radius.pill,
@@ -258,51 +255,33 @@ export default StyleSheet.create({
     marginLeft: spacing.xs,
   },
   totalsCard: {
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.mint,
     borderRadius: radius.lg,
-    padding: spacing.md,
+    padding: spacing.mdl,
     marginBottom: spacing.md,
   },
   totalsHeader: {
     flexDirection: 'row',
-    alignItems: 'baseline',
+    alignItems: 'center',
     justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
   },
   totalsTitle: {
-    ...typography.label,
-    fontSize: 14,
-    color: colors.primaryDark,
+    ...typography.h3,
+    color: colors.ink,
   },
   totalsKcal: {
-    fontSize: 26,
-    fontWeight: '800',
+    ...typography.statMd,
     color: colors.ink,
   },
-  totalsKcalUnit: {
-    fontSize: 14,
-    fontWeight: '400',
+  totalsTrio: {
+    marginTop: spacing.md,
+  },
+  totalsNote: {
+    ...typography.small,
     color: colors.inkMuted,
-  },
-  totalsMacroRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.md,
-    marginTop: spacing.sm,
-  },
-  macroItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  macroDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 6,
-  },
-  macroText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.ink,
+    marginTop: spacing.md,
   },
   cancelBtn: {
     minHeight: 48,
