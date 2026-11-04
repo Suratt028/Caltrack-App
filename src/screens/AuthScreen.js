@@ -168,12 +168,6 @@ export default function AuthScreen() {
               />
               {!!passwordError && <Text style={styles.fieldError}>{passwordError}</Text>}
 
-              {!isSignup && (
-                <View style={[styles.rowBetween, styles.rowEnd]}>
-                  <Text style={styles.linkText}>ลืมรหัสผ่าน?</Text>
-                </View>
-              )}
-
               {!!error && (
                 <View style={styles.errorBox}>
                   <Banner tone="error" message={error} />
