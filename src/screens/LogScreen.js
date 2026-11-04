@@ -1,41 +1,61 @@
-import React, { useEffect, useState } from 'react';
-import { View, Pressable, ActivityIndicator, ScrollView } from 'react-native';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { View, Pressable } from 'react-native';
 import { Text } from '../components/AppText';
 import { TextInput } from '../components/AppTextInput';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { searchNutritionFoods } from '../services/foodService';
 import { isOfflineError } from '../services/atlasService';
 import { useApp } from '../context/AppContext';
+import Screen from '../components/Screen';
 import FoodSearchRow from '../components/FoodSearchRow';
+import SkeletonRows from '../components/SkeletonRows';
 import Card from '../components/Card';
 import PrimaryButton from '../components/PrimaryButton';
-import { defaultMealForNow } from '../components/MealChips';
+import IconButton from '../components/IconButton';
+import { MEAL_OPTIONS, defaultMealForNow } from '../components/MealChips';
 import EmptyState from '../components/EmptyState';
 import Banner from '../components/Banner';
 import OfflineState from '../components/OfflineState';
 import ScreenHeader from '../components/ScreenHeader';
+import SectionHeader from '../components/SectionHeader';
 import SegmentedControl from '../components/SegmentedControl';
 import styles from '../style/screens/LogScreenStyles';
 
 const SEARCH_DEBOUNCE_MS = 200;
 const SEARCH_LIMIT = 20;
+const RECENT_LIMIT = 6;
 
-// Short meal labels — same wording as the web prototype (meals.*Short).
-const MEAL_OPTIONS = [
-  { value: 'breakfast', label: 'เช้า' },
-  { value: 'lunch', label: 'กลางวัน' },
-  { value: 'dinner', label: 'เย็น' },
-  { value: 'snack', label: 'ว่าง' },
-];
+const formatNumber = (value) => Math.round(Number(value) || 0).toLocaleString('th-TH');
 
 /**
- * Log search screen (mirrors the web LogSearchScreen): pick a meal, search the
- * real food service, jump to the portion screen with "+", or add a food manually.
+ * Database foods the user logged most recently (newest first, one per food),
+ * so everyday dishes are one tap away. Built from the user's own logs only.
+ */
+function recentFoodsFrom(logsByDay) {
+  const seen = new Set();
+  const out = [];
+  Object.keys(logsByDay)
+    .sort((a, b) => (a < b ? 1 : -1))
+    .forEach((dateKey) => {
+      [...(logsByDay[dateKey] || [])]
+        .sort((a, b) => String(b.time || '').localeCompare(String(a.time || '')))
+        .forEach((entry) => {
+          const id = entry.foodId != null ? String(entry.foodId) : '';
+          if (!id || seen.has(id) || out.length >= RECENT_LIMIT) return;
+          seen.add(id);
+          out.push(entry);
+        });
+    });
+  return out;
+}
+
+/**
+ * Log search screen: pick a meal, search the real food service, open the
+ * portion screen for a result (or a recent food), or add a food manually.
  */
 export default function LogScreen({ navigation, route }) {
-  const { addFoodLog } = useApp();
+  const { addFoodLog, logsByDay } = useApp();
   const requestedMeal = route?.params?.meal;
   const [meal, setMeal] = useState(() => requestedMeal || defaultMealForNow());
 
@@ -44,6 +64,7 @@ export default function LogScreen({ navigation, route }) {
     if (requestedMeal) setMeal(requestedMeal);
   }, [requestedMeal, route?.params?.requestedAt]);
   const [query, setQuery] = useState('');
+  const [focused, setFocused] = useState(false);
   const [results, setResults] = useState([]);
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState('');
@@ -55,6 +76,10 @@ export default function LogScreen({ navigation, route }) {
   const [manualKcal, setManualKcal] = useState('');
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
+  const [savedNotice, setSavedNotice] = useState('');
+  const searchInput = useRef(null);
+
+  const recentFoods = useMemo(() => recentFoodsFrom(logsByDay), [logsByDay]);
 
   // Debounced search of the server's food database (with stale-response guard).
   useEffect(() => {
@@ -98,6 +123,17 @@ export default function LogScreen({ navigation, route }) {
     });
   };
 
+  // Recent entries only carry the foodId; Portion loads the food by id.
+  const goToRecent = (entry) => {
+    navigation.navigate('Portion', { foodId: String(entry.foodId), meal });
+  };
+
+  const openManual = () => {
+    setManualOpen(true);
+    setSavedNotice('');
+    if (!manualName && query.trim()) setManualName(query.trim());
+  };
+
   const saveManual = async () => {
     const name = manualName.trim();
     if (!name || saving) return;
@@ -117,6 +153,8 @@ export default function LogScreen({ navigation, route }) {
       setManualName('');
       setManualKcal('');
       setManualOpen(false);
+      setQuery('');
+      setSavedNotice(`บันทึก “${name}” แล้ว ดูได้ที่หน้าหลัก`);
     } catch (error) {
       // Keep the form open (with the typed values) so the user can retry.
       setSaveError(error?.message || 'บันทึกไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
@@ -125,181 +163,212 @@ export default function LogScreen({ navigation, route }) {
     }
   };
 
-  return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScrollView
-        contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        <ScreenHeader title="บันทึกอาหาร" subtitle="เลือกมื้อ แล้วค้นหาอาหารที่ทาน" />
+  const trimmedQuery = query.trim();
 
-        {/* Meal */}
-        <View style={styles.mealWrap}>
-          <SegmentedControl options={MEAL_OPTIONS} value={meal} onChange={setMeal} label="มื้ออาหาร" />
-        </View>
-
-        {/* Search field */}
-        <View style={styles.searchWrap}>
-          <Ionicons name="search" size={20} color={colors.inkMuted} style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            value={query}
-            onChangeText={setQuery}
-            placeholder="ค้นหาอาหาร เช่น ข้าวกะเพราไก่"
-            placeholderTextColor={colors.inkFaint}
-            returnKeyType="search"
-            autoFocus
-            accessibilityLabel="ค้นหาอาหาร"
+  let body;
+  if (!trimmedQuery) {
+    body = recentFoods.length > 0 ? (
+      <>
+        <SectionHeader title="เมนูที่บันทึกล่าสุด" meta={`${recentFoods.length} รายการ`} />
+        {recentFoods.map((entry) => (
+          <FoodSearchRow
+            key={String(entry.foodId)}
+            name={entry.name}
+            subtitle={`ครั้งก่อน ${entry.servings || 1} ${entry.unit || 'หน่วย'}${entry.grams ? ` · ${formatNumber(entry.grams)} กรัม` : ''}`}
+            kcal={entry.kcal}
+            onPress={() => goToRecent(entry)}
           />
-          {query.length > 0 && (
-            <Pressable
-              onPress={() => setQuery('')}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel="ล้างคำค้น"
-              style={({ pressed }) => [styles.clearBtn, pressed && styles.clearBtnPressed]}
-            >
-              <Ionicons name="close" size={20} color={colors.inkMuted} />
-            </Pressable>
-          )}
-        </View>
+        ))}
+      </>
+    ) : (
+      <Card>
+        <EmptyState
+          icon="search-outline"
+          title="พิมพ์ชื่ออาหารเพื่อค้นหา"
+          message="ค้นได้ทั้งชื่อไทยและอังกฤษ จากฐานข้อมูลอาหารไทยกว่า 1,000 รายการ"
+        />
+      </Card>
+    );
+  } else if (searching) {
+    body = (
+      <>
+        <SectionHeader title="อาหารที่พบ" meta="กำลังค้นหา…" />
+        <SkeletonRows count={3} label="กำลังค้นหาอาหาร" />
+      </>
+    );
+  } else if (searchOffline) {
+    body = (
+      <Card>
+        <OfflineState timedOut={searchOffline.timedOut} onRetry={() => setSearchAttempt((attempt) => attempt + 1)} />
+      </Card>
+    );
+  } else if (searchError) {
+    body = (
+      <Card>
+        <EmptyState
+          icon="alert-circle-outline"
+          title="ค้นหาไม่สำเร็จ"
+          message={searchError}
+          actionTitle="ลองใหม่"
+          actionIcon="refresh"
+          onAction={() => setSearchAttempt((attempt) => attempt + 1)}
+        />
+      </Card>
+    );
+  } else if (results.length === 0) {
+    body = (
+      <Card>
+        <EmptyState
+          icon="search-outline"
+          title={`ไม่พบ “${trimmedQuery}”`}
+          message="ลองพิมพ์ให้สั้นลง หรือใช้ชื่อเรียกอื่น เช่น “กะเพรา” แทน “ผัดกะเพราไก่ไข่ดาว”"
+          actionTitle="เพิ่มเมนูนี้เอง"
+          actionIcon="create-outline"
+          onAction={openManual}
+          secondaryTitle="ล้างคำค้น"
+          onSecondary={() => setQuery('')}
+        />
+      </Card>
+    );
+  } else {
+    body = (
+      <>
+        <SectionHeader title="อาหารที่พบ" meta={`${results.length} รายการ`} />
+        {results.map((food) => (
+          <FoodSearchRow
+            key={String(food.id)}
+            name={food.name}
+            query={trimmedQuery}
+            subtitle={food.nameEn || undefined}
+            kcal={food.per100g?.kcal}
+            kcalSuffix="/ 100 กรัม"
+            kcalEstimated={food.estimated?.includes('kcal')}
+            onPress={() => goToPortion(food)}
+          />
+        ))}
+      </>
+    );
+  }
 
-        {/* Results */}
-        <View style={styles.resultsHeader}>
-          <Text style={styles.resultsTitle}>อาหารที่พบ</Text>
-          {!!query.trim() && !searching && !searchError && (
-            <Text style={styles.resultsCount}>{results.length} รายการ</Text>
-          )}
-        </View>
+  return (
+    <Screen variant="flow">
+      <ScreenHeader title="บันทึกอาหาร" subtitle="เลือกมื้อ แล้วค้นหาอาหารที่ทาน" />
 
-        {!query.trim() ? (
-          <Card style={styles.emptyCard}>
-            <EmptyState
-              icon="search-outline"
-              title="พิมพ์ชื่ออาหารเพื่อค้นหา"
-              message="ค้นได้ทั้งชื่อไทยและอังกฤษ จากฐานข้อมูลอาหารไทยกว่า 1,000 รายการ"
-            />
-          </Card>
-        ) : searching ? (
-          <View style={styles.loadingRow}>
-            <ActivityIndicator size="small" color={colors.primary} />
-            <Text style={styles.loadingText}>กำลังค้นหา…</Text>
-          </View>
-        ) : searchOffline ? (
-          <Card style={styles.emptyCard}>
-            <OfflineState
-              timedOut={searchOffline.timedOut}
-              onRetry={() => setSearchAttempt((attempt) => attempt + 1)}
-            />
-          </Card>
-        ) : searchError ? (
-          <Banner tone="error" message={searchError} />
-        ) : results.length === 0 ? (
-          <Card style={styles.emptyCard}>
-            <EmptyState
-              icon="restaurant-outline"
-              title={`ไม่พบเมนูที่ตรงกับ “${query}”`}
-              message="ลองพิมพ์คำอื่นสั้นลง หรือเพิ่มชื่ออาหารและโภชนาการเองได้เลย"
-            />
-          </Card>
-        ) : (
-          <View>
-            {results.map((food) => (
-              <FoodSearchRow
-                key={String(food.id)}
-                name={food.name}
-                subtitle={[food.nameEn, 'ต่อ 100 กรัม'].filter(Boolean).join(' · ')}
-                kcal={food.per100g?.kcal}
-                kcalEstimated={food.estimated?.includes('kcal')}
-                onPress={() => goToPortion(food)}
-              />
-            ))}
-          </View>
+      <View style={styles.mealWrap}>
+        <SegmentedControl options={MEAL_OPTIONS} value={meal} onChange={setMeal} label="มื้ออาหาร" />
+      </View>
+
+      {/* Search field */}
+      <View style={[styles.searchWrap, focused && styles.searchWrapFocused]}>
+        <Ionicons name="search" size={22} color={colors.primaryDark} />
+        <TextInput
+          ref={searchInput}
+          style={styles.searchInput}
+          value={query}
+          onChangeText={setQuery}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          placeholder="ค้นหาอาหาร เช่น ข้าวกะเพรา"
+          placeholderTextColor={colors.inkFaint}
+          returnKeyType="search"
+          accessibilityLabel="ค้นหาอาหาร"
+        />
+        {query.length > 0 && (
+          <IconButton
+            icon="close"
+            variant="ghost"
+            color={colors.inkMuted}
+            onPress={() => {
+              setQuery('');
+              searchInput.current?.focus?.();
+            }}
+            accessibilityLabel="ล้างคำค้น"
+          />
         )}
+        <IconButton
+          icon="camera-outline"
+          variant="soft"
+          onPress={() => navigation.navigate('Scan', { meal })}
+          accessibilityLabel="สแกนอาหารด้วย AI"
+          accessibilityHint="ถ่ายหรือเลือกรูปอาหารแทนการพิมพ์ค้นหา"
+        />
+      </View>
 
-        {/* Add manually */}
-        <View style={styles.manualSection}>
-          <Pressable
-            onPress={() => setManualOpen((open) => !open)}
-            accessibilityRole="button"
-            accessibilityLabel="ไม่พบเมนูที่ต้องการ? เพิ่มชื่ออาหารและโภชนาการเอง"
-            accessibilityState={{ expanded: manualOpen }}
-            style={({ pressed }) => [styles.manualToggle, pressed && styles.manualTogglePressed]}
-          >
-            <View style={styles.manualTile}>
-              <Ionicons name="pencil" size={20} color={colors.primary} />
-            </View>
-            <View style={styles.manualTextCol}>
-              <Text style={styles.manualTitle}>ไม่พบเมนูที่ต้องการ?</Text>
-              <Text style={styles.manualSubtitle}>เพิ่มชื่ออาหารและโภชนาการเอง</Text>
-            </View>
-            <View style={[styles.chevron, manualOpen && styles.chevronOpen]}>
-              <Ionicons name="chevron-forward" size={20} color={colors.inkMuted} />
-            </View>
-          </Pressable>
+      {!!savedNotice && (
+        <Banner tone="success" message={savedNotice} onDismiss={() => setSavedNotice('')} style={styles.banner} />
+      )}
 
-          {manualOpen && (
-            <Card style={styles.manualForm}>
-              <View style={styles.inputGroup}>
-                <Text style={styles.fieldLabel}>ชื่ออาหาร</Text>
-                <TextInput
-                  style={styles.manualInput}
-                  value={manualName}
-                  onChangeText={setManualName}
-                  placeholder="เช่น ข้าวกะเพราไก่"
-                  placeholderTextColor={colors.inkFaint}
-                  accessibilityLabel="ชื่ออาหาร"
-                  returnKeyType="done"
-                />
-              </View>
+      <View accessibilityLiveRegion="polite">{body}</View>
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.fieldLabel}>พลังงาน (kcal)</Text>
-                <TextInput
-                  style={styles.manualInput}
-                  value={manualKcal}
-                  onChangeText={setManualKcal}
-                  placeholder="เช่น 560"
-                  placeholderTextColor={colors.inkFaint}
-                  keyboardType="numeric"
-                  accessibilityLabel="พลังงาน (kcal)"
-                  returnKeyType="done"
-                />
-              </View>
+      {/* Add manually */}
+      <Pressable
+        onPress={() => (manualOpen ? setManualOpen(false) : openManual())}
+        accessibilityRole="button"
+        accessibilityLabel="ไม่พบเมนูที่ต้องการ? เพิ่มชื่ออาหารและโภชนาการเอง"
+        accessibilityState={{ expanded: manualOpen }}
+        style={({ pressed }) => [styles.manualToggle, pressed && styles.pressed]}
+      >
+        <Ionicons name="create-outline" size={24} color={colors.primary} />
+        <View style={styles.manualTextCol}>
+          <Text style={styles.manualTitle}>ไม่พบเมนูที่ต้องการ?</Text>
+          <Text style={styles.manualSubtitle}>เพิ่มชื่ออาหารและพลังงานเอง</Text>
+        </View>
+        <Ionicons name={manualOpen ? 'chevron-down' : 'chevron-forward'} size={22} color={colors.primaryDark} />
+      </Pressable>
 
-              {!!saveError && <Banner tone="error" message={saveError} onDismiss={() => setSaveError('')} />}
+      {manualOpen && (
+        <Card style={styles.manualForm}>
+          <Text style={styles.fieldLabel}>ชื่ออาหาร</Text>
+          <TextInput
+            style={styles.input}
+            value={manualName}
+            onChangeText={setManualName}
+            placeholder="เช่น ข้าวกะเพราไก่"
+            placeholderTextColor={colors.inkFaint}
+            accessibilityLabel="ชื่ออาหาร"
+            returnKeyType="next"
+          />
+          <Text style={[styles.fieldLabel, styles.fieldGap]}>พลังงาน (kcal)</Text>
+          <TextInput
+            style={styles.input}
+            value={manualKcal}
+            onChangeText={setManualKcal}
+            placeholder="เช่น 560"
+            placeholderTextColor={colors.inkFaint}
+            keyboardType="numeric"
+            accessibilityLabel="พลังงาน กิโลแคลอรี"
+            returnKeyType="done"
+            onSubmitEditing={saveManual}
+          />
+          <Text style={styles.hint}>ไม่ทราบตัวเลขก็เว้นว่างได้ จะบันทึกเป็น 0 kcal และแก้ทีหลังได้</Text>
 
-              <View style={styles.manualActions}>
-                <PrimaryButton
-                  title="บันทึก"
-                  icon="checkmark"
-                  onPress={saveManual}
-                  loading={saving}
-                  disabled={!manualName.trim()}
-                  style={[styles.actionGap, { flex: 1 }]}
-                />
-                <PrimaryButton
-                  title="ยกเลิก"
-                  variant="outline"
-                  onPress={() => setManualOpen(false)}
-                  disabled={saving}
-                  style={{ flex: 1 }}
-                />
-              </View>
-            </Card>
+          {!!saveError && (
+            <Banner tone="error" message={saveError} onDismiss={() => setSaveError('')} style={styles.banner} />
           )}
-        </View>
 
-        {/* Gentle info notice */}
-        <View style={styles.noticeCard}>
-          <Ionicons name="information-circle" size={20} color={colors.primaryDark} style={styles.noticeIcon} />
-          <View style={styles.noticeTextCol}>
-            <Text style={styles.noticeText}>เลือก + เพื่อปรับปริมาณก่อนบันทึก</Text>
-            <Text style={styles.noticeSub}>ข้อมูลโภชนาการอาจต่างกันตามสูตรและวัตถุดิบ</Text>
+          <View style={styles.manualActions}>
+            <PrimaryButton
+              title="บันทึก"
+              icon="checkmark"
+              onPress={saveManual}
+              loading={saving}
+              disabled={!manualName.trim()}
+              style={styles.flex}
+            />
+            <PrimaryButton
+              title="ยกเลิก"
+              variant="outline"
+              onPress={() => setManualOpen(false)}
+              disabled={saving}
+              style={styles.flex}
+            />
           </View>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+        </Card>
+      )}
+
+      <Text style={styles.footnote}>
+        แตะรายการเพื่อปรับปริมาณก่อนบันทึก{'\n'}ค่าประมาณอาจต่างกันตามสูตรและวัตถุดิบ
+      </Text>
+    </Screen>
   );
 }

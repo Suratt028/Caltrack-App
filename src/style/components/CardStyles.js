@@ -3,11 +3,20 @@ import { colors, radius, spacing, shadows } from '../../theme/colors';
 
 export default StyleSheet.create({
   card: {
-    backgroundColor: colors.surface,
     borderRadius: radius.lg,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
+    padding: spacing.mdl,
+  },
+  surface: {
+    backgroundColor: colors.surface,
     ...shadows.card,
+  },
+  mint: {
+    backgroundColor: colors.mint,
+  },
+  dashed: {
+    backgroundColor: 'transparent',
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: colors.border,
   },
 });

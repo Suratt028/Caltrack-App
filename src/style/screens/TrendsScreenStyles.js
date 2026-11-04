@@ -24,7 +24,9 @@ export default StyleSheet.create({
   },
   segmentWrap: {
     width: '100%',
-    maxWidth: 320,
+  },
+  segmentWrapWide: {
+    maxWidth: 360,
   },
   navigator: {
     flexDirection: 'row',
@@ -34,6 +36,7 @@ export default StyleSheet.create({
   },
   navigatorWide: {
     flex: 1,
+    justifyContent: 'flex-end',
   },
   navBtn: {
     width: 44,
@@ -44,6 +47,33 @@ export default StyleSheet.create({
     backgroundColor: colors.card,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  // Wide screens: plain chevrons around a right-aligned range label.
+  navBtnPlain: {
+    borderWidth: 0,
+    backgroundColor: 'transparent',
+  },
+  navLabelWide: {
+    flexGrow: 0,
+    flexShrink: 1,
+    flexBasis: 'auto',
+    paddingHorizontal: spacing.xs,
+    color: colors.ink,
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  dateChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    minHeight: 44,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.md,
+    backgroundColor: colors.surface,
+  },
+  dateChipText: {
+    ...typography.label,
+    color: colors.ink,
   },
   navBtnPressed: {
     backgroundColor: colors.mint,
@@ -165,22 +195,34 @@ export default StyleSheet.create({
   // Stat cards
   statRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-    marginBottom: spacing.md,
-  },
-  statCard: {
-    flexBasis: '100%',
-    flexGrow: 1,
+    gap: spacing.md,
+    marginBottom: spacing.mdl,
   },
   statCardWide: {
-    flexBasis: '30%',
-    flexGrow: 1,
+    flex: 1,
+    minWidth: 0,
   },
 
   // Chart cards
+  chartRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.mdl,
+  },
+  chartCol: {
+    flex: 1,
+    minWidth: 0,
+  },
   chartCard: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.mdl,
+  },
+  flexShrink: {
+    flexShrink: 1,
+  },
+  reminderHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
   },
   cardTitle: {
     ...typography.h3,

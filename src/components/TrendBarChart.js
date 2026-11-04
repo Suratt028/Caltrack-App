@@ -5,8 +5,9 @@ import Svg, { Rect, Line, Text as SvgText } from 'react-native-svg';
 import { colors } from '../theme/colors';
 import styles from '../style/components/TrendBarChartStyles';
 
-const CHART_HEIGHT = 176;
-const PAD = { top: 26, right: 12, bottom: 26, left: 48 };
+const CHART_HEIGHT = 210;
+// Bottom padding holds two rows under the bars: the value, then the day.
+const PAD = { top: 10, right: 8, bottom: 46, left: 40 };
 const MIN_CHART_WIDTH = 240;
 
 const formatNumber = (value) => Math.round(Number(value) || 0).toLocaleString('th-TH');
@@ -20,9 +21,10 @@ const niceMax = (values, step = 500) => {
 };
 
 /**
- * Vertical bar chart of energy per day with a dashed gold goal reference line,
- * per-bar value labels, y-axis ticks in the given unit and a visually hidden
- * text alternative (data list) for screen readers. Mirrors the web TrendBarChart.
+ * Vertical bar chart of energy per day with a dashed goal reference line,
+ * a legend row (unit + goal) above the plot, per-bar values under the bars,
+ * y-axis ticks and a visually hidden text alternative for screen readers.
+ * Today (still in progress) is the dark bar; past days the soft green.
  */
 export default function TrendBarChart({
   data = [],
@@ -63,6 +65,15 @@ export default function TrendBarChart({
 
   return (
     <View style={styles.wrap}>
+      <View style={styles.legend}>
+        <Text style={styles.legendText}>{axisUnit}</Text>
+        {safeGoal != null && !!goalLabel && (
+          <View style={styles.legendGoal}>
+            <View style={styles.legendDash} />
+            <Text style={styles.legendGoalText}>{goalLabel}</Text>
+          </View>
+        )}
+      </View>
       <View
         onLayout={onLayout}
         style={styles.canvas}
@@ -96,11 +107,6 @@ export default function TrendBarChart({
               </React.Fragment>
             ))}
 
-            {/* axis unit hint */}
-            <SvgText x={PAD.left - 6} y={12} fontSize={10} fill={colors.inkMuted} textAnchor="end">
-              {axisUnit}
-            </SvgText>
-
             {/* bars */}
             {data.map((datum, i) => {
               const value = Number(datum.value) || 0;
@@ -111,37 +117,22 @@ export default function TrendBarChart({
               const showDay = i % stepEvery === 0 || datum.highlight || isLast;
               return (
                 <React.Fragment key={datum.date}>
-                  {/* Today is still in progress: outline it instead of the
-                      strongest fill, so it doesn't read as the key result. */}
-                  {datum.highlight ? (
-                    <Rect
-                      x={cx - barW / 2 + 1}
-                      y={y(value) + 1}
-                      width={barW - 2}
-                      height={Math.max(barH - 2, 1)}
-                      rx={6}
-                      fill="none"
-                      stroke={colors.primary}
-                      strokeWidth={2}
-                      strokeDasharray="5,4"
-                    />
-                  ) : (
-                    <Rect
-                      x={cx - barW / 2}
-                      y={y(value)}
-                      width={barW}
-                      height={barH}
-                      rx={6}
-                      fill={colors.barPast}
-                    />
-                  )}
+                  {/* Today (still in progress) is the dark bar; the caption
+                      under the chart says it isn't complete yet. */}
+                  <Rect
+                    x={cx - barW / 2}
+                    y={y(value)}
+                    width={barW}
+                    height={barH}
+                    rx={6}
+                    fill={datum.highlight ? colors.primary : colors.barPast}
+                  />
                   {showValue && (
                     <SvgText
                       x={cx}
-                      y={Math.max(y(value) - 6, 10)}
+                      y={CHART_HEIGHT - PAD.bottom + 16}
                       fontSize={barW >= 24 ? 10 : 9}
-                      fontWeight="600"
-                      fill={colors.ink}
+                      fill={colors.inkMuted}
                       textAnchor="middle"
                     >
                       {formatNumber(value)}
@@ -177,18 +168,6 @@ export default function TrendBarChart({
                   strokeWidth={1.5}
                   strokeDasharray="6,5"
                 />
-                {!!goalLabel && (
-                  <SvgText
-                    x={width - PAD.right}
-                    y={Math.max(y(safeGoal) - 6, 12)}
-                    fontSize={11}
-                    fontWeight="600"
-                    fill={colors.ink}
-                    textAnchor="end"
-                  >
-                    {goalLabel}
-                  </SvgText>
-                )}
               </React.Fragment>
             )}
           </Svg>

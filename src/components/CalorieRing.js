@@ -2,13 +2,16 @@ import React from 'react';
 import { View } from 'react-native';
 import { Text } from './AppText';
 import Svg, { Circle } from 'react-native-svg';
-import { colors, typography } from '../theme/colors';
+import { colors } from '../theme/colors';
 import styles from '../style/components/CalorieRingStyles';
 
+const formatNumber = (value) => Math.round(Number(value) || 0).toLocaleString('th-TH');
+
 // A ring that fills as the day's calories are logged.
-// Green while there is room left, warm red once the goal is passed.
 // consumed/goal are in kcal. size/strokeWidth are in dp.
-export default function CalorieRing({ consumed, goal, size = 220, strokeWidth = 18 }) {
+// Over the goal the ring is simply full and the centre reads
+// "มากกว่าเป้า X" — never a negative number or an alarm colour.
+export default function CalorieRing({ consumed, goal, size = 200, strokeWidth = 16 }) {
   const safeConsumed = Math.max(Number(consumed) || 0, 0);
   const safeGoal = Number(goal) > 0 ? Number(goal) : 0;
   const radius = (size - strokeWidth) / 2;
@@ -17,20 +20,19 @@ export default function CalorieRing({ consumed, goal, size = 220, strokeWidth = 
   const remaining = Math.max(safeGoal - safeConsumed, 0);
   const over = Math.max(safeConsumed - safeGoal, 0);
   const isOver = safeGoal > 0 && safeConsumed > safeGoal;
-
-  // The ring always reads as progress in brand green — over-goal is never
-  // signalled with alarm red (design keeps feedback supportive, not blaming).
-  const ringColor = colors.primary;
+  // Scale the centre number with the ring so 4-5 digit values never clip.
+  const valueSize = Math.round(size * 0.2);
 
   return (
     <View
       style={[styles.wrap, { width: size, height: size }]}
       accessible
       accessibilityRole="progressbar"
+      accessibilityValue={{ min: 0, max: Math.round(safeGoal), now: Math.round(Math.min(safeConsumed, safeGoal)) }}
       accessibilityLabel={
         isOver
-          ? `กินไป ${Math.round(safeConsumed)} แคลอรี่ เกินเป้าหมาย ${Math.round(over)} แคลอรี่`
-          : `กินไป ${Math.round(safeConsumed)} แคลอรี่ จากเป้าหมาย ${Math.round(safeGoal)} แคลอรี่ เหลือ ${Math.round(remaining)} แคลอรี่`
+          ? `ทานแล้ว ${formatNumber(safeConsumed)} กิโลแคลอรี มากกว่าเป้าหมายที่ตั้งไว้ ${formatNumber(over)} กิโลแคลอรี`
+          : `ทานแล้ว ${formatNumber(safeConsumed)} จากเป้าหมาย ${formatNumber(safeGoal)} กิโลแคลอรี เหลืออีก ${formatNumber(remaining)} กิโลแคลอรี`
       }
     >
       <Svg width={size} height={size}>
@@ -42,25 +44,31 @@ export default function CalorieRing({ consumed, goal, size = 220, strokeWidth = 
           strokeWidth={strokeWidth}
           fill="none"
         />
-        <Circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke={ringColor}
-          strokeWidth={strokeWidth}
-          strokeLinecap="round"
-          strokeDasharray={[circumference, circumference]}
-          strokeDashoffset={circumference * (1 - pct)}
-          fill="none"
-          transform={`rotate(-90 ${size / 2} ${size / 2})`}
-        />
+        {pct > 0 && (
+          <Circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            stroke={colors.primary}
+            strokeWidth={strokeWidth}
+            strokeLinecap={pct >= 1 ? 'butt' : 'round'}
+            strokeDasharray={[circumference, circumference]}
+            strokeDashoffset={circumference * (1 - pct)}
+            fill="none"
+            transform={`rotate(-90 ${size / 2} ${size / 2})`}
+          />
+        )}
       </Svg>
       <View style={[styles.centerLabel, { pointerEvents: 'none' }]}>
-        <Text style={[typography.stat, styles.value]}>{Math.round(isOver ? over : remaining)}</Text>
-        <Text style={[styles.unit, isOver && styles.unitOver]}>kcal</Text>
-        <Text style={[styles.caption, isOver && styles.captionOver]}>
-          {isOver ? 'เกินเป้าหมายวันนี้' : 'เหลือในวันนี้'}
+        <Text style={styles.caption}>{isOver ? 'มากกว่าเป้า' : 'เหลืออีก'}</Text>
+        <Text
+          style={[styles.value, { fontSize: valueSize, lineHeight: Math.round(valueSize * 1.3) }]}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+        >
+          {formatNumber(isOver ? over : remaining)}
         </Text>
+        <Text style={styles.unit}>กิโลแคลอรี</Text>
       </View>
     </View>
   );

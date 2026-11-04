@@ -1,12 +1,13 @@
 import React, { useMemo, useState } from 'react';
-import { View, ScrollView, Pressable, useWindowDimensions } from 'react-native';
+import { View, Pressable } from 'react-native';
 import { Text } from '../components/AppText';
 import { TextInput } from '../components/AppTextInput';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle, Polyline, Text as SvgText } from 'react-native-svg';
-import { colors, spacing } from '../theme/colors';
+import { colors } from '../theme/colors';
+import { useLayout } from '../theme/layout';
 import { useApp } from '../context/AppContext';
+import Screen from '../components/Screen';
 import { calculateMacroGoals, lastNDays, todayKey } from '../utils/calculations';
 import Card from '../components/Card';
 import PrimaryButton from '../components/PrimaryButton';
@@ -16,7 +17,7 @@ import ScreenHeader from '../components/ScreenHeader';
 import SegmentedControl from '../components/SegmentedControl';
 import TrendStatCard from '../components/TrendStatCard';
 import TrendBarChart from '../components/TrendBarChart';
-import MacroGoalCharts from '../components/MacroGoalCharts';
+import MacroBarChart from '../components/MacroBarChart';
 import TrendDataTable from '../components/TrendDataTable';
 import styles from '../style/screens/TrendsScreenStyles';
 
@@ -87,11 +88,9 @@ function WeightTrendChart({ points, width }) {
 
 export default function TrendsScreen({ navigation }) {
   const { profile, logsByDay, weightsByDay, logWeight, getDayTotals } = useApp();
-  const { width: windowWidth } = useWindowDimensions();
-  // Mirrors the web breakpoints: controls sit side by side from sm (640),
-  // stat cards form a row from lg (1024).
-  const isSmUp = windowWidth >= 640;
-  const isLgUp = windowWidth >= 1024;
+  // Phone: one summary card, charts stacked. Tablet/desktop: stat cards in a
+  // row; desktop also puts the two charts side by side.
+  const { isWide: isSmUp, isDesktop: isLgUp } = useLayout();
 
   const [range, setRange] = useState('7');
   const [rangeOffset, setRangeOffset] = useState(0);
@@ -156,13 +155,13 @@ export default function TrendsScreen({ navigation }) {
   const prevAvgKcal = completeDays.length
     ? Math.round(completeDays.reduce((sum, day) => sum + day.kcal, 0) / completeDays.length)
     : 0;
-  // Headline average: finished days only, so a half-logged today doesn't drag it down.
-  const headlineAvg = completeDays.length ? prevAvgKcal : avgKcal;
-  const headlineNote = completeDays.length === loggedDays.length
-    ? 'จากวันที่บันทึกเท่านั้น'
-    : completeDays.length
-      ? 'ไม่นับวันนี้ที่ยังไม่ครบวัน · จากวันที่บันทึกเท่านั้น'
-      : 'มีแค่วันนี้ที่ยังไม่ครบวัน';
+  // Headline average covers every logged day (as in the design); when today is
+  // still in progress it says so, and the "previous days" figure leaves it out.
+  const includesToday = completeDays.length !== loggedDays.length;
+  const headlineAvg = avgKcal;
+  const headlineNote = includesToday
+    ? 'รวมวันนี้ที่ยังไม่ครบวัน · จากข้อมูลที่บันทึกเท่านั้น'
+    : 'จากวันที่บันทึกเท่านั้น';
   const selectedDay = dayData.length ? dayData[dayData.length - 1] : null;
 
   const firstDay = days[0];
@@ -225,7 +224,9 @@ export default function TrendsScreen({ navigation }) {
       dayData.map((day) => ({
         date: day.date,
         partial: day.date === today,
-        macros: { protein: day.protein, carbs: day.carbs, fat: day.fat },
+        protein: day.protein,
+        carbs: day.carbs,
+        fat: day.fat,
       })),
     [dayData, today]
   );
@@ -270,13 +271,27 @@ export default function TrendsScreen({ navigation }) {
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <ScreenHeader title="แนวโน้มของคุณ" subtitle="มองเห็นจังหวะการกิน ไม่ใช่คะแนนตัดสิน" />
+    <Screen>
+        <ScreenHeader
+          title="แนวโน้มของคุณ"
+          subtitle={
+            isSmUp
+              ? 'มองเห็นจังหวะการกินจากข้อมูลที่คุณบันทึก ไม่ใช่คะแนนตัดสิน'
+              : 'มองเห็นจังหวะการกิน ไม่ใช่คะแนนตัดสิน'
+          }
+          right={
+            isSmUp ? (
+              <View style={styles.dateChip} accessible accessibilityLabel={`วันนี้ ${shortDateFull(today)}`}>
+                <Ionicons name="calendar-outline" size={16} color={colors.primary} />
+                <Text style={styles.dateChipText}>{shortDateFull(today)}</Text>
+              </View>
+            ) : null
+          }
+        />
 
         {/* Range picker + date navigator */}
         <View style={[styles.controlsRow, isSmUp && styles.controlsRowWide]}>
-          <View style={styles.segmentWrap}>
+          <View style={[styles.segmentWrap, isSmUp && styles.segmentWrapWide]}>
             <SegmentedControl
               label="เลือกช่วงเวลาของแนวโน้ม"
               size="sm"
@@ -294,11 +309,11 @@ export default function TrendsScreen({ navigation }) {
               onPress={() => moveRange(-1)}
               accessibilityRole="button"
               accessibilityLabel="ช่วงก่อนหน้า"
-              style={({ pressed }) => [styles.navBtn, pressed && styles.navBtnPressed]}
+              style={({ pressed }) => [styles.navBtn, isSmUp && styles.navBtnPlain, pressed && styles.navBtnPressed]}
             >
               <Ionicons name="chevron-back" size={20} color={colors.ink} />
             </Pressable>
-            <Text style={styles.navLabel} numberOfLines={1}>
+            <Text style={[styles.navLabel, isSmUp && styles.navLabelWide]} numberOfLines={1}>
               {rangeLabel || 'กำหนดช่วงเอง'}
             </Text>
             <Pressable
@@ -308,6 +323,7 @@ export default function TrendsScreen({ navigation }) {
               accessibilityLabel="ช่วงถัดไป"
               style={({ pressed }) => [
                 styles.navBtn,
+                isSmUp && styles.navBtnPlain,
                 pressed && canGoForward && styles.navBtnPressed,
                 !canGoForward && styles.navBtnDisabled,
               ]}
@@ -356,74 +372,88 @@ export default function TrendsScreen({ navigation }) {
 
         {!enough ? (
           <>
-            <Card style={styles.tipCard}>
-              <EmptyState
-                icon="leaf-outline"
-                title="ยังมีข้อมูลไม่พอสำหรับดูแนวโน้ม"
-                message="เริ่มบันทึกจากมื้อที่สะดวกได้เลย เมื่อมีข้อมูลอย่างน้อย 3 วัน เราจะช่วยแสดงภาพรวมให้คุณเห็น"
-              />
-            </Card>
+            <EmptyState
+              size="lg"
+              icon="analytics-outline"
+              title={'ยังมีข้อมูลไม่พอ\nสำหรับดูแนวโน้ม'}
+              message={'เริ่มบันทึกจากมื้อที่สะดวกได้เลย\nเมื่อมีข้อมูลอย่างน้อย 3 วัน\nเราจะช่วยแสดงภาพรวมให้คุณเห็น'}
+            />
 
             <Card style={styles.tipCard}>
-              <Text style={styles.cardTitle}>ช่วงนี้ยังไม่มีวันที่บันทึก</Text>
+              <Text style={styles.cardTitle}>
+                {loggedDays.length === 0
+                  ? 'ช่วงนี้ยังไม่มีวันที่บันทึก'
+                  : `ช่วงนี้บันทึกแล้ว ${loggedDays.length} วัน จาก 3 วันที่ต้องใช้`}
+              </Text>
               <Text style={styles.cardBody}>
                 ไม่แสดงกราฟหรือค่าเฉลี่ยแทนข้อมูลที่หายไป คุณเริ่มใหม่ได้ทุกเมื่อ ไม่ต้องย้อนบันทึกให้ครบ
               </Text>
             </Card>
 
             <PrimaryButton
-              title="บันทึกอาหารมื้อแรก"
-              icon="restaurant-outline"
+              title={loggedDays.length === 0 ? 'บันทึกอาหารมื้อแรก' : 'บันทึกอาหารเพิ่ม'}
+              icon="add"
               onPress={() => navigation.navigate('Log')}
               style={styles.cta}
             />
           </>
         ) : (
           <>
-            {/* Mobile summary */}
-            <Card style={styles.mintCard}>
-              <View style={styles.summaryHeadRow}>
-                <Text style={styles.mintLabel}>พลังงานเฉลี่ยต่อวัน</Text>
-                <View style={styles.chip}>
-                  <Text style={styles.chipText}>{`บันทึก ${loggedDays.length} วัน`}</Text>
+            {isSmUp ? (
+              /* Wide: three stat cards in a row */
+              <View style={styles.statRow}>
+                <TrendStatCard
+                  title="พลังงานเฉลี่ยต่อวัน"
+                  value={`${formatNumber(headlineAvg)} kcal`}
+                  body={headlineNote}
+                  style={styles.statCardWide}
+                />
+                <TrendStatCard
+                  title="วันที่มีการบันทึก"
+                  value={`${loggedDays.length} วัน`}
+                  body={statsBody}
+                  style={styles.statCardWide}
+                />
+                {includesToday && completeDays.length > 0 ? (
+                  <TrendStatCard
+                    title={`เฉลี่ย ${completeDays.length} วันก่อนหน้า`}
+                    value={`${formatNumber(prevAvgKcal)} kcal`}
+                    body="แยกวันนี้ที่ยังบันทึกไม่ครบออก"
+                    style={styles.statCardWide}
+                  />
+                ) : goal ? (
+                  <TrendStatCard
+                    title="เป้าหมายจากโปรไฟล์"
+                    value={`${formatNumber(goal)} kcal`}
+                    body="ต่อวัน · ดูหรือแก้ไขได้ที่โปรไฟล์"
+                    style={styles.statCardWide}
+                  />
+                ) : null}
+              </View>
+            ) : (
+              /* Phone: one summary card */
+              <Card tone="mint" style={styles.mintCard}>
+                <View style={styles.summaryHeadRow}>
+                  <View style={styles.flexShrink}>
+                    <Text style={styles.mintLabel}>พลังงานเฉลี่ยต่อวัน</Text>
+                    <Text style={styles.summaryValue}>{`${formatNumber(headlineAvg)} kcal`}</Text>
+                  </View>
+                  <View style={styles.chip}>
+                    <Text style={styles.chipText}>{`บันทึก ${loggedDays.length} วัน`}</Text>
+                  </View>
                 </View>
-              </View>
-              <View style={styles.summaryValueRow}>
-                <Text style={styles.summaryValue}>{formatNumber(headlineAvg)}</Text>
-                <Text style={styles.summaryUnit}>kcal</Text>
-              </View>
-              <Text style={styles.mintNote}>{headlineNote}</Text>
-            </Card>
+                <Text style={styles.mintNote}>{headlineNote}</Text>
+              </Card>
+            )}
 
-            {/* Stat cards */}
-            <View style={styles.statRow}>
-              <TrendStatCard
-                title="พลังงานเฉลี่ยต่อวัน"
-                value={`${formatNumber(headlineAvg)} kcal`}
-                body={headlineNote}
-                style={isLgUp ? styles.statCardWide : styles.statCard}
-              />
-              <TrendStatCard
-                title="วันที่มีการบันทึก"
-                value={`${loggedDays.length} วัน`}
-                body={statsBody}
-                style={isLgUp ? styles.statCardWide : styles.statCard}
-              />
-              <TrendStatCard
-                title="เฉลี่ยรวมวันนี้"
-                value={`${formatNumber(avgKcal)} kcal`}
-                body="รวมวันนี้ที่ยังบันทึกไม่ครบวันด้วย"
-                style={isLgUp ? styles.statCardWide : styles.statCard}
-              />
-            </View>
-
+            <View style={isLgUp ? styles.chartRow : null}>
             {/* Energy chart */}
-            <Card style={styles.chartCard}>
+            <Card style={[styles.chartCard, isLgUp && styles.chartCol]}>
               <Text style={styles.cardTitle}>พลังงานในแต่ละวัน</Text>
               <TrendBarChart
                 data={energyData}
                 goalValue={goal || undefined}
-                goalLabel={goal ? `เป้าหมายโปรไฟล์ ${formatNumber(goal)}` : ''}
+                goalLabel={goal ? `เป้าหมาย ${formatNumber(goal)}` : ''}
                 axisUnit="กิโลแคลอรี"
                 caption={monthCaption}
                 title="พลังงานในแต่ละวัน"
@@ -431,32 +461,46 @@ export default function TrendsScreen({ navigation }) {
               />
             </Card>
 
-            {/* One mini chart per macro, each against its own goal */}
-            <Card style={styles.chartCard}>
-              <Text style={styles.cardTitle}>{macroGoals ? 'สารอาหารเทียบเป้าหมาย' : 'สารอาหารในแต่ละวัน'}</Text>
-              <Text style={styles.cardNote}>หน่วยกรัม ดูตัวเลขรายวันได้จากตารางด้านล่าง</Text>
-              <MacroGoalCharts data={macroData} goals={macroGoals} />
+            {/* Grouped protein / carbs / fat bars per logged day */}
+            <Card style={[styles.chartCard, isLgUp && styles.chartCol]}>
+              <Text style={styles.cardTitle}>สารอาหารในแต่ละวัน</Text>
+              <MacroBarChart data={macroData} />
               {selectedDay && (
                 <Text style={styles.selectedDay}>
-                  {`วันที่ ${shortDateFull(selectedDay.date)} · โปรตีน ${formatNumber(selectedDay.protein)} / คาร์บ ${formatNumber(
+                  {`${shortDateFull(selectedDay.date)} · โปรตีน ${formatNumber(selectedDay.protein)} / คาร์บ ${formatNumber(
                     selectedDay.carbs
                   )} / ไขมัน ${formatNumber(selectedDay.fat)} กรัม`}
                 </Text>
               )}
+              <Text style={styles.cardNote}>
+                {macroGoals
+                  ? `เป้าหมายจากโปรไฟล์ โปรตีน ${formatNumber(macroGoals.protein)} · คาร์บ ${formatNumber(macroGoals.carbs)} · ไขมัน ${formatNumber(macroGoals.fat)} กรัม\n`
+                  : ''}
+                ปริมาณเป็นกรัม ไม่ใช่สัดส่วนพลังงาน ดูตัวเลขรายวันได้จากตารางด้านล่าง
+              </Text>
             </Card>
 
+            </View>
+
             {/* Reminder */}
-            <Card style={styles.mintCard}>
-              <Text style={styles.reminderTitle}>แต่ละวันไม่จำเป็นต้องเหมือนกัน</Text>
+            <Card tone="mint" style={styles.mintCard}>
+              <View style={styles.reminderHead}>
+                <Ionicons name="leaf-outline" size={22} color={colors.primary} />
+                <Text style={styles.reminderTitle}>แต่ละวันไม่จำเป็นต้องเหมือนกัน</Text>
+              </View>
               <Text style={styles.reminderBody}>
-                {`วันที่บันทึกก่อนหน้าเฉลี่ย ${formatNumber(prevAvgKcal)} kcal โดยนับเฉพาะวันที่มีข้อมูล วันที่ไม่มีรายการจะไม่ถูกนับ`}
+                {includesToday && completeDays.length > 0
+                  ? `${completeDays.length} วันก่อนเฉลี่ย ${formatNumber(prevAvgKcal)} kcal ส่วนวันนี้ยังไม่ครบ ความต่างอาจมาจากมื้อที่ยังไม่ได้บันทึก`
+                  : 'นับเฉพาะวันที่มีข้อมูล วันที่ไม่มีรายการจะไม่ถูกนับเป็นศูนย์'}
+                {'\nใช้ภาพรวมนี้ค่อย ๆ ทำความรู้จักตัวเองนะ'}
               </Text>
             </Card>
 
             {/* Data table (accessible alternative) */}
             <Card style={styles.tableCard}>
               <TrendDataTable
-                title={goal ? `เป้าหมายโปรไฟล์ ${formatNumber(goal)} kcal` : 'ข้อมูลที่บันทึก'}
+                title="ตัวเลขรายวัน"
+                meta={goal ? `เป้าหมายจากโปรไฟล์ ${formatNumber(goal)} kcal` : undefined}
                 rows={tableRows}
                 showYear={showYear}
               />
@@ -502,7 +546,6 @@ export default function TrendsScreen({ navigation }) {
             />
           )}
         </Card>
-      </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 }

@@ -1,20 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import { View, Image, ActivityIndicator, Pressable, ScrollView, Switch } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { View, Image, ActivityIndicator, Pressable, Switch } from 'react-native';
 import { Text } from '../components/AppText';
-import { TextInput } from '../components/AppTextInput';
 import { Ionicons } from '@expo/vector-icons';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
-import { colors, spacing } from '../theme/colors';
+import { colors } from '../theme/colors';
+import Screen from '../components/Screen';
 import PrimaryButton from '../components/PrimaryButton';
 import Card from '../components/Card';
 import FoodScanReview from '../components/FoodScanReview';
-import MealChips, { defaultMealForNow } from '../components/MealChips';
+import { MEAL_LABEL, MEAL_OPTIONS, defaultMealForNow } from '../components/MealChips';
 import Banner from '../components/Banner';
-import OfflineState from '../components/OfflineState';
+import EmptyState from '../components/EmptyState';
 import ScreenHeader from '../components/ScreenHeader';
+import SegmentedControl from '../components/SegmentedControl';
 import { useApp } from '../context/AppContext';
-import { searchNutritionFoods } from '../services/foodService';
 import { isOfflineError } from '../services/atlasService';
 import { analyzeFoodImage, prepareScanImage } from '../services/aiVisionService';
 import styles from '../style/screens/ScanScreenStyles';
@@ -32,30 +31,18 @@ function FoodBoxOverlays({ items = [] }) {
     return (
       <View
         key={`${item.name_th || 'food'}_${index}`}
-        style={{
-          position: 'absolute',
-          top: `${ymin / 10}%`,
-          left: `${xmin / 10}%`,
-          width: `${(xmax - xmin) / 10}%`,
-          height: `${(ymax - ymin) / 10}%`,
-          borderWidth: 2,
-          borderColor: colors.primary,
-          pointerEvents: 'none', // แก้จาก prop pointerEvents บน View มาไว้ใน style
-        }}
+        style={[
+          styles.box,
+          {
+            top: `${ymin / 10}%`,
+            left: `${xmin / 10}%`,
+            width: `${(xmax - xmin) / 10}%`,
+            height: `${(ymax - ymin) / 10}%`,
+          },
+        ]}
       >
         {/* Same number as the item's card in the review below. */}
-        <Text
-          style={{
-            alignSelf: 'flex-start',
-            minWidth: 22,
-            textAlign: 'center',
-            backgroundColor: colors.primary,
-            color: '#fff',
-            fontSize: 13,
-            fontWeight: '700',
-          }}
-          accessibilityLabel={`รายการที่ ${index + 1} ${item.name_th || ''}`}
-        >
+        <Text style={styles.boxLabel} accessibilityLabel={`รายการที่ ${index + 1} ${item.name_th || ''}`}>
           {index + 1}
         </Text>
       </View>
@@ -63,65 +50,42 @@ function FoodBoxOverlays({ items = [] }) {
   });
 }
 
-export default function ScanScreen({ navigation }) {
+/**
+ * AI scan flow, one step at a time:
+ *   capture → analyzing (cancellable) → review → saved
+ *   and recovery when the analysis fails (retry, other photo, or log manually).
+ * Nothing is logged until the user confirms on the review step.
+ */
+export default function ScanScreen({ navigation, route }) {
   const { addFoodLog, user } = useApp();
   const [imageUri, setImageUri] = useState(null);
   const [lastAsset, setLastAsset] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState(null);
   const [analysisError, setAnalysisError] = useState('');
-  const [notice, setNotice] = useState('');
-  const [meal, setMeal] = useState(defaultMealForNow);
-  const [saved, setSaved] = useState(false);
-  const [foodQuery, setFoodQuery] = useState('');
-  const [foodResults, setFoodResults] = useState([]);
-  const [searchingFoods, setSearchingFoods] = useState(false);
-  const [foodSearchError, setFoodSearchError] = useState('');
-  // Set (to { timedOut }) when a request failed because the server couldn't be reached.
-  const [foodSearchOffline, setFoodSearchOffline] = useState(null);
-  const [foodSearchAttempt, setFoodSearchAttempt] = useState(0);
   const [analysisOffline, setAnalysisOffline] = useState(null);
+  const [notice, setNotice] = useState('');
+  const [meal, setMeal] = useState(() => route?.params?.meal || defaultMealForNow());
+  const [saved, setSaved] = useState(null);
   const [storeImageConsent, setStoreImageConsent] = useState(false);
+  // Each analysis gets an id; cancelling bumps it so a late answer is ignored.
+  const runId = useRef(0);
 
-  useEffect(() => {
-    const query = foodQuery.trim();
-    if (!query) {
-      setFoodResults([]);
-      setSearchingFoods(false);
-      setFoodSearchError('');
-      setFoodSearchOffline(null);
-      return undefined;
-    }
-
-    let active = true;
-    const timer = setTimeout(async () => {
-      setSearchingFoods(true);
-      setFoodSearchError('');
-      setFoodSearchOffline(null);
-      try {
-        const results = await searchNutritionFoods(query, 8);
-        if (active) setFoodResults(results.slice(0, 8));
-      } catch (error) {
-        if (active) {
-          setFoodResults([]);
-          if (isOfflineError(error)) setFoodSearchOffline({ timedOut: !!error.timedOut });
-          setFoodSearchError(error.message || 'ค้นหาฐานข้อมูลอาหารไม่สำเร็จ');
-        }
-      } finally {
-        if (active) setSearchingFoods(false);
-      }
-    }, 250);
-
-    return () => {
-      active = false;
-      clearTimeout(timer);
-    };
-  }, [foodQuery, foodSearchAttempt]);
+  const step = saved
+    ? 'saved'
+    : analyzing
+      ? 'analyzing'
+      : analysisError
+        ? 'recovery'
+        : result
+          ? 'review'
+          : 'capture';
 
   const runAiAnalysis = async (asset, storeImage) => {
+    const id = ++runId.current;
     setAnalyzing(true);
     setResult(null);
-    setSaved(false);
+    setSaved(null);
     setAnalysisError('');
     setAnalysisOffline(null);
     setNotice('');
@@ -129,19 +93,16 @@ export default function ScanScreen({ navigation }) {
 
     try {
       const upload = await prepareScanImage(asset);
-      const aiResult = await analyzeFoodImage(
-        upload.base64,
-        upload.mimeType,
-        user?.id,
-        storeImage
-      );
+      const aiResult = await analyzeFoodImage(upload.base64, upload.mimeType, user?.id, storeImage);
+      if (id !== runId.current) return;
       setResult({ ...aiResult, reviewKey: aiResult.scanId || `scan_${Date.now()}` });
     } catch (err) {
+      if (id !== runId.current) return;
       console.error('Analysis error:', err);
       if (isOfflineError(err)) setAnalysisOffline({ timedOut: !!err.timedOut });
       setAnalysisError(err.message || 'วิเคราะห์ภาพไม่สำเร็จ กรุณาลองใหม่หรือค้นหาอาหารด้วยตนเอง');
     } finally {
-      setAnalyzing(false);
+      if (id === runId.current) setAnalyzing(false);
     }
   };
 
@@ -154,7 +115,7 @@ export default function ScanScreen({ navigation }) {
     if (!perm.granted) {
       setNotice(
         source === 'camera'
-          ? 'ต้องอนุญาตให้ใช้กล้องก่อนจึงจะสแกนได้ หรือเลือกจากคลังภาพแทน'
+          ? 'ต้องอนุญาตให้ใช้กล้องก่อนจึงจะถ่ายได้ หรือเลือกรูปจากคลังภาพแทน'
           : 'ต้องอนุญาตให้เข้าถึงรูปภาพก่อนจึงจะเลือกจากคลังภาพได้'
       );
       return;
@@ -167,33 +128,6 @@ export default function ScanScreen({ navigation }) {
       runAiAnalysis(res.assets[0], storeImageConsent);
       setStoreImageConsent(false);
     }
-  };
-
-  const selectFoodFromDatabase = (food) => {
-    setImageUri(null);
-    setLastAsset(null);
-    setFoodQuery(food.name);
-    setFoodResults([]);
-    setSaved(false);
-    setAnalysisError('');
-    setAnalysisOffline(null);
-    setNotice('');
-    setStoreImageConsent(false);
-    setResult({
-      reviewKey: `manual_${Date.now()}`,
-      items: [{
-        name_th: food.name,
-        name_en: food.nameEn,
-        foodId: food.foodId,
-        per100g: food.per100g,
-        estimated_grams: null,
-        estimated_nutrition: null,
-        confidence: 1,
-      }],
-      reference_object: '',
-      source: 'database_search',
-      scanId: null,
-    });
   };
 
   const confirmAdd = async ({ items, totals }) => {
@@ -220,231 +154,199 @@ export default function ScanScreen({ navigation }) {
       source: result?.source || 'ai_scan',
       scanId: result?.scanId || null,
     });
-    setSaved(true);
+    setSaved({ name: items.map((item) => item.name).join(' + '), kcal: totals.kcal });
   };
 
   const reset = () => {
+    runId.current += 1;
+    setAnalyzing(false);
     setImageUri(null);
     setLastAsset(null);
     setResult(null);
-    setSaved(false);
+    setSaved(null);
     setAnalysisError('');
     setAnalysisOffline(null);
     setNotice('');
     setStoreImageConsent(false);
   };
 
-  const isRealAi = result?.source === 'gemini_vision';
+  const goBack = () => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate('Tabs', { screen: 'Home' }));
+  const logManually = () => navigation.navigate('Tabs', { screen: 'Log', params: { meal, requestedAt: Date.now() } });
+  const mealLabel = MEAL_LABEL[meal] || 'มื้ออาหาร';
 
-  return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <ScreenHeader
-          title="สแกนอาหารด้วย AI"
-          subtitle="ถ่ายรูปมื้ออาหาร แล้วให้ระบบช่วยประเมินแคลอรี่เบื้องต้นให้"
+  const photo = imageUri ? (
+    <View style={styles.photoWrap}>
+      <Image source={{ uri: imageUri }} style={styles.photo} resizeMode="stretch" accessibilityLabel="รูปอาหารที่เลือก" />
+      <FoodBoxOverlays items={result?.items} />
+    </View>
+  ) : null;
+
+  /* ------------------------------- analyzing ------------------------------ */
+  if (step === 'analyzing') {
+    return (
+      <Screen variant="flow">
+        <ScreenHeader title="กำลังประเมินอาหาร" subtitle="ใช้เวลาประมาณ 5–15 วินาที" onBack={reset} backHint="ยกเลิกการประเมิน" />
+        {photo}
+        <Text style={styles.photoCaption}>รูปที่เลือก · {mealLabel}</Text>
+        <Card style={styles.block}>
+          <View style={styles.analyzingBox} accessibilityLiveRegion="polite">
+            <ActivityIndicator color={colors.primary} size="large" />
+            <Text style={styles.analyzingTitle}>กำลังดูว่าในจานมีอะไรบ้าง</Text>
+            <Text style={styles.analyzingText}>
+              เมื่อได้ผลประเมินแล้ว{'\n'}คุณจะได้ตรวจชื่ออาหารและปริมาณ{'\n'}ก่อนเพิ่มลงในบันทึกเสมอ
+            </Text>
+          </View>
+        </Card>
+        <Banner
+          tone="info"
+          icon="information-circle-outline"
+          message="ผลอาจคลาดเคลื่อนตามสูตร วัตถุดิบ และสิ่งที่มองไม่เห็นในภาพ"
+          style={styles.block}
         />
+        <PrimaryButton title="ยกเลิกและกลับไปเลือกรูป" variant="soft" onPress={reset} />
+      </Screen>
+    );
+  }
 
-        {!!notice && <Banner tone="warning" message={notice} onDismiss={() => setNotice('')} style={{ marginBottom: spacing.md }} />}
-
-        {!imageUri && (
-          <View>
-            <View style={styles.databaseSearchCard}>
-              <View style={styles.databaseSearchHeader}>
-                <View style={styles.databaseSearchIcon}>
-                  <Ionicons name="search" size={18} color={colors.primary} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.databaseSearchTitle}>ค้นหาอาหารในฐานข้อมูล</Text>
-                  <Text style={styles.databaseSearchSubtitle}>เลือกเมนูเพื่อบันทึกโดยไม่ต้องถ่ายรูป</Text>
-                </View>
-              </View>
-              <View style={styles.databaseSearchInputWrap}>
-                <Ionicons name="search-outline" size={18} color={colors.inkFaint} />
-                <TextInput
-                  value={foodQuery}
-                  onChangeText={setFoodQuery}
-                  placeholder="เช่น ข้าวกะเพรา, ผัดไทย"
-                  placeholderTextColor={colors.inkFaint}
-                  style={styles.databaseSearchInput}
-                  returnKeyType="search"
-                  accessibilityLabel="ค้นหาอาหารในฐานข้อมูล"
-                />
-                {searchingFoods && <ActivityIndicator size="small" color={colors.primary} />}
-              </View>
-              {Boolean(foodQuery.trim()) && !searchingFoods && foodSearchOffline && (
-                <View style={styles.searchOffline}>
-                  <OfflineState
-                    timedOut={foodSearchOffline.timedOut}
-                    onRetry={() => setFoodSearchAttempt((attempt) => attempt + 1)}
-                  />
-                </View>
-              )}
-              {Boolean(foodQuery.trim()) && !searchingFoods && !foodSearchOffline && foodResults.length === 0 && (
-                <Text style={styles.noSearchResults}>
-                  {foodSearchError || 'ไม่พบอาหารที่ค้นหา ลองใช้ชื่อเมนูอื่น'}
-                </Text>
-              )}
-              {foodResults.length > 0 && (
-                <View style={styles.searchResults}>
-                  {foodResults.map((food) => (
-                    <Pressable
-                      key={food.id}
-                      onPress={() => selectFoodFromDatabase(food)}
-                      accessibilityRole="button"
-                      accessibilityLabel={`เลือก ${food.name}`}
-                      style={({ pressed }) => [styles.searchResultItem, pressed && { opacity: 0.7 }]}
-                    >
-                      <View style={styles.searchResultIcon}>
-                        <Ionicons name="restaurant-outline" size={17} color={colors.primary} />
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.searchResultName} numberOfLines={1}>{food.name}</Text>
-                        <Text style={styles.searchResultMeta}>
-                          {food.serving ? `${food.serving} · ` : ''}
-                          {food.estimated?.includes('kcal') ? '≈' : ''}{food.per100g?.kcal ?? '—'} kcal / 100 g
-                        </Text>
-                      </View>
-                      <Ionicons name="chevron-forward" size={18} color={colors.inkFaint} />
-                    </Pressable>
-                  ))}
-                </View>
-              )}
-            </View>
-
-            <View style={styles.scanHero}>
-              <View style={styles.scanHeroIcon}><Ionicons name="camera" size={34} color={colors.primary} /></View>
-              <Text style={styles.scanHeroTitle}>สแกนอาหารด้วยกล้อง</Text>
-              <Text style={styles.scanHeroText}>ถ่ายให้เห็นอาหารทั้งจานในที่ที่มีแสงพอ เพื่อให้ AI ประเมินได้แม่นขึ้น</Text>
-
-              <View style={styles.stepsRow}>
-                <View style={styles.stepItem}>
-                  <View style={styles.stepIcon}><Ionicons name="camera-outline" size={15} color={colors.primary} /></View>
-                  <Text style={styles.stepText}>จัดจานให้อยู่ในกรอบ อย่าให้มือบัง</Text>
-                </View>
-                <View style={styles.stepItem}>
-                  <View style={styles.stepIcon}><Ionicons name="sunny-outline" size={15} color={colors.primary} /></View>
-                  <Text style={styles.stepText}>ถ่ายในที่แสงสว่าง เลี่ยงเงาที่บังอาหาร</Text>
-                </View>
-                <View style={styles.stepItem}>
-                  <View style={styles.stepIcon}><Ionicons name="create-outline" size={15} color={colors.primary} /></View>
-                  <Text style={styles.stepText}>ตรวจสอบชื่อและปริมาณก่อนบันทึกทุกครั้ง</Text>
-                </View>
-              </View>
-
-              <PrimaryButton
-                title="เริ่มสแกนด้วยกล้อง"
-                icon="camera"
-                onPress={() => pickFrom('camera')}
-                style={{ width: '100%', marginTop: spacing.md }}
-              />
-              <View style={styles.consentRow}>
-                <Switch
-                  value={storeImageConsent}
-                  onValueChange={setStoreImageConsent}
-                  accessibilityLabel="ยินยอมให้เก็บรูปสแกนเพื่อทบทวนผล"
-                />
-                <Text style={styles.consentText}>
-                  เก็บรูปนี้ไว้ทบทวนผลภายหลัง (ไม่บังคับ)
-                </Text>
-              </View>
-            </View>
-
-            <Banner
-              tone="info"
-              icon="information-circle-outline"
-              message="ค่าที่ได้จากการประเมินเป็นเพียงค่าประมาณ ไม่ใช่คำแนะนำทางการแพทย์หรือโภชนาการ"
-              style={{ marginBottom: spacing.md }}
+  /* -------------------------------- recovery ------------------------------ */
+  if (step === 'recovery') {
+    const reason = analysisOffline
+      ? analysisOffline.timedOut
+        ? 'ส่งรูปไปประเมินไม่ทันเวลา การเชื่อมต่ออาจช้า'
+        : 'ส่งรูปไปประเมินไม่ได้ ตรวจสอบอินเทอร์เน็ตแล้วลองอีกครั้ง'
+      : analysisError;
+    return (
+      <Screen variant="flow">
+        <ScreenHeader title="ลองอีกวิธีได้เลย" subtitle="สแกนอาหารด้วย AI" onBack={reset} backHint="กลับไปเลือกรูป" />
+        <EmptyState
+          size="lg"
+          icon={analysisOffline ? 'cloud-offline-outline' : 'image-outline'}
+          title={analysisOffline ? 'ยังเชื่อมต่อเพื่อประเมินไม่ได้' : 'ครั้งนี้ยังประเมิน\nอาหารจากภาพไม่ได้'}
+          message={`${reason}\nไม่เป็นไรนะ เลือกวิธีที่สะดวกได้เลย ยังไม่มีรายการใดถูกบันทึก`}
+        />
+        <View style={styles.actions}>
+          {lastAsset && (
+            <PrimaryButton
+              title="ลองประเมินภาพเดิมอีกครั้ง"
+              icon="refresh"
+              onPress={() => runAiAnalysis(lastAsset, false)}
             />
+          )}
+          <PrimaryButton title="เลือกรูปอื่น" icon="images-outline" variant="soft" onPress={() => pickFrom('library')} />
+          <PrimaryButton title="ค้นหาและบันทึกอาหารเอง" icon="search" variant="outline" onPress={logManually} />
+        </View>
+        <Card style={styles.tipsCard}>
+          <Text style={styles.cardTitle}>ถ้าจะลองถ่ายใหม่</Text>
+          <Text style={styles.cardBody}>
+            ขยับให้เห็นอาหารทั้งจาน ใช้แสงธรรมชาติ และลองถ่ายทีละจาน ภาพไม่จำเป็นต้องสวย แค่มองเห็นอาหารชัดก็พอ
+          </Text>
+        </Card>
+      </Screen>
+    );
+  }
 
-            <Text style={styles.sectionTitle}>หรือเลือกรูปจากคลังภาพ</Text>
-            <View style={styles.actionsRow}>
-              <PrimaryButton title="เลือกจากคลังภาพ" variant="outline" icon="images-outline" onPress={() => pickFrom('library')} style={{ flex: 1 }} />
-            </View>
+  /* --------------------------------- saved -------------------------------- */
+  if (step === 'saved') {
+    return (
+      <Screen variant="flow">
+        <ScreenHeader title="บันทึกแล้ว" subtitle="สแกนอาหารด้วย AI" onBack={goBack} />
+        <EmptyState
+          size="lg"
+          icon="checkmark-circle-outline"
+          title="บันทึกมื้อนี้แล้ว"
+          message={`${saved.name} · ${Math.round(Number(saved.kcal) || 0).toLocaleString('th-TH')} kcal\n${mealLabel} · วันนี้ ดูรายการได้ที่หน้าหลัก`}
+          actionTitle="ไปหน้าหลัก"
+          actionIcon="home-outline"
+          onAction={() => navigation.navigate('Tabs', { screen: 'Home' })}
+          secondaryTitle="สแกนมื้อถัดไป"
+          secondaryIcon="scan-outline"
+          onSecondary={reset}
+        />
+      </Screen>
+    );
+  }
+
+  /* --------------------------------- review ------------------------------- */
+  if (step === 'review') {
+    return (
+      <Screen variant="flow">
+        <ScreenHeader
+          title="ตรวจทานผลประเมิน"
+          subtitle="แก้ไขให้ใกล้เคียงกับที่คุณทานได้เลย"
+          onBack={reset}
+          backHint="ทิ้งผลนี้แล้วกลับไปเลือกรูป"
+        />
+        {photo}
+        <Banner
+          tone="warning"
+          icon="information-circle-outline"
+          message="ผลประเมินจากภาพ อาจไม่ตรงสูตรจริง ลองแก้ชื่อหรือปริมาณด้านล่างก่อนบันทึก ตัวเลขไม่ใช่คำแนะนำทางการแพทย์"
+          style={styles.block}
+        />
+        <Text style={styles.fieldLabel}>มื้ออาหาร</Text>
+        <View style={styles.block}>
+          <SegmentedControl options={MEAL_OPTIONS} value={meal} onChange={setMeal} label="มื้ออาหาร" />
+        </View>
+        <FoodScanReview key={result.reviewKey} analysis={result} onConfirm={confirmAdd} onReset={reset} />
+      </Screen>
+    );
+  }
+
+  /* -------------------------------- capture ------------------------------- */
+  return (
+    <Screen variant="flow">
+      <ScreenHeader title="สแกนอาหารด้วย AI" subtitle="เริ่มจากภาพอาหาร แล้วตรวจทานด้วยกัน" onBack={goBack} />
+
+      <View style={styles.block}>
+        <SegmentedControl options={MEAL_OPTIONS} value={meal} onChange={setMeal} label="มื้ออาหาร" />
+      </View>
+
+      {!!notice && <Banner tone="warning" message={notice} onDismiss={() => setNotice('')} style={styles.block} />}
+
+      <Pressable
+        onPress={() => pickFrom('camera')}
+        accessibilityRole="button"
+        accessibilityLabel="เปิดกล้องถ่ายอาหาร"
+        accessibilityHint="วางอาหารให้อยู่ในกรอบ แล้วถ่ายภาพ"
+        style={({ pressed }) => [styles.viewfinder, pressed && styles.pressed]}
+      >
+        <View style={styles.viewfinderFrame}>
+          <View style={styles.viewfinderIcon}>
+            <Ionicons name="camera-outline" size={34} color={colors.white} />
           </View>
-        )}
+          <Text style={styles.viewfinderTitle}>วางอาหารให้อยู่ในกรอบ</Text>
+          <Text style={styles.viewfinderText}>แตะเพื่อเปิดกล้อง</Text>
+        </View>
+      </Pressable>
 
-        {Boolean(imageUri) && (
-          <Card style={styles.imageCard}>
-            <View style={{ position: 'relative', width: '100%', aspectRatio: 1 }}>
-              <Image source={{ uri: imageUri }} style={{ width: '100%', height: '100%' }} resizeMode="stretch" />
-              <FoodBoxOverlays items={result?.items} />
-            </View>
-          </Card>
-        )}
+      <Card style={styles.block}>
+        <Text style={styles.cardTitle}>ถ่ายแบบนี้ จะช่วยให้ตรวจทานง่ายขึ้น</Text>
+        <View style={styles.tipRow}>
+          <Ionicons name="sunny-outline" size={20} color={colors.primary} />
+          <Text style={styles.tipText}>ใช้แสงสว่าง ถ่ายให้เห็นทั้งจาน{'\n'}ลองแยกจานที่มีอาหารหลายอย่าง</Text>
+        </View>
+      </Card>
 
-        {Boolean(analysisError) && !analyzing && (
-          <View style={{ marginTop: spacing.md }}>
-            {analysisOffline ? (
-              <OfflineState
-                timedOut={analysisOffline.timedOut}
-                message={
-                  analysisOffline.timedOut
-                    ? 'ส่งรูปไปวิเคราะห์ไม่ทันเวลา การเชื่อมต่ออาจช้า ลองวิเคราะห์อีกครั้งได้เลย'
-                    : 'ส่งรูปไปวิเคราะห์ไม่ได้ ตรวจสอบอินเทอร์เน็ตแล้วลองวิเคราะห์อีกครั้ง'
-                }
-              />
-            ) : (
-              <Banner tone="error" message={analysisError} />
-            )}
-            <View style={[styles.actionsRow, { marginTop: spacing.md }]}>
-              {lastAsset && (
-                <PrimaryButton
-                  title="ลองวิเคราะห์อีกครั้ง"
-                  icon="refresh"
-                  onPress={() => runAiAnalysis(lastAsset, storeImageConsent)}
-                  style={[styles.actionGap, { flex: 1 }]}
-                />
-              )}
-              <PrimaryButton title="สแกนใหม่" variant="outline" onPress={reset} style={{ flex: 1 }} />
-            </View>
-          </View>
-        )}
+      <View style={styles.actions}>
+        <PrimaryButton title="เปิดกล้องถ่ายอาหาร" icon="camera-outline" onPress={() => pickFrom('camera')} />
+        <PrimaryButton title="เลือกรูปจากคลังภาพ" icon="images-outline" variant="soft" onPress={() => pickFrom('library')} />
+      </View>
 
-        {analyzing && (
-          <Card style={{ marginTop: spacing.md }}>
-            <View style={styles.analyzingBox}>
-              <ActivityIndicator color={colors.primary} size="large" />
-              <Text style={styles.analyzingText}>กำลังวิเคราะห์ภาพอาหาร...</Text>
-              <Text style={styles.analyzingHint}>ขั้นตอนนี้อาจใช้เวลาประมาณ 5–15 วินาที กรุณารอสักครู่</Text>
-            </View>
-          </Card>
-        )}
+      <View style={styles.consentRow}>
+        <Switch
+          value={storeImageConsent}
+          onValueChange={setStoreImageConsent}
+          trackColor={{ true: colors.primary, false: colors.border }}
+          accessibilityLabel="เก็บรูปนี้ไว้ทบทวนผลภายหลัง"
+        />
+        <Text style={styles.consentText}>เก็บรูปนี้ไว้ทบทวนผลภายหลัง (ไม่บังคับ)</Text>
+      </View>
 
-        {Boolean(result) && !analyzing && (
-          <Card style={{ marginTop: spacing.md }}>
-            {saved ? (
-              <View style={styles.successState}>
-                <View style={styles.successIcon}>
-                  <Ionicons name="checkmark" size={38} color={colors.primary} />
-                </View>
-                <Text style={styles.successTitle}>บันทึกมื้อนี้แล้ว</Text>
-                <Text style={styles.successText}>ดูรายการและยอดสารอาหารของวันนี้ได้ที่หน้าหลัก</Text>
-                <View style={styles.successActions}>
-                  <PrimaryButton title="สแกนมื้อถัดไป" onPress={reset} style={[styles.actionGap, { flex: 1 }]} />
-                  <PrimaryButton title="กลับหน้าหลัก" variant="outline" onPress={() => navigation.navigate('Home')} style={{ flex: 1 }} />
-                </View>
-              </View>
-            ) : (
-              <>
-                <View style={[styles.demoTag, isRealAi && { backgroundColor: colors.primarySoft }]}>
-                  <Text style={[styles.demoTagText, isRealAi && { color: colors.primaryDark }]}>
-                    {isRealAi ? 'วิเคราะห์โดย Vision AI' : 'เลือกจากฐานข้อมูล'}
-                  </Text>
-                </View>
-                <View style={styles.mealSection}>
-                  <MealChips value={meal} onChange={setMeal} />
-                </View>
-                <FoodScanReview
-                  key={result.reviewKey}
-                  analysis={result}
-                  onConfirm={confirmAdd}
-                  onReset={reset}
-                />
-              </>
-            )}
-          </Card>
-        )}
-      </ScrollView>
-    </SafeAreaView>
+      <PrimaryButton title="ค้นหาและบันทึกอาหารเอง" icon="search" variant="ghost" onPress={logManually} compact />
+
+      <Text style={styles.footnote}>
+        AI ช่วยประเมินเบื้องต้น ไม่ทราบสูตรหรือปริมาณจริง{'\n'}คุณแก้ไขชื่ออาหารและปริมาณได้ก่อนบันทึก{'\n'}จะขอสิทธิ์กล้องหรือรูปภาพเมื่อเลือกใช้งาน
+      </Text>
+    </Screen>
   );
 }

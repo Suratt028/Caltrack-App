@@ -3,15 +3,19 @@ import { colors, spacing, typography } from '../../theme/colors';
 
 export default StyleSheet.create({
   wrap: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.mdl,
   },
   row: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  back: {
+    marginRight: spacing.smd,
   },
   titleWrap: {
     flex: 1,
+    minWidth: 0,
     paddingRight: spacing.sm,
   },
   right: {
@@ -22,9 +26,7 @@ export default StyleSheet.create({
     color: colors.ink,
   },
   subtitle: {
-    ...typography.body,
+    ...typography.bodySm,
     color: colors.inkMuted,
-    marginTop: spacing.xs,
-    lineHeight: 21,
   },
 });
