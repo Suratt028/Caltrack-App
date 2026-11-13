@@ -18,6 +18,7 @@ import ProfileCalorieCumulativeChart from '../components/ProfileCalorieCumulativ
 import MacroGroupedChart from '../components/MacroGroupedChart';
 import WeightTrendChart from '../components/WeightTrendChart';
 import BmiTrendChart from '../components/BmiTrendChart';
+import WeightOutlookCard from '../components/WeightOutlookCard';
 import styles from '../style/screens/TrendsScreenStyles';
 
 const RANGE_OPTIONS = [
@@ -415,6 +416,16 @@ export default function TrendsScreen({ navigation }) {
 
           </>
         )}
+
+        {/* 4-week projection: log every day vs the last 14 days' pattern */}
+        <WeightOutlookCard
+          logsByDay={logsByDay}
+          tdee={Number(profile?.tdee) || 0}
+          goalKcal={goal || 0}
+          weightKg={weightPoints.length ? weightPoints[weightPoints.length - 1].weight : Number(profile?.weightKg) || 0}
+          stacked={!isSmUp}
+          style={styles.weightCard}
+        />
 
         {/* Weight + BMI: stacked on mobile/tablet, side by side on desktop */}
         <View style={isLgUp ? styles.twoCol : undefined}>

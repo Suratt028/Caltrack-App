@@ -25,6 +25,7 @@ import Banner from '../components/Banner';
 import ScreenHeader from '../components/ScreenHeader';
 import GoalPresetButton from '../components/GoalPresetButton';
 import BmiReferenceCard from '../components/BmiReferenceCard';
+import ReminderSettingsCard from '../components/ReminderSettingsCard';
 import styles from '../style/screens/ProfileScreenStyles';
 import ReportScreen from './ReportScreen';
 
@@ -486,6 +487,9 @@ export default function ProfileScreen() {
             </Text>
           )}
         </Card>
+
+        {/* Reminders */}
+        <ReminderSettingsCard style={styles.cardSpacing} />
 
         {/* Support */}
         <Card style={styles.cardSpacing}>

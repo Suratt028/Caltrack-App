@@ -12,6 +12,7 @@ import {
 } from '../services/atlasService';
 import { clearAuthTokens, loadUserToken, saveAdminToken, saveUserToken } from '../services/authStorage';
 import { queryPersister } from '../data/queryClient';
+import { clearNoLogReminders } from '../services/reminderService';
 import {
   LEGACY_GLOBAL_DATA_KEYS,
   legacyUserDataKeys,
@@ -165,6 +166,8 @@ export function AppProvider({ children }) {
   }, [clearSessionData]);
 
   const logout = useCallback(async () => {
+    // Signed-out devices shouldn't keep nudging about food logs.
+    await clearNoLogReminders().catch(() => {});
     await clearSessionData();
   }, [clearSessionData]);
 

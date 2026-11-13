@@ -45,7 +45,13 @@
       "expo-apple-authentication",
       "expo-web-browser",
       "expo-status-bar",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "color": "#21634C"
+        }
+      ]
     ],
     "extra": {
       "eas": {

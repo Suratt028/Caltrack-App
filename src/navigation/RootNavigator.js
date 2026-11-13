@@ -15,6 +15,7 @@ import ProfileScreen from '../screens/ProfileScreen';
 
 // Flow screen pushed above the tabs (reached from Log search results).
 import PortionScreen from '../screens/PortionScreen';
+import NoLogReminderScheduler from '../components/NoLogReminderScheduler';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -55,6 +56,9 @@ function Tabs() {
   const bottomPadding = Math.max(insets.bottom, 8);
 
   return (
+    <>
+    {/* Evening "nothing logged yet" push reminders (phones only). */}
+    <NoLogReminderScheduler />
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
@@ -133,6 +137,7 @@ function Tabs() {
       <Tab.Screen name="Trends" component={TrendsScreen} options={{ tabBarLabel: 'แนวโน้ม' }} />
       <Tab.Screen name="Profile" component={ProfileScreen} options={{ tabBarLabel: 'โปรไฟล์' }} />
     </Tab.Navigator>
+    </>
   );
 }
 
