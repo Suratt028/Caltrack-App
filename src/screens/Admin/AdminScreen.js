@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, ScrollView, View, Modal, StyleSheet } fro
 import { Text } from '../../components/AppText';
 import { TextInput } from '../../components/AppTextInput';
 import { API_BASE_URL } from '../../config';
+import { fetchWithTimeout } from '../../services/atlasService';
 import { clearAuthTokens, loadAdminToken, saveAdminToken } from '../../services/authStorage';
 import { useApp } from '../../context/AppContext';
 import { colors } from '../../theme/colors';
@@ -31,7 +32,7 @@ const NAV = [
 ];
 
 async function api(path, token, options = {}) {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetchWithTimeout(`${API_BASE_URL}${path}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -294,7 +295,7 @@ function AdminLogin({ notice, onLoggedIn, onExit }) {
     setSubmitting(true);
     setLoginError('');
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/login`, {
+      const response = await fetchWithTimeout(`${API_BASE_URL}/admin/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim(), password }),

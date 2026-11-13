@@ -3,10 +3,12 @@ import { Alert, Platform, View } from 'react-native';
 import { Text } from '../AppText';
 import styles from '../../style/screens/AdminScreenStyles';
 import { API_BASE_URL } from '../../config';
+import { fetchWithTimeout } from '../../services/atlasService';
 
-// Authenticated JSON request for admin sub-pages.
+// Authenticated JSON request for admin sub-pages. If the server can't be reached,
+// it rejects with a Thai "can't reach the server" message, not the browser's "Failed to fetch".
 export async function adminRequest(path, token, options = {}) {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetchWithTimeout(`${API_BASE_URL}${path}`, {
     ...options,
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
   });

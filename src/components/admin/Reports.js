@@ -4,6 +4,7 @@ import { Text } from '../AppText';
 import styles from '../../style/screens/AdminScreenStyles';
 import { colors } from '../../theme/colors';
 import { API_BASE_URL } from '../../config';
+import { fetchWithTimeout } from '../../services/atlasService';
 import { Title, Stat, Card, adminRequest, notify } from './AdminCommon';
 
 const EXPORTS = [
@@ -47,7 +48,11 @@ export default function Reports({ token }) {
     }
     setExporting(key);
     try {
-      const response = await fetch(`${API_BASE_URL}${path}`, { headers: { Authorization: `Bearer ${token}` } });
+      const response = await fetchWithTimeout(
+        `${API_BASE_URL}${path}`,
+        { headers: { Authorization: `Bearer ${token}` } },
+        { timeoutMs: 60000 } // exports can be large
+      );
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
         throw new Error(data.error || `Export failed (${response.status})`);
