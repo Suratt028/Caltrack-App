@@ -10,19 +10,29 @@ const mongoose = require('mongoose');
 //   node seed-foods.js --file thaiFoods_clean.json  same, from another file
 //                                                   (e.g. the output of scripts/clean-foods.js)
 //   node seed-foods.js --replace --yes              delete EVERY food first, then insert
+//   node seed-foods.js --file thaiFoods_merged.json --collection foods_v2
+//                                                   write to another collection, leaving
+//                                                   "foods" untouched (switch over later)
 //
 // --replace also removes admin-added foods, so it refuses to run without --yes.
 
 const argv = process.argv.slice(2);
-const fileFlag = argv.indexOf('--file');
-if (fileFlag !== -1 && !argv[fileFlag + 1]) {
-  console.error('❌ --file needs a path, e.g. --file thaiFoods_clean.json');
+const flagValue = (flag, example) => {
+  const i = argv.indexOf(flag);
+  if (i === -1) return null;
+  if (!argv[i + 1] || argv[i + 1].startsWith('--')) {
+    console.error(`❌ ${flag} needs a value, e.g. ${flag} ${example}`);
+    process.exit(1);
+  }
+  return argv[i + 1];
+};
+const fileArg = flagValue('--file', 'thaiFoods_clean.json');
+const SOURCE_FILE = fileArg ? path.resolve(process.cwd(), fileArg) : path.join(__dirname, 'thaiFoods_full.json');
+const COLLECTION_NAME = flagValue('--collection', 'foods_v2') || 'foods';
+if (!/^[A-Za-z][\w-]{0,63}$/.test(COLLECTION_NAME)) {
+  console.error(`❌ invalid collection name: ${COLLECTION_NAME}`);
   process.exit(1);
 }
-const SOURCE_FILE = fileFlag === -1
-  ? path.join(__dirname, 'thaiFoods_full.json')
-  : path.resolve(process.cwd(), argv[fileFlag + 1]);
-const COLLECTION_NAME = 'foods';
 
 const args = new Set(argv);
 const replaceAll = args.has('--replace');

@@ -59,6 +59,38 @@ export default StyleSheet.create({
   unitLabel: {
     marginTop: spacing.md,
   },
+  eggSizeSection: {
+    marginTop: spacing.md,
+  },
+  eggSizeOptions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+  },
+  eggSizeOption: {
+    minWidth: 66,
+    minHeight: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.sm,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  eggSizeOptionSelected: {
+    backgroundColor: colors.primarySoft,
+    borderColor: colors.primary,
+  },
+  eggSizeOptionText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.inkMuted,
+  },
+  eggSizeOptionTextSelected: {
+    color: colors.primaryDark,
+    fontWeight: '700',
+  },
 
   // Live calculation card
   calcCard: {

@@ -176,11 +176,21 @@ export async function fetchLogs(userId) {
   return payload.logs || [];
 }
 
+// log.clientId makes this safe to retry: the server returns the first log for a
+// repeated clientId. So one retry after a timeout/network drop (no HTTP status,
+// the save may or may not have landed) can't create a duplicate entry.
 export async function saveLog(userId, log) {
-  const payload = await requestJson(`/logs/${userId}`, {
+  const send = () => requestJson(`/logs/${userId}`, {
     method: 'POST',
     body: JSON.stringify(log),
   });
+  let payload;
+  try {
+    payload = await send();
+  } catch (error) {
+    if (!log?.clientId || error.status) throw error;
+    payload = await send();
+  }
   return payload.log;
 }
 

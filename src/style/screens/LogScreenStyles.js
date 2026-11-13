@@ -98,6 +98,47 @@ export default StyleSheet.create({
     padding: spacing.xs,
   },
 
+  // Quick picks (recent / popular) before typing
+  quickPickTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.inkMuted,
+    marginBottom: spacing.sm,
+    paddingHorizontal: spacing.xs,
+  },
+  chipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  chip: {
+    minHeight: 44,
+    maxWidth: '100%',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 999,
+  },
+  chipPressed: {
+    backgroundColor: colors.mint,
+    borderColor: colors.primary,
+  },
+  chipText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.ink,
+  },
+  quickPickHint: {
+    fontSize: 13,
+    fontWeight: '400',
+    color: colors.inkMuted,
+    marginTop: spacing.md,
+    paddingHorizontal: spacing.xs,
+    lineHeight: 20,
+  },
+
   // Add manually
   manualSection: {
     marginTop: spacing.lg,

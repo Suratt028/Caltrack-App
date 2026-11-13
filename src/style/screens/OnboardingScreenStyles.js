@@ -45,6 +45,35 @@ export default StyleSheet.create({
     marginBottom: 18,
     lineHeight: 21,
   },
+  bmiGuidance: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+  },
+  bmiGuidanceTitle: {
+    ...typography.bodyBold,
+    color: colors.primaryDark,
+    marginBottom: spacing.xs,
+  },
+  bmiGuidanceText: {
+    ...typography.body,
+    color: colors.ink,
+    lineHeight: 21,
+  },
+  bmiGuidanceNote: {
+    ...typography.caption,
+    color: colors.inkMuted,
+    lineHeight: 18,
+    marginTop: spacing.sm,
+  },
+  goalPrompt: {
+    ...typography.bodyBold,
+    color: colors.ink,
+    marginBottom: spacing.sm,
+  },
   fieldLabel: {
     ...typography.bodyBold,
     color: colors.ink,

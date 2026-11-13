@@ -1,0 +1,604 @@
+﻿type,foodId,nameTh,detail,inmuCode,inmuName
+match,1005,"ขนมจีน, แป้งหมัก",identical-values; filled 3: sugar_g ash_g iron_mg,E92,"ลำไย, กะโหลก"
+match,1007,"ข้าวกล้อง, งอก, ดิบ",thai-exact+english+scientific+macros(4); filled 4: phosphorus_mg sodium_mg iron_mg cholesterol_mg,A6,"ข้าวกล้อง, งอก, ดิบ"
+match,1012,"ข้าวเจ้า, 5%, ดิบ",english+macros(4); filled 6: iron_mg copper_mg zinc_mg betacarotene_ug cholesterol_mg saturatedFat_g,A10,"ข้าวเจ้า, พันธุ์ต่างๆ, ดิบ"
+match,1013,"ข้าวเจ้า, 10%, ดิบ",english+macros(4); filled 6: iron_mg copper_mg zinc_mg betacarotene_ug cholesterol_mg saturatedFat_g,A10,"ข้าวเจ้า, พันธุ์ต่างๆ, ดิบ"
+match,1014,"ข้าวเจ้า, 100%, ดิบ",english+macros(4); filled 6: iron_mg copper_mg zinc_mg betacarotene_ug cholesterol_mg saturatedFat_g,A10,"ข้าวเจ้า, พันธุ์ต่างๆ, ดิบ"
+match,1033,"ข้าวสาลี, ดิบ",thai-exact+english+scientific+macros(4); filled 3: ash_g cholesterol_mg saturatedFat_g,A125,"ข้าวสาลี, ดิบ"
+match,1036,"ข้าวเหนียว, ดิบ",thai-exact+macros(4); filled 3: ash_g phosphorus_mg cholesterol_mg,A22,"ข้าวเหนียว, ดิบ"
+match,1037,"ข้าวเหนียวดำ, ดิบ",thai-exact+english+scientific+macros(4); filled 5: ash_g phosphorus_mg potassium_mg cholesterol_mg saturatedFat_g,A24,"ข้าวเหนียวดำ, ดิบ"
+match,1038,"ข้าวเหนียวดำ, ข้าวลืมผัว, ดิบ",english+macros(4); filled 3: ash_g cholesterol_mg saturatedFat_g,A24,"ข้าวเหนียวดำ, ดิบ"
+match,1039,"ข้าวเหนียว, นึ่ง",thai-exact+scientific+macros(4); filled 8: ash_g phosphorus_mg potassium_mg copper_mg zinc_mg betacarotene_ug cholesterol_mg saturatedFat_g,A23,"ข้าวเหนียว, นึ่ง"
+match,1040,"ข้าวเหนียวกล้อง, ดิบ",english+macros(4); filled 5: ash_g phosphorus_mg potassium_mg cholesterol_mg saturatedFat_g,A31,"ข้าวเหนียว, ข้าวกล้อง, ดิบ"
+match,1041,"ข้าวโอ๊ต, ดิบ",thai-exact+english+macros(4); filled 3: ash_g cholesterol_mg saturatedFat_g,A126,"ข้าวโอ๊ต, ดิบ"
+match,1046,"บะหมี่, สด",thai-exact+english+macros(2); filled 3: carbTotal_g ash_g phosphorus_mg,A27,"บะหมี่, สด"
+match,1047,บะหมี่กึ่งสำเร็จรูปพร้อมเครื่องปรุงรสหมู,english+macros(4); filled 5: sugar_g ash_g phosphorus_mg potassium_mg saturatedFat_g,A69,"บะหมี่กึ่งสำเร็จรูป, พร้อมเครื่องปรุง, รสหมูสับ"
+match,1049,"ลูกเดือย, ดิบ",thai-exact+english+macros(4); filled 3: ash_g phosphorus_mg cholesterol_mg,A94,"ลูกเดือย, ดิบ"
+match,1050,"เส้นหมี่, แห้ง",english+macros(4); filled 2: ash_g cholesterol_mg,A40,"เส้นหมี่, อบ / ตาก, แห้ง"
+match,2001,"กลอย, ดิบ",thai-exact+scientific+macros(2); filled 6: carbTotal_g sugar_g ash_g iron_mg niacin_mg vitaminC_mg,B2,"กลอย, ดิบ"
+match,2005,"มันแกว, ดิบ",thai-exact+english+scientific+macros(4); filled 3: sugar_g ash_g zinc_mg,B8,"มันแกว, ดิบ"
+match,2011,"มันเทศ, เนื้อสีม่วงแดง, ดิบ",thai-exact+english+scientific+macros(2); filled 2: carbTotal_g ash_g,B10,"มันเทศ, เนื้อสีม่วงแดง, ดิบ"
+match,2013,"มันฝรั่ง, ดิบ",thai-exact+english+scientific+macros(2); filled 3: carbTotal_g ash_g iron_mg,B11,"มันฝรั่ง, ดิบ"
+match,2015,"มันสำปะหลัง, ดิบ",thai-exact+english+scientific+macros(2); filled 1: retinol_ug,B12,"มันสำปะหลัง, ดิบ"
+match,2023,"หัวผักกาดแห้ง, หวาน",thai-name+macros(2); filled 1: carbTotal_g,D259,"หัวผักกาด, แห้ง, หวาน"
+match,3002,"กระจับ, ต้ม",thai-exact+macros(2); filled 2: carbTotal_g vitaminC_mg,B1,"กระจับ, ต้ม"
+match,3005,"เกาลัด, ดิบ",english+macros(2); filled 2: cholesterol_mg saturatedFat_g,C127,"เกาลัด, ลูกใหญ่, ดิบ"
+match,3006,"งาขาว, คั่ว",thai-name+english+macros(2); filled 3: carbTotal_g cholesterol_mg saturatedFat_g,C2,งาขาว. คั่ว
+match,3009,"งาดำ, อบ",thai-exact+macros(4); filled 2: cholesterol_mg saturatedFat_g,C128,"งาดำ, อบ"
+match,3010,"เต้าเจี้ยว, ขาว",thai-name+scientific+macros(2); filled 4: carbTotal_g sodium_mg cholesterol_mg saturatedFat_g,C43,เต้าเจี้ยวขาว
+match,3033,"ถั่วแระ, ดิบ",thai-exact+scientific+macros(2); filled 9: calcium_mg phosphorus_mg sodium_mg potassium_mg iron_mg betacarotene_ug retinol_ug vitaminC_mg cholesterol_mg,C31,"ถั่วแระ, ดิบ"
+match,3042,"ถั่วหรั่ง, ดิบ",thai-exact+english+macros(2); filled 3: carbTotal_g cholesterol_mg saturatedFat_g,C38,"ถั่วหรั่ง, ดิบ"
+match,3043,"ถั่วหรั่ง, ต้ม",thai-exact+english+macros(2); filled 2: carbTotal_g cholesterol_mg,C39,"ถั่วหรั่ง, ต้ม"
+match,3047,"แปะก๊วย, เมล็ด, ไม่มีเปลือก",thai-exact+macros(2); filled 3: magnesium_mg cholesterol_mg saturatedFat_g,C129,"แปะก๊วย, เมล็ด, ไม่มีเปลือก"
+match,3054,"เมล็ดขนุน, ดิบ",english+macros(2); filled 2: cholesterol_mg saturatedFat_g,C65,"ขนุน, เมล็ดสด, ดิบ"
+match,3058,"เมล็ดบัว, นึ่ง",thai-exact+english+macros(2); filled 2: carbTotal_g cholesterol_mg,C133,"เมล็ดบัว, นึ่ง"
+match,3060,"เมล็ดบัว, แห้ง, ดิบ",identical-values; filled 2: cholesterol_mg saturatedFat_g,C132,"เมล็ดบัว, ดิบ"
+match,3062,"เมล็ดมะม่วงหิมพานต์, คั่ว",english+macros(2); filled 3: carbTotal_g cholesterol_mg saturatedFat_g,C73,"มะม่วงหิมพานต์, เมล็ดแห้ง, คั่ว"
+match,3064,"เมล็ดมะม่วงหิมพานต์, อบเนย",identical-values; filled 0: ,T369,"มะม่วงหิมพานต์, เมล็ด, อบเนย"
+match,4001,"กระเจี๊ยบเปรี้ยว, ใบ",english+macros(2); filled 2: betacarotene_ug vitaminA_RAE_ug,D1,"กระเจี๊ยบ, ใบ"
+match,4017,"กะหล่ำ, ดอก",thai-name+english+scientific+macros(4); filled 5: fiber_g magnesium_mg sodium_mg copper_mg zinc_mg,D9,"กะหล่ำดอก, ดิบ"
+match,4022,"กุยช่าย, ดอก",thai-name+scientific+macros(4); filled 4: sodium_mg potassium_mg iron_mg copper_mg,D12,"กุยช่าย, ดอก, ดิบ"
+match,4023,"ขจร, ดอก",thai-name+scientific+macros(2); filled 1: carbTotal_g,D14,"ขจร, ดอก, ดิบ"
+match,4024,"ขนุน, อ่อน",thai-name+scientific+macros(4); filled 0: ,D15,"ขนุนอ่อน, ดิบ"
+match,4026,"ข้าวโพด, อ่อน",thai-name+scientific+macros(4); filled 0: ,D16,"ข้าวโพดอ่อน, ดิบ"
+match,4030,"ขิง, แก่",thai-exact+english+scientific+macros(2); filled 4: carbTotal_g sodium_mg copper_mg zinc_mg,N16,"ขิง, แก่"
+match,4031,"ขิง, อ่อน",thai-exact+english+scientific+macros(4); filled 1: retinol_ug,N17,"ขิง, อ่อน"
+match,4032,"ขี้เหล็ก, ดอก",thai-name+scientific+macros(4); filled 0: ,D20,"ขี้เหล็ก, ดอก, ดิบ"
+match,4034,คื่นช่าย,english+macros(4); filled 6: magnesium_mg sodium_mg potassium_mg iron_mg copper_mg zinc_mg,D86,"ผักคื่นช่าย, ดิบ"
+match,4036,"แค, ดอก",thai-name+scientific+macros(4); filled 3: sodium_mg copper_mg zinc_mg,D25,"แค, ดอก, ดิบ"
+match,4040,จวง/เทพธาโร,identical-values; filled 0: ,D326,ผักจวง
+match,4047,"ชะพลู, ใบ",thai-name+scientific+macros(4); filled 0: ,D28,"ชะพลู, ใบ, ดิบ"
+match,4052,"ต้นหอม, ดอก",thai-name+macros(2); filled 1: potassium_mg,D31,"ต้นหอม, ดอก, ดิบ"
+match,4055,"ตะลิงปลิง, ผล",thai-exact+macros(2); filled 1: carbTotal_g,D317,"ตะลิงปลิง, ผล"
+match,4056,"ตั้งโอ๋, ใบ",thai-name+macros(2); filled 1: retinol_ug,D33,"ตั้งโอ๋, ใบ, ดิบ"
+match,4061,แตงกวา,thai-name+english+scientific+macros(4); filled 4: magnesium_mg sodium_mg copper_mg zinc_mg,D34,"แตงกวา, ดิบ"
+match,4063,แตงไทยอ่อน,thai-name+scientific+macros(2); filled 1: carbTotal_g,D35,"แตงไทยอ่อน, ดิบ"
+match,4064,แตงโมอ่อน,thai-name+english+macros(2); filled 1: carbTotal_g,D36,"แตงโมอ่อน, ดิบ"
+match,4065,แตงร้าน,thai-name+scientific+macros(4); filled 0: ,D37,"แตงร้าน, ดิบ"
+match,4069,ถั่วปี,thai-name+scientific+macros(2); filled 2: carbTotal_g phosphorus_mg,D43,"ถั่วปี, ดิบ"
+match,4070,ถั่วฝักยาว,thai-name+scientific+macros(4); filled 3: iron_mg copper_mg zinc_mg,D44,"ถั่วฝักยาว, ดิบ"
+match,4076,"ทองหลาง, ใบ",thai-name+english+macros(2); filled 1: carbTotal_g,D48,"ทองหลาง, ใบ, ดิบ"
+match,4082,บร็อคโคลี่,thai-name+english+scientific+macros(4); filled 0: ,D50,"บร็อคโคลี่, ดิบ"
+match,4083,บวบงู,thai-name+macros(4); filled 0: ,D54,"บวบงู, ดิบ"
+match,4084,บวบหอม,thai-name+macros(2); filled 0: ,D58,"บวบหอม, ดิบ"
+match,4085,บวบเหลี่ยม,thai-name+macros(4); filled 7: fiber_g magnesium_mg sodium_mg copper_mg zinc_mg cholesterol_mg saturatedFat_g,D59,"บวบเหลี่ยม, ดิบ"
+match,4087,"บัวบก, ใบ",thai-name+english+scientific+macros(4); filled 4: sugar_g sodium_mg copper_mg zinc_mg,D60,"บัวบก, ใบ, ดิบ"
+match,4088,"บุกเกียง, ยอดอ่อน",thai-exact+macros(2); filled 1: carbTotal_g,D321,"บุกเกียง, ยอดอ่อน"
+match,4095,ปวยเล้ง,thai-name+english+scientific+macros(4); filled 5: fiber_g sodium_mg potassium_mg copper_mg zinc_mg,D61,"ปวยเล้ง, ดิบ"
+match,4099,ผักกาดขาว,thai-name+scientific+macros(4); filled 6: fiber_g magnesium_mg sodium_mg potassium_mg copper_mg zinc_mg,D69,"ผักกาดขาว, ดิบ"
+match,4100,ผักกาดเขียว,thai-name+scientific+macros(2); filled 1: carbTotal_g,D73,"ผักกาดเขียว, ดิบ"
+match,4113,ผักชีฝรั่ง,thai-name+scientific+macros(2); filled 0: ,D88,"ผักชีฝรั่ง, ดิบ"
+match,4115,ผักชีลาว,thai-name+english+scientific+macros(4); filled 0: ,D89,"ผักชีลาว, ดิบ"
+match,4118,ผักเตา/ผักเทา/สาหร่ายน้ำจืด,english+macros(2); filled 0: ,U35,"เทา/ตะไคร่น้ำ/สาหร่ายน้ำจืด, ดิบ"
+match,4120,ผักบุ้งจีน,thai-name+scientific+macros(4); filled 2: cholesterol_mg saturatedFat_g,D94,"ผักบุ้งจีน, ดิบ"
+match,4121,"ผักบุ้งไทย, ต้นขาว",thai-name+scientific+macros(4); filled 2: cholesterol_mg saturatedFat_g,D93,"ผักบุ้งไทย, ต้นขาว, ดิบ"
+match,4122,"ผักบุ้งไทย, ต้นแดง",thai-name+macros(4); filled 3: copper_mg cholesterol_mg saturatedFat_g,D95,"ผักบุ้งไทย, ต้นแดง, ดิบ"
+match,4130,"ผักเสี้ยว (ชงโค), ยอด",english+macros(2); filled 1: carbTotal_g,D331,"ผักเสี้ยว (ชงโค), จ.เชียงใหม่"
+match,4133,"ผักหวาน, บ้าน",thai-name+english+macros(4); filled 7: sodium_mg potassium_mg copper_mg zinc_mg retinol_ug cholesterol_mg saturatedFat_g,D213,"ผักหวานบ้าน, ดิบ"
+match,4138,พริกขี้หนู,thai-exact+macros(4); filled 0: ,D335,พริกขี้หนู
+match,4145,พริกหนุ่ม,thai-name+scientific+macros(4); filled 0: ,D339,"พริกหนุ่ม, สด"
+match,4146,พริกหยวก,thai-name+macros(4); filled 1: zinc_mg,D105,"พริกหยวก, ดิบ"
+match,4149,"พาโหม, ยอด",thai-exact+english+macros(4); filled 0: ,D341,"พาโหม, ยอด"
+match,4152,"ฟักข้าว, ยอด",thai-exact+macros(2); filled 1: carbTotal_g,D342,"ฟักข้าว, ยอด"
+match,4153,ฟักเขียว,thai-name+scientific+macros(4); filled 6: fiber_g magnesium_mg sodium_mg potassium_mg copper_mg zinc_mg,D107,"ฟักเขียว, ดิบ"
+match,4161,"มะกอกป่า, ยอดอ่อน",identical-values; filled 2: cholesterol_mg saturatedFat_g,D344,"มะกอกป่า, ยอด"
+match,4163,"มะขาม, ใบอ่อน",english+macros(2); filled 2: carbTotal_g retinol_ug,D115,"มะขาม, ยอดอ่อน"
+match,4169,"มะเขือไข่เต่า, สีเขียว",english+macros(4); filled 1: magnesium_mg,D124,"มะเขือยาว, ดิบ"
+match,4176,มะเขือยาว,thai-name+scientific+macros(4); filled 1: magnesium_mg,D124,"มะเขือยาว, ดิบ"
+match,4177,"มะเขือยาว, สีม่วง",thai-name+scientific+macros(4); filled 2: sugar_g iron_mg,D370,"มะเขือยาว, สีม่วง, สด"
+match,4181,"มะเดื่อ, ผลอ่อน",thai-exact+english+macros(1); filled 1: ash_g,D345,"มะเดื่อ, ผลอ่อน"
+match,4186,มะระจีน,thai-name+scientific+macros(4); filled 0: ,D129,"มะระจีน, ดิบ"
+match,4190,มะแว้ง,thai-name+macros(2); filled 2: carbTotal_g retinol_ug,D135,"มะแว้ง, ดิบ"
+match,4214,สันตะวาใบพาย,thai-exact+english+scientific+macros(2); filled 1: carbTotal_g,D347,สันตะวาใบพาย
+match,4217,เสม็ด,identical-values; filled 0: ,D330,"ผักเสม็ด, ยอด"
+match,4218,"โสน, ดอก",thai-name+macros(4); filled 1: sugar_g,D148,"โสน, ดอก, ดิบ"
+match,4219,"หญ้าปักกิ่ง, ราก",thai-exact+macros(4); filled 0: ,D315,"หญ้าปักกิ่ง, ราก"
+match,4220,"หญ้าปักกิ่ง, ต้นและใบ",identical-values; filled 0: ,D316,"หญ้าปักกิ่ง, ลำต้น, ใบ"
+match,4225,"หน่อไม้หวาน, หน่อเล็ก",english+macros(2); filled 2: carbTotal_g vitaminC_mg,D159,"หน่อไม้หวาน, ดิบ"
+match,4226,"หน่อไม้หวาน, หน่อใหญ่",english+macros(2); filled 1: carbTotal_g,D159,"หน่อไม้หวาน, ดิบ"
+match,4231,หมากหมก/ผักหวานใบแหลม,identical-values; filled 1: betacarotene_ug,D333,ผักหมากหมก
+match,4232,"หยวกกล้วย, อ่อน",english+macros(2); filled 1: carbTotal_g,D161,"หยวกกล้วยน้ำว้าอ่อน, ดิบ"
+match,4233,"หยวกกล้วยน้ำว้า, อ่อน",thai-name+english+macros(2); filled 1: carbTotal_g,D161,"หยวกกล้วยน้ำว้าอ่อน, ดิบ"
+match,4234,หอมหัวใหญ่,thai-exact+english+macros(4); filled 6: magnesium_mg sodium_mg potassium_mg iron_mg copper_mg zinc_mg,D348,หอมหัวใหญ่
+match,4237,เห็ดเข็มทอง,thai-name+english+macros(4); filled 0: ,D294,"เห็ดเข็มทอง, ดิบ"
+match,4238,เห็ดซาง,english+macros(2); filled 1: carbTotal_g,D350,เห็ดชาง
+match,4239,เห็ดตับเต่า,thai-exact+english+macros(2); filled 7: carbTotal_g sodium_mg potassium_mg iron_mg copper_mg zinc_mg retinol_ug,D170,เห็ดตับเต่า
+match,4242,เห็ดนางรม,thai-name+english+macros(2); filled 6: carbTotal_g magnesium_mg sodium_mg potassium_mg copper_mg zinc_mg,D174,"เห็ดนางรม, ดิบ"
+match,4246,เห็ดลม/เห็ดกระด้าง,thai-name+macros(2); filled 5: carbTotal_g sodium_mg potassium_mg copper_mg zinc_mg,D180,"เห็ดลม/ เห็ดกระด้าง, ดิบ"
+match,4247,เห็ดหอมสด,thai-name+english+macros(4); filled 0: ,D181,"เห็ดหอมสด, ดิบ"
+match,4252,เอื้องน้ำ,thai-exact+english+macros(4); filled 1: betacarotene_ug,D355,เอื้องน้ำ
+match,5001,"กล้วยไข่, สุก",thai-exact+scientific+macros(4); filled 1: sugar_g,E1,"กล้วยไข่, สุก"
+match,5004,"กล้วยงาช้าง, สุก",thai-exact+english+macros(4); filled 1: retinol_ug,E4,"กล้วยงาช้าง, สุก"
+match,5009,"กล้วยนมสาว, สุก",thai-exact+english+macros(4); filled 1: sugar_g,E5,"กล้วยนมสาว, สุก"
+match,5011,"กล้วยนางพญา, สุก",thai-exact+english+macros(4); filled 1: retinol_ug,E6,"กล้วยนางพญา, สุก"
+match,5014,"กล้วยน้ำไทย, สุก",thai-exact+english+scientific+macros(4); filled 8: fiber_g sugar_g magnesium_mg sodium_mg potassium_mg zinc_mg betacarotene_ug retinol_ug,E7,"กล้วยน้ำไทย, สุก"
+match,5015,"กล้วยน้ำว้า, สุก",thai-exact+scientific+macros(4); filled 6: sugar_g magnesium_mg sodium_mg potassium_mg copper_mg zinc_mg,E3,"กล้วยน้ำว้า, สุก"
+match,5026,"กล้วยหักมุกนวล, สุก",thai-exact+macros(4); filled 1: retinol_ug,E12,"กล้วยหักมุกนวล, สุก"
+match,5029,"แก้วมังกร, เนื้อสีขาว",thai-name+scientific+macros(4); filled 6: calcium_mg magnesium_mg sodium_mg potassium_mg copper_mg zinc_mg,E13,"แก้วมังกร, เนื้อ, สีขาว"
+match,5033,"แคนตาลูป, เนื้อเขียว",identical-values; filled 1: retinol_ug,E76,"แคนตาลูป, เนื้อสีเขียว, สุก"
+match,5035,เงาะ,thai-exact+english+scientific+macros(2); filled 4: carbTotal_g sodium_mg copper_mg zinc_mg,E17,เงาะ
+match,5036,"เงาะ, โรงเรียน",thai-name+english+scientific+macros(4); filled 4: magnesium_mg sodium_mg copper_mg zinc_mg,E18,เงาะโรงเรียน
+match,5037,"เงาะ, สีชมพู",thai-name+english+scientific+macros(4); filled 5: magnesium_mg sodium_mg copper_mg zinc_mg retinol_ug,E19,เงาะสีชมพู
+match,5038,"ชมพู่, แก้มแหม่ม",thai-name+scientific+macros(2); filled 1: carbTotal_g,E22,ชมพู่แก้มแหม่ม
+match,5039,"ชมพู่, แขกดำ",thai-name+english+scientific+macros(2); filled 1: carbTotal_g,E24,ชมพู่แขกดำ
+match,5040,"ชมพู่, ทับทิมจันทร์",thai-name+english+scientific+macros(4); filled 1: retinol_ug,E121,ชมพู่ทับทิมจันทร์
+match,5041,"ชมพู่, ทูลเกล้า",thai-name+english+scientific+macros(4); filled 0: ,E89,ชมพู่ทูลเกล้า
+match,5042,"ชมพู่, นาค",thai-name+scientific+macros(2); filled 2: carbTotal_g retinol_ug,E25,ชมพู่นาค
+match,5043,ชมพู่ มะเหมี่ยว,thai-exact+scientific+macros(2); filled 1: retinol_ug,E26,ชมพู่มะเหมี่ยว
+match,5044,"ชมพู่,เมืองเพชร",thai-name+scientific+macros(4); filled 1: retinol_ug,E133,ชมพู่เมืองเพชร
+match,5045,"ชมพู่, สาแหรก",thai-name+english+scientific+macros(2); filled 2: carbTotal_g retinol_ug,E27,ชมพู่สาแหรก
+match,5046,"ชมพู่, สีชาด",thai-name+macros(2); filled 2: carbTotal_g retinol_ug,E28,ชมพู่สีชาด
+match,5056,ทุเรียนกวน,thai-name+english+scientific+macros(4); filled 3: sugar_g ash_g sodium_mg,E166,"ทุเรียน, กวน"
+match,5057,"ทุเรียนกวน, ก้านยาว",english+macros(4); filled 3: sugar_g ash_g sodium_mg,E166,"ทุเรียน, กวน"
+match,5059,"ทุเรียนกวน, ก้านยาว+หมอนทอง",english+macros(4); filled 3: sugar_g ash_g sodium_mg,E166,"ทุเรียน, กวน"
+match,5063,"ทุเรียน, หมอนทอง",thai-name+scientific+macros(4); filled 7: ash_g magnesium_mg copper_mg zinc_mg retinol_ug cholesterol_mg saturatedFat_g,E35,ทุเรียนหมอนทอง
+match,5065,น้อยหน่า,thai-exact+scientific+macros(4); filled 6: sugar_g magnesium_mg sodium_mg copper_mg zinc_mg retinol_ug,E36,น้อยหน่า
+match,5072,"พุทรา, ลูกยาว",thai-name+english+macros(2); filled 3: carbTotal_g ash_g retinol_ug,E42,พุทราลูกยาว
+match,5073,พุทราไทย,thai-exact+english+scientific+macros(2); filled 4: carbTotal_g copper_mg zinc_mg retinol_ug,E41,พุทราไทย
+match,5075,"แพชชั่นฟรุท, กวน",identical-values; filled 2: ash_g retinol_ug,E169,"เสาวรส, แยม"
+match,5077,"แพชชั่นฟรุท, เนื้อภายนอก",identical-values; filled 2: ash_g retinol_ug,E139,"เสาวรส, ผล, เนื้อภายนอก"
+match,5078,"แพชชั่นฟรุท, เมล็ด",identical-values; filled 1: retinol_ug,E140,"เสาวรส, เมล็ด"
+match,5079,มะกอกฝรั่ง,thai-exact+macros(2); filled 3: carbTotal_g ash_g retinol_ug,E47,มะกอกฝรั่ง
+match,5080,มะขามเทศ,thai-exact+macros(4); filled 1: ash_g,E49,มะขามเทศ
+match,5081,มะขามป้อม,thai-exact+english+macros(4); filled 2: ash_g retinol_ug,E50,มะขามป้อม
+match,5082,มะขามหวาน,thai-exact+english+macros(4); filled 4: sugar_g ash_g sodium_mg retinol_ug,E52,มะขามหวาน
+match,5083,"มะปราง, สุก",identical-values; filled 3: sugar_g ash_g retinol_ug,E57,มะปราง
+match,5084,มะเฟือง,thai-exact+macros(4); filled 0: ,E59,มะเฟือง
+match,5085,มะไฟ,thai-exact+macros(2); filled 3: carbTotal_g iron_mg retinol_ug,E60,มะไฟ
+match,5086,"มะม่วง, แก้ว, ดิบ",thai-name+english+macros(4); filled 5: ash_g magnesium_mg copper_mg zinc_mg retinol_ug,E61,"มะม่วงแก้ว, ดิบ"
+match,5087,"มะม่วง, แก้ว, สุก",thai-name+english+scientific+macros(4); filled 4: ash_g retinol_ug cholesterol_mg saturatedFat_g,E62,"มะม่วงแก้ว, สุก"
+match,5089,"มะม่วง, เขียวเสวย, ดิบ",thai-name+english+scientific+macros(4); filled 2: cholesterol_mg saturatedFat_g,E63,"มะม่วงเขียวเสวย, ดิบ"
+match,5090,"มะม่วง, เขียวเสวย, สุก",thai-name+english+scientific+macros(2); filled 2: carbTotal_g retinol_ug,E143,"มะม่วงเขียวเสวย, สุก"
+match,5092,"มะม่วง, ทองดำ, ดิบ",thai-name+english+scientific+macros(2); filled 3: carbTotal_g ash_g retinol_ug,E66,"มะม่วงทองดำ, ดิบ"
+match,5093,"มะม่วง, น้ำดอกไม้, สุก",thai-name+english+scientific+macros(4); filled 0: ,E69,"มะม่วงน้ำดอกไม้, สุก"
+match,5096,"มะม่วง, พิมเสนมัน, ดิบ",thai-name+english+scientific+macros(4); filled 2: ash_g retinol_ug,E70,"มะม่วงพิมเสนมัน, ดิบ"
+match,5100,"มะม่วง, หนังกลางวัน, สุก",thai-name+english+scientific+macros(2); filled 4: carbTotal_g ash_g iron_mg retinol_ug,E74,"มะม่วงหนังกลางวัน, สุก"
+match,5102,"มะม่วง, อกร่อง, สุก",thai-name+english+scientific+macros(4); filled 9: sugar_g ash_g magnesium_mg sodium_mg copper_mg zinc_mg retinol_ug cholesterol_mg saturatedFat_g,E75,"มะม่วงอกร่อง, สุก"
+match,5104,"มะม่วงหิมพานต์, ผล, สุก",thai-exact+english+scientific+macros(4); filled 2: ash_g retinol_ug,E144,"มะม่วงหิมพานต์, ผล, สุก"
+match,5106,"มะละกอ, ค่อนข้างสุก",thai-exact+scientific+macros(2); filled 3: carbTotal_g ash_g retinol_ug,E81,"มะละกอ, ค่อนข้างสุก"
+match,5110,มังคุด,thai-exact+macros(4); filled 7: sugar_g ash_g magnesium_mg sodium_mg copper_mg zinc_mg retinol_ug,E83,มังคุด
+match,5111,ระกำ,thai-exact+english+macros(2); filled 5: carbTotal_g calcium_mg phosphorus_mg iron_mg retinol_ug,E84,ระกำ
+match,5113,ลองกอง,thai-exact+english+macros(4); filled 0: ,E145,ลองกอง
+match,5116,ลางสาด,thai-exact+macros(2); filled 4: carbTotal_g copper_mg zinc_mg retinol_ug,E90,ลางสาด
+match,5118,"ลำใย, กะโหลก",english+macros(4); filled 3: sugar_g retinol_ug vitaminC_mg,E92,"ลำไย, กะโหลก"
+match,5119,"ลำใย, เบี้ยวเขียว",english+macros(4); filled 4: sodium_mg copper_mg zinc_mg retinol_ug,E94,"ลำไย, เบี้ยวเขียว"
+match,5127,ลูกตาล,identical-values; filled 0: ,E109,"ลูกตาลอ่อน, สด"
+match,5128,ลูกท้อ,thai-exact+english+scientific+macros(4); filled 0: ,E111,ลูกท้อ
+match,5129,ลูกหว้า,thai-exact+scientific+macros(4); filled 0: ,E113,ลูกหว้า
+match,5131,สตรอว์เบอร์รี่,english+macros(4); filled 0: ,E148,สตรอเบอร์รี่
+match,5132,"ส้ม, เกลี้ยง",thai-exact+english+scientific+macros(2); filled 3: carbTotal_g ash_g retinol_ug,E114,"ส้ม, เกลี้ยง"
+match,5133,"ส้ม, เขียวหวาน",thai-exact+scientific+macros(4); filled 1: ash_g,E115,"ส้ม, เขียวหวาน"
+match,5134,"ส้ม, โชกุน",thai-exact+english+scientific+macros(4); filled 2: ash_g iron_mg,E152,"ส้ม, โชกุน"
+match,5138,ส้มสายน้ำผึ้ง,thai-name+english+scientific+macros(4); filled 1: ash_g,E153,"ส้ม, สายน้ำผึ้ง"
+match,5144,สละ,thai-exact+scientific+macros(4); filled 4: sodium_mg copper_mg zinc_mg retinol_ug,E151,สละ
+match,5148,"สัปปะรด, ศรีราชา",english+macros(4); filled 0: ,E154,"สับปะรด, ศรีราชา"
+match,5153,องุ่นเขียว,thai-exact+english+scientific+macros(4); filled 0: ,E130,องุ่นเขียว
+match,5157,แอปเปิ้ลเขียว,thai-name+english+scientific+macros(4); filled 0: ,E200,"แอปเปิ้ล, เขียว"
+match,6004,"ไก่, ตับ, ดิบ",thai-exact+english+scientific+macros(4); filled 8: retinol_ug vitaminA_RAE_ug thiamin_mg riboflavin_mg niacin_mg vitaminC_mg cholesterol_mg saturatedFat_g,F15,"ไก่, ตับ, ดิบ"
+match,6005,"ไก่, เนื้อ, ดิบ",thai-exact+english+scientific+macros(4); filled 14: phosphorus_mg magnesium_mg sodium_mg potassium_mg iron_mg copper_mg retinol_ug vitaminA_RAE_ug thiamin_mg riboflavin_mg niacin_mg vitaminC_mg cholesterol_mg saturatedFat_g,F25,"ไก่, เนื้อ, ดิบ"
+match,6007,"ไก่ดำ, กิ๊น, ดิบ",identical-values; filled 1: iron_mg,F32,"ไก่ดำ, กึ๋น, ดิบ"
+match,6008,"ไก่ดำ, น่อง, เนื้อและหนัง, ดิบ",thai-exact+scientific+macros(4); filled 2: iron_mg niacin_mg,F33,"ไก่ดำ, น่อง, เนื้อและหนัง, ดิบ"
+match,6009,"ไก่ดำ, ปีก, เนื้อและหนัง, ดิบ",thai-exact+scientific+macros(4); filled 2: iron_mg niacin_mg,F34,"ไก่ดำ, ปีก, เนื้อและหนัง, ดิบ"
+match,6010,"ไก่ดำ, สะโพก, เนื้อและหนัง, ดิบ",thai-exact+scientific+macros(4); filled 2: iron_mg niacin_mg,F36,"ไก่ดำ, สะโพก, เนื้อและหนัง, ดิบ"
+match,6011,"ไก่ดำ, หน้าอก, เนื้อและหนัง, ดิบ",identical-values; filled 2: iron_mg niacin_mg,F35,"ไก่ดำ, อก, เนื้อและหนัง, ดิบ"
+match,6013,"ไก่บ้าน, น่อง, เนื้อและหนัง, ดิบ",thai-exact+scientific+macros(4); filled 2: phosphorus_mg iron_mg,F38,"ไก่บ้าน, น่อง, เนื้อและหนัง, ดิบ"
+match,6014,"ไก่บ้าน, ปีก, เนื้อและหนัง, ดิบ",thai-exact+scientific+macros(4); filled 3: phosphorus_mg iron_mg riboflavin_mg,F39,"ไก่บ้าน, ปีก, เนื้อและหนัง, ดิบ"
+match,6015,"ไก่บ้าน, สะโพก, เนื้อและหนัง, ดิบ",thai-exact+scientific+macros(4); filled 3: phosphorus_mg iron_mg niacin_mg,F40,"ไก่บ้าน, สะโพก, เนื้อและหนัง, ดิบ"
+match,6016,"ไก่บ้าน, อก, เนื้อและหนัง, ดิบ",thai-exact+scientific+macros(4); filled 3: phosphorus_mg iron_mg niacin_mg,F41,"ไก่บ้าน, อก, เนื้อและหนัง, ดิบ"
+match,6017,"ไก่ป่า, น่อง, เนื้อ, ดิบ",identical-values; filled 0: ,F42,"ไก่ป่า, น่อง, เนื้อและหนัง, ดิบ"
+match,6018,"ไก่ป่า, ปีก, เนื้อและหนัง, ดิบ",thai-exact+scientific+macros(4); filled 0: ,F43,"ไก่ป่า, ปีก, เนื้อและหนัง, ดิบ"
+match,6019,"ไก่ป่า, สะโพก, เนื้อและหนัง, ดิบ",thai-exact+scientific+macros(4); filled 0: ,F44,"ไก่ป่า, สะโพก, เนื้อและหนัง, ดิบ"
+match,6020,"ไก่ป่า, หน้าอก, เนื้อและหนัง, ดิบ",identical-values; filled 0: ,F45,"ไก่ป่า, อก, เนื้อและหนัง, ดิบ"
+match,6024,"แคบหมู, ไม่มีมัน",thai-exact+macros(4); filled 1: iron_mg,F179,"แคบหมู, ไม่มีมัน"
+match,6026,"เป็ด, เนื้อ, ดิบ",thai-exact+english+macros(4); filled 1: iron_mg,F49,"เป็ด, เนื้อ, ดิบ"
+match,6034,"วัว, เนื้อแดดเดียว, ดิบ",identical-values; filled 0: ,F48,เนื้อเค็ม
+match,6035,"วัว, เนื้อติดมัน, ทอด",thai-name+macros(4); filled 0: ,F105,"วัว, เนื้อ, ติดมัน, ทอด"
+match,6036,"วัว, เนื้อสันใน, ดิบ",english+macros(4); filled 1: saturatedFat_g,F64,"วัว, สันใน, ดิบ"
+match,6050,"หมู, เนื้อ, ดิบ",thai-exact+scientific+macros(4); filled 10: phosphorus_mg sodium_mg potassium_mg iron_mg copper_mg zinc_mg retinol_ug vitaminC_mg cholesterol_mg saturatedFat_g,F75,"หมู, เนื้อ, ดิบ"
+match,6052,"หมู, เลือด, สุก",english+macros(4); filled 1: saturatedFat_g,F81,"หมู, เลือด, ต้ม"
+match,6054,"หมู, ตับ, ดิบ",thai-exact+english+scientific+macros(4); filled 7: magnesium_mg sodium_mg iron_mg copper_mg zinc_mg cholesterol_mg saturatedFat_g,F76,"หมู, ตับ, ดิบ"
+match,6055,"หมู, เนื้อซี่โครงอ่อน, ดิบ",english+macros(4); filled 2: phosphorus_mg saturatedFat_g,F72,"หมู, ซี่โครง, ดิบ"
+match,6058,"หมู, ยอ",thai-exact+scientific+macros(4); filled 2: sodium_mg iron_mg,F98,"หมู, ยอ"
+match,6060,"หมู, สันคอ, ดิบ",english+macros(4); filled 2: phosphorus_mg saturatedFat_g,F95,"หมู, คอ, ดิบ"
+match,6061,"หมู, สันใน, ดิบ",thai-exact+english+scientific+macros(4); filled 3: niacin_mg cholesterol_mg saturatedFat_g,F88,"หมู, สันใน, ดิบ"
+match,7001,"กระเพาะปลา, ทอด",identical-values; filled 1: niacin_mg,G2,"กระเพาะปลา, แห้ง, ทอด"
+match,7002,"กุ้งกุลาดำ, เนื้อ, สด",thai-exact+scientific+macros(4); filled 2: niacin_mg vitaminC_mg,G6,"กุ้งกุลาดำ, เนื้อ, สด"
+match,7003,"กุ้งกุลาดำ, หัว, สด",identical-values; filled 1: niacin_mg,G189,"กุ้งกุลาดำ, เนื้อส่วนหัว"
+match,7004,"กุ้งเคย, สด",identical-values; filled 1: calcium_mg,G8,"กุ้งเคย (น้ำเค็ม), สด"
+match,7012,"ปลากดทะเล, แห้ง",thai-exact+scientific+macros(4); filled 0: ,G17,"ปลากดทะเล, แห้ง"
+match,7013,"ปลากระบอก, สด",english+macros(4); filled 2: cholesterol_mg saturatedFat_g,G19,"ปลากระบอก (ปีกเหลือง), สด"
+match,7014,"ปลากราย, สด",identical-values; filled 0: ,G21,"ปลากราย, หางแพน, สด"
+match,7024,"ปลาช่อน, สด",english+macros(4); filled 6: magnesium_mg potassium_mg copper_mg vitaminC_mg cholesterol_mg saturatedFat_g,G47,"ปลาช่อน (ค้อ), สด"
+match,7025,"ปลาช่อนทะเล, แห้ง",thai-exact+english+scientific+macros(4); filled 0: ,G52,"ปลาช่อนทะเล, แห้ง"
+match,7031,"ปลาตะเพียน, สด",english+macros(4); filled 6: magnesium_mg potassium_mg copper_mg zinc_mg cholesterol_mg saturatedFat_g,G80,"ปลาตะเพียนขาว, สด"
+match,7034,"ปลาทู, นึ่ง",thai-exact+scientific+macros(4); filled 6: magnesium_mg potassium_mg copper_mg vitaminC_mg cholesterol_mg saturatedFat_g,G86,"ปลาทู, นึ่ง"
+match,7041,"ปลานิล, สด",thai-exact+english+scientific+macros(4); filled 9: calcium_mg phosphorus_mg magnesium_mg sodium_mg potassium_mg iron_mg copper_mg cholesterol_mg saturatedFat_g,G98,"ปลานิล, สด"
+match,7042,"ปลาเนื้ออ่อน, สด",thai-exact+scientific+macros(4); filled 0: ,G100,"ปลาเนื้ออ่อน, สด"
+match,7055,"ปลาลิ้นหมา, แห้ง",thai-exact+scientific+macros(4); filled 0: ,G115,"ปลาลิ้นหมา, แห้ง"
+match,7059,"ปลาสลิด, สด",thai-exact+english+scientific+macros(4); filled 1: niacin_mg,G124,"ปลาสลิด, สด"
+match,7062,"ปลาสวาย, สด",thai-exact+english+scientific+macros(4); filled 6: magnesium_mg potassium_mg copper_mg vitaminC_mg cholesterol_mg saturatedFat_g,G128,"ปลาสวาย, สด"
+match,7065,"ปลาไส้ตัน, สด",thai-exact+scientific+macros(4); filled 0: ,G137,"ปลาไส้ตัน, สด"
+match,7068,"ปลาหมอ, สด",identical-values; filled 0: ,G140,"ปลาหมอไทย, สด"
+match,7069,"ปลาหมึกกล้วย, สด",thai-exact+scientific+macros(4); filled 6: magnesium_mg potassium_mg copper_mg vitaminC_mg cholesterol_mg saturatedFat_g,G143,"ปลาหมึกกล้วย, สด"
+match,7073,"ปลาหางแข็ง, แห้ง",thai-exact+scientific+macros(4); filled 0: ,G149,"ปลาหางแข็ง, แห้ง"
+match,7074,"ปลาไหล, สด",thai-exact+scientific+macros(4); filled 6: magnesium_mg potassium_mg copper_mg zinc_mg cholesterol_mg saturatedFat_g,G150,"ปลาไหล, สด"
+match,7082,"ปูม้า, สด",thai-name+scientific+macros(4); filled 0: ,G160,ปูม้า
+match,7090,"หอยกะพง, สด",thai-name+scientific+macros(4); filled 1: vitaminC_mg,G166,"หอยกะพง, ดิบ"
+match,7091,"หอยขม, สด",thai-name+scientific+macros(4); filled 1: potassium_mg,G168,"หอยขม, ดิบ"
+match,7094,"หอยแครง, สด",thai-name+macros(4); filled 5: magnesium_mg sodium_mg potassium_mg copper_mg zinc_mg,G169,"หอยแครง, ดิบ"
+match,7098,"หอยแมลงภู่, สด",thai-name+scientific+macros(4); filled 6: magnesium_mg sodium_mg potassium_mg copper_mg zinc_mg vitaminC_mg,G177,"หอยแมลงภู่, ดิบ"
+match,8001,"ไข่ไก่, ไข่ขาว",thai-name+english+scientific+macros(4); filled 1: riboflavin_mg,H1,"ไข่ไก่, ไข่ขาว, ดิบ"
+match,8003,"ไข่ไก่, ทั้งฟอง",english+macros(4); filled 1: saturatedFat_g,H19,"ไข่ไก่, ทั้งฟอง, ดิบ (2001-2010)"
+match,8004,"ไข่จระเข้, ไข่ขาว",thai-exact+english+scientific+macros(4); filled 0: ,H32,"ไข่จระเข้, ไข่ขาว"
+match,8005,"ไข่จระเข้, ไข่แดง",thai-exact+english+scientific+macros(4); filled 0: ,H33,"ไข่จระเข้, ไข่แดง"
+match,8006,"ไข่จระเข้, ทั้งฟอง",identical-values; filled 0: ,H34,"ไข่จระเข้, ดิบ"
+match,8009,"ไข่ปลากระบอก, เค็ม",thai-exact+scientific+macros(4); filled 0: ,H10,"ไข่ปลากระบอก, เค็ม"
+match,8010,"ไข่เป็ด, ไข่ขาว",thai-name+english+scientific; filled 0: ,H12,"ไข่เป็ด, ไข่ขาว, ดิบ"
+match,8011,"ไข่เป็ด, ไข่แดง",thai-name+english+scientific; filled 0: ,H13,"ไข่เป็ด, ไข่แดง, ดิบ"
+match,8012,"ไข่เป็ด, ทั้งฟอง",thai-name+english+scientific+macros(4); filled 1: saturatedFat_g,H14,"ไข่เป็ด, ทั้งฟอง, ดิบ"
+match,8017,ไข่มดแดงและตัวอ่อน,thai-exact+scientific+macros(4); filled 0: ,H35,ไข่มดแดงและตัวอ่อน
+match,8018,ไข่แมงมัน,identical-values; filled 0: ,H36,ไข่แมงมัน (แมงมันจ่อม)
+match,9022,"นมผง, ขาดมันเนย",thai-exact+macros(4); filled 4: sugar_g sodium_mg copper_mg saturatedFat_g,J72,"นมผง, ขาดมันเนย"
+match,9035,"โยเกิร์ต, รสธรรมชาติ",thai-exact+english+macros(4); filled 3: sugar_g sodium_mg saturatedFat_g,J61,"โยเกิร์ต, รสธรรมชาติ"
+match,10002,"กะปิ, คุณภาพดี",thai-exact+macros(4); filled 4: fiber_g sugar_g sodium_mg potassium_mg,N44,"กะปิ, คุณภาพดี"
+match,10004,ขมิ้นขาว,thai-exact+english+scientific+macros(2); filled 7: carbTotal_g ash_g magnesium_mg sodium_mg copper_mg zinc_mg retinol_ug,N9,ขมิ้นขาว
+match,10005,ขมิ้นชัน,thai-exact+scientific+macros(2); filled 5: carbTotal_g magnesium_mg sodium_mg copper_mg zinc_mg,N8,ขมิ้นชัน
+match,10006,ข่า,thai-exact+english+scientific+macros(2); filled 4: carbTotal_g sodium_mg copper_mg zinc_mg,N11,ข่า
+match,10009,ดอกจันทน์เทศ,english+macros(2); filled 1: carbTotal_g,N7,ดอกจันท์
+match,10010,ตะไคร้,thai-exact+english+scientific+macros(2); filled 4: carbTotal_g sodium_mg copper_mg zinc_mg,N18,ตะไคร้
+match,10018,"พริกชี้ฟ้า, แห้ง",thai-exact+english+scientific+macros(2); filled 2: carbTotal_g vitaminC_mg,N33,"พริกชี้ฟ้า, แห้ง"
+match,10019,"พริกไทย, ขาว",thai-exact+scientific+macros(2); filled 1: carbTotal_g,N27,"พริกไทย, ขาว"
+match,10020,"พริกไทย, ดำ",thai-exact+scientific+macros(2); filled 0: ,N26,"พริกไทย, ดำ"
+match,10023,"มะกรูด, ใบ",thai-exact+scientific+macros(2); filled 4: carbTotal_g sodium_mg copper_mg zinc_mg,N35,"มะกรูด, ใบ"
+match,10024,"มะกรูด, ผิว",thai-exact+scientific+macros(2); filled 1: carbTotal_g,N34,"มะกรูด, ผิว"
+match,10028,หอมแดง,thai-exact+english+scientific+macros(4); filled 6: fiber_g sodium_mg potassium_mg iron_mg copper_mg zinc_mg,N41,หอมแดง
+match,10030,อบเชย,thai-exact+english+macros(2); filled 2: carbTotal_g iron_mg,N42,อบเชย
+match,11004,ก๋วยเตี๋ยวแขก (ก๋วยเตี๋ยวแกง),thai-exact+macros(2); filled 0: ,T6,ก๋วยเตี๋ยวแขก (ก๋วยเตี๋ยวแกง)
+match,11006,ก๋วยเตี๋ยวเนื้อสับ,thai-name+macros(2); filled 0: ,T7,"ก๋วยเตี๋ยว, เนื้อสับ"
+match,11029,"ก๋วยเตี๋ยวเส้นใหญ่, ราดหน้า, กุ้ง",thai-exact+macros(2); filled 1: sodium_mg,T12,"ก๋วยเตี๋ยวเส้นใหญ่, ราดหน้า, กุ้ง"
+match,11042,ข้าวขาหมู,thai-exact+macros(4); filled 2: sodium_mg potassium_mg,T48,ข้าวขาหมู
+match,11044,ข้าวผัดหมู,thai-exact+english+macros(2); filled 0: ,T56,ข้าวผัดหมู
+match,11047,ข้าวราดแกงเขียวหวานไก่,thai-exact+macros(4); filled 0: ,T46,ข้าวราดแกงเขียวหวานไก่
+match,11087,ข้าวหมูแดง,thai-exact+macros(4); filled 1: sodium_mg,T64,ข้าวหมูแดง
+match,11090,"ส้มตำ, ปู - กุ้ง",thai-exact+macros(2); filled 0: ,T102,"ส้มตำ, ปู-กุ้ง"
+match,11094,หมี่กรอบ,thai-exact+macros(4); filled 1: riboflavin_mg,T131,หมี่กรอบ
+match,11096,หมี่กะทิ,thai-exact+macros(4); filled 0: ,T132,หมี่กะทิ
+match,11124,"ปลาแมกเคอเรล, ในซอสมะเขือเทศ",english+macros(4); filled 7: fiber_g sugar_g calcium_mg sodium_mg iron_mg thiamin_mg riboflavin_mg,G250,"ปลาแมคเคอเรล, ในซอสมะเขือเทศ"
+match,11136,แกงบอน,thai-exact+macros(2); filled 2: carbTotal_g vitaminC_mg,T289,แกงบอน
+match,11138,แกงหมูชะมวง,thai-exact+macros(2); filled 1: vitaminC_mg,T291,แกงหมูชะมวง
+match,11146,ซุปหน่อไม้,thai-exact+macros(2); filled 1: carbTotal_g,T73,ซุปหน่อไม้
+match,11153,แกงไตปลา,thai-exact+macros(2); filled 1: vitaminC_mg,T288,แกงไตปลา
+match,11158,แกงเหลืองใส่ปลา,thai-exact+macros(2); filled 0: ,T294,แกงเหลืองใส่ปลา
+match,11166,ข้าวยำปักษ์ใต้,thai-exact+macros(4); filled 5: fiber_g calcium_mg phosphorus_mg sodium_mg iron_mg,T60,ข้าวยำปักษ์ใต้
+match,11177,"เส้นหมี่, ผัดซีอิ้ว",thai-exact+macros(2); filled 1: carbTotal_g,T312,"เส้นหมี่, ผัดซีอิ้ว"
+match,11178,แกงขนุนอ่อน,english+macros(2); filled 1: carbTotal_g,T286,แกงขนุน
+match,11180,แกงฮังเล,thai-exact+macros(4); filled 0: ,T297,แกงฮังเล
+match,11182,"ข้าวซอย, ไก่",thai-name+macros(4); filled 1: vitaminC_mg,T310,ข้าวซอยไก่
+match,11183,น้ำพริกอ่อง,thai-exact+english+macros(4); filled 0: ,T303,น้ำพริกอ่อง
+match,11192,"แกงอ่อม, เนื้อ",thai-name+macros(2); filled 4: carbTotal_g calcium_mg phosphorus_mg iron_mg,T295,แกงอ่อมเนื้อ
+match,11193,"แกงอ่อม, ปลา",thai-name+macros(2); filled 1: carbTotal_g,T296,แกงอ่อมปลา
+match,11202,"ลาบเลือด, อีสาน",thai-exact+macros(2); filled 1: carbTotal_g,T100,"ลาบเลือด, อีสาน"
+match,11204,"ส้มตำ, อีสาน",thai-exact+macros(2); filled 1: carbTotal_g,T103,"ส้มตำ, อีสาน"
+match,12002,"กล้วยไข่, เชื่อม",thai-exact+english+macros(4); filled 0: ,T313,"กล้วยไข่, เชื่อม"
+match,12005,ขนมโก๋,thai-exact+macros(2); filled 7: carbTotal_g phosphorus_mg iron_mg betacarotene_ug vitaminA_RAE_ug thiamin_mg riboflavin_mg,T315,ขนมโก๋
+match,12012,ขนมลา,thai-exact+macros(2); filled 5: calcium_mg phosphorus_mg thiamin_mg riboflavin_mg niacin_mg,T316,ขนมลา
+match,12021,ข้าวเหนียวมูล,thai-exact+english+macros(4); filled 6: calcium_mg phosphorus_mg betacarotene_ug vitaminA_RAE_ug riboflavin_mg niacin_mg,T139,ข้าวเหนียวมูล
+match,12022,ซาหริ่ม,thai-exact+english+macros(4); filled 8: calcium_mg phosphorus_mg iron_mg betacarotene_ug vitaminA_RAE_ug thiamin_mg riboflavin_mg niacin_mg,T164,ซาหริ่ม
+match,12023,ตะโก้แห้ว,thai-exact+macros(4); filled 8: calcium_mg phosphorus_mg iron_mg betacarotene_ug vitaminA_RAE_ug thiamin_mg riboflavin_mg niacin_mg,T140,ตะโก้แห้ว
+match,12025,ทองหยิบ,thai-exact+macros(4); filled 9: calcium_mg phosphorus_mg iron_mg betacarotene_ug retinol_ug vitaminA_RAE_ug thiamin_mg riboflavin_mg niacin_mg,T142,ทองหยิบ
+match,12031,เม็ดขนุน,thai-exact+macros(4); filled 12: calcium_mg phosphorus_mg potassium_mg iron_mg betacarotene_ug retinol_ug vitaminA_RAE_ug thiamin_mg riboflavin_mg niacin_mg cholesterol_mg saturatedFat_g,T158,เม็ดขนุน
+match,12032,ลอดช่องไทย น้ำกะทิ,english+macros(4); filled 4: calcium_mg phosphorus_mg thiamin_mg niacin_mg,T163,ลอดช่องน้ำกะทิ
+match,12034,"วุ้นกะทิ, ใบเตย",thai-name+macros(4); filled 8: calcium_mg phosphorus_mg iron_mg betacarotene_ug vitaminA_RAE_ug thiamin_mg riboflavin_mg niacin_mg,T150,วุ้นกะทิใบเตย
+match,13001,"จิ้งโกร่ง, ดิบ",thai-name+english+scientific+macros(2); filled 1: phosphorus_mg,U5,จิ้งโกร่ง
+match,13002,"จิ้งหรีด, ดิบ",thai-name+english+scientific+macros(4); filled 8: fiber_g calcium_mg phosphorus_mg sodium_mg potassium_mg iron_mg cholesterol_mg saturatedFat_g,U3,จิ้งหรีด
+match,13004,"ต่อ, ตัวแก่, ดิบ",english+macros(2); filled 2: carbTotal_g saturatedFat_g,U28,"ตัวต่อ, แก่"
+match,13005,"ต่อ, ตัวอ่อน, ดิบ",english+macros(2); filled 2: carbTotal_g saturatedFat_g,U29,"ตัวต่อ, อ่อน"
+match,13011,"แมงป่อง, ดิบ",thai-name+english+scientific+macros(4); filled 8: fiber_g calcium_mg phosphorus_mg sodium_mg potassium_mg iron_mg cholesterol_mg saturatedFat_g,U34,แมงป่อง
+match,13013,"หนอนไม้ไผ่, ดิบ",thai-exact+english+scientific+macros(2); filled 8: carbTotal_g calcium_mg phosphorus_mg sodium_mg potassium_mg iron_mg cholesterol_mg saturatedFat_g,U17,"หนอนไม้ไผ่, ดิบ"
+match,14015,"ปลาทู, สด, ทอด",thai-exact+english+macros(4); filled 13: fiber_g calcium_mg phosphorus_mg sodium_mg potassium_mg iron_mg copper_mg zinc_mg thiamin_mg riboflavin_mg niacin_mg cholesterol_mg saturatedFat_g,G95,"ปลาทู, สด, ทอด"
+match,14035,"มันเทศ, ชุบแป้งทอด",thai-name+macros(4); filled 13: fiber_g sugar_g calcium_mg phosphorus_mg magnesium_mg sodium_mg potassium_mg iron_mg copper_mg zinc_mg thiamin_mg riboflavin_mg niacin_mg,T374,มันเทศชุบแป้งทอด
+match,14036,"มันฝรั่ง, ทอด",thai-name+macros(4); filled 10: fiber_g calcium_mg phosphorus_mg magnesium_mg sodium_mg potassium_mg iron_mg zinc_mg cholesterol_mg saturatedFat_g,S37,มันฝรั่งทอด
+not-matched,1048,แป้งข้าวเจ้า,"same name, macros differ (different sample/recipe)",A80,แป้งข้าวเจ้า
+not-matched,2022,"หัวผักกาดแห้ง, เค็ม","same name, macros differ (different sample/recipe)",D258,"หัวผักกาด, แห้ง, เค็ม"
+not-matched,3027,"ถั่วเน่า, แห้ง","same name, macros differ (different sample/recipe)",C24,"ถั่วเน่า, แห้ง"
+not-matched,3034,"ถั่วแระ, ต้ม","same name, macros differ (different sample/recipe)",C105,"ถั่วแระ, ต้ม"
+not-matched,3052,"มะพร้าวอ่อน, เนื้อ","same name, macros differ (different sample/recipe)",E142,"มะพร้าวอ่อน, เนื้อ"
+not-matched,3059,"เมล็ดบัว, สด","same name, macros differ (different sample/recipe)",C132,"เมล็ดบัว, ดิบ"
+not-matched,4003,กระชาย,"same name, macros differ (different sample/recipe)",N4,"กระชาย, ดิบ"
+not-matched,4005,"กระถิน, ยอดอ่อน","same name, macros differ (different sample/recipe)",D3,"กระถิน, ยอดอ่อน, ดิบ"
+not-matched,4008,"กระเทียม, ต้น","same name, macros differ (different sample/recipe)",D7,"กระเทียม, ต้น, ดิบ"
+not-matched,4019,กะหล่ำปลี,"same name, macros differ (different sample/recipe)",D10,"กะหล่ำปลี, ดิบ"
+not-matched,4037,"แค, ยอด","same name, macros differ (different sample/recipe)",D26,"แค, ยอด, ดิบ"
+not-matched,4038,แครอท,"same name, macros differ (different sample/recipe)",D27,"แครอท, ดิบ"
+not-matched,4067,ถั่วงอก,"same name, macros differ (different sample/recipe)",D39,"ถั่วงอก, ดิบ"
+not-matched,4068,"ถั่วงอก, หัวโต","same name, macros differ (different sample/recipe)",D42,"ถั่วงอกหัวโต, ดิบ"
+not-matched,4074,ถั่วลันเตา,"same name, macros differ (different sample/recipe)",D47,"ถั่วลันเตา, ดิบ"
+not-matched,4102,ผักกาดหอม,"same name, macros differ (different sample/recipe)",D77,"ผักกาดหอม, ดิบ"
+not-matched,4106,ผักกูด,"same name, macros differ (different sample/recipe)",D274,"ผักกูด, ดิบ"
+not-matched,4112,ผักชี,"same name, macros differ (different sample/recipe)",D87,ผักชี
+not-matched,4114,ผักชีล้อม,"same name, macros differ (different sample/recipe)",D199,"ผักชีล้อม, ดิบ"
+not-matched,4132,ผักหนาม,"same name, macros differ (different sample/recipe)",D210,"ผักหนาม, ดิบ"
+not-matched,4148,พริกเหลือง,"same name, macros differ (different sample/recipe)",D340,พริกเหลือง
+not-matched,4156,"ฟักทอง, ยอดอ่อน","same name, macros differ (different sample/recipe)",D110,"ฟักทอง, ยอดอ่อน, ดิบ"
+not-matched,4159,"มะกอก, ยอดอ่อน","same name, macros differ (different sample/recipe)",D111,"มะกอก, ยอดอ่อน, ดิบ"
+not-matched,4162,"มะขาม, ฝักอ่อน","same name, macros differ (different sample/recipe)",D112,"มะขาม, ฝักอ่อน, ดิบ"
+not-matched,4175,มะเขือพวง,"same name, macros differ (different sample/recipe)",D122,"มะเขือพวง, ดิบ"
+not-matched,4178,มะเขือเสวย,"same name, macros differ (different sample/recipe)",D126,"มะเขือเสวย, ดิบ"
+not-matched,4182,"มะตูม, ยอดอ่อน","same name, macros differ (different sample/recipe)",D250,"มะตูม, ยอดอ่อน, ดิบ"
+not-matched,4195,"แมงลัก, ใบ","same name, macros differ (different sample/recipe)",N155,"แมงลัก, ใบ"
+not-matched,4196,"ยอ, ใบ","same name, macros differ (different sample/recipe)",D252,"ยอ, ใบ, ดิบ"
+not-matched,4199,"ย่านาง, ใบ","same name, macros differ (different sample/recipe)",D253,"ย่านาง, ใบ, ดิบ"
+not-matched,4209,สมอไทย,"same name, macros differ (different sample/recipe)",E149,"สมอ, ไทย"
+not-matched,4210,"สะเดา, ดอก","same name, macros differ (different sample/recipe)",D142,"สะเดา, ดอก, ดิบ"
+not-matched,4215,สายบัว,"same name, macros differ (different sample/recipe)",D146,"สายบัว, ดิบ"
+not-matched,4221,หน่อไม้ไผ่ตง,"same name, macros differ (different sample/recipe)",D154,"หน่อไม้ไผ่ตง, ดิบ"
+not-matched,4222,หน่อไม้ไผ่ป่า,"same name, macros differ (different sample/recipe)",D156,"หน่อไม้ไผ่ป่า, ดิบ"
+not-matched,4235,หัวปลี,"same name, macros differ (different sample/recipe)",D162,"หัวปลี, ดิบ"
+not-matched,4241,เห็ดนางฟ้า,"same name, macros differ (different sample/recipe)",D173,"เห็ดนางฟ้า, ดิบ"
+not-matched,4245,เห็ดเผาะ,"same name, macros differ (different sample/recipe)",D176,"เห็ดเผาะ, ดิบ"
+not-matched,5021,"กล้วยหอม, สุก","same name, macros differ (different sample/recipe)",E8,"กล้วยหอม, สุก"
+not-matched,5055,"ทุเรียน, กระดุม","same name, macros differ (different sample/recipe)",E31,ทุเรียนกระดุม
+not-matched,5060,"ทุเรียน, ก้านยาว","same name, macros differ (different sample/recipe)",E32,ทุเรียนก้านยาว
+not-matched,5061,"ทุเรียน, ชะนี","same name, macros differ (different sample/recipe)",E33,ทุเรียนชะนี
+not-matched,5098,"มะม่วง, แรด, ดิบ","same name, macros differ (different sample/recipe)",E73,"มะม่วงแรด, ดิบ"
+not-matched,5120,ลิ้นจี่,"same name, macros differ (different sample/recipe)",E100,ลิ้นจี่
+not-matched,6032,"วัว, เนื้อ, ดิบ","same name, macros differ (different sample/recipe)",F59,"วัว, เนื้อ, ดิบ"
+not-matched,6047,"ไส้กรอกหมู, ทอด","same name, macros differ (different sample/recipe)",F161,"ไส้กรอก, หมู, ทอด"
+not-matched,6051,"หมู, ปอด, ดิบ","same name, macros differ (different sample/recipe)",F80,"หมู, ปอด, ดิบ"
+not-matched,6063,"หมู, หยอง","same name, macros differ (different sample/recipe)",F99,หมูหยอง
+not-matched,7015,"ปลากะพงขาว, สด","same name, macros differ (different sample/recipe)",G28,"ปลากะพงขาว, สด"
+not-matched,7026,"ปลาซาบะ, สด","same name, macros differ (different sample/recipe)",G259,"ปลาซาบะ, ดิบ"
+not-matched,7035,"ปลาทู, สด","same name, macros differ (different sample/recipe)",G93,"ปลาทู, สด"
+not-matched,7063,"ปลาสีเสียด, แห้ง","same name, macros differ (different sample/recipe)",G136,"ปลาสีเสียด, แห้ง"
+not-matched,7064,"ปลาสำลี, สด","same name, macros differ (different sample/recipe)",G132,"ปลาสำลี, สด"
+not-matched,7088,ส้มฟัก,"same name, macros differ (different sample/recipe)",G199,ส้มฟัก
+not-matched,7100,"หูฉลาม, แห้ง","same name, macros differ (different sample/recipe)",G188,"หูฉลาม, แห้ง"
+not-matched,8002,"ไข่ไก่, ไข่แดง","same name, macros differ (different sample/recipe)",H2,"ไข่ไก่, ไข่แดง, ดิบ"
+not-matched,8016,ไข่มดแดง,"same name, macros differ (different sample/recipe)",H29,ไข่มดแดง
+not-matched,10001,กระเทียม,"same name, macros differ (different sample/recipe)",N2,"กระเทียม, สด"
+not-matched,10003,"กะปิ, คุณภาพรอง","same name, macros differ (different sample/recipe)",N45,"กะปิ, คุณภาพรอง"
+not-matched,10015,"ผักชี, ราก","same name, macros differ (different sample/recipe)",N20,"ผักชี, ราก"
+not-matched,10027,"สะระแหน่, ใบ","same name, macros differ (different sample/recipe)",N40,"สะระแหน่, ใบ"
+not-matched,10029,"โหระพา, ใบ","same name, macros differ (different sample/recipe)",N37,"โหระพา, ใบ"
+not-matched,11001,กระเพาะปลา,"same name, macros differ (different sample/recipe)",T2,กระเพาะปลา
+not-matched,11135,แกงเขียวหวานหมู,"same name, macros differ (different sample/recipe)",T285,แกงเขียวหวานหมู
+not-matched,11143,ขนมจีนน้ำยา,"same name, macros differ (different sample/recipe)",T39,"ขนมจีน, น้ำยา"
+not-matched,11156,แกงมัสมั่นเนื้อ,"same name, macros differ (different sample/recipe)",T190,"แกงมัสมั่น, เนื้อ"
+not-matched,11167,ข้าวหมกไก่,"same name, macros differ (different sample/recipe)",T63,"ข้าวหมก, ไก่"
+not-matched,11205,"ไส้กรอก, อีสาน","same name, macros differ (different sample/recipe)",T14,"ไส้กรอก, อีสาน"
+not-matched,12010,ขนมชั้น,"same name, macros differ (different sample/recipe)",T160,ขนมชั้น
+not-matched,12024,ทองหยอด,"same name, macros differ (different sample/recipe)",T141,ทองหยอด
+not-matched,12033,ลูกชุบ,"same name, macros differ (different sample/recipe)",T273,ลูกชุบ
+not-matched,13003,"ดักแด้ไหม, ดิบ","same name, macros differ (different sample/recipe)",U4,ดักแด้ไหม
+not-matched,14005,"ไก่, น่อง, ทอด","same name, macros differ (different sample/recipe)",F13,"ไก่, น่อง, ทอด"
+not-matched,14006,"ไก่, ปีก, ทอด","same name, macros differ (different sample/recipe)",F24,"ไก่, ปีก, ทอด"
+not-matched,14013,"ปลาช่อน, ทอด","same name, macros differ (different sample/recipe)",G209,"ปลาช่อน, ทอด"
+not-matched,14021,"ลูกชิ้นไก่, ทอด","same name, macros differ (different sample/recipe)",F137,"ลูกชิ้น, ไก่, ทอด"
+not-matched,14029,"เต้าหู้, ทอด","same name, macros differ (different sample/recipe)",T343,"เต้าหู้, ทอด"
+not-matched,14034,"เผือก, ชุบแป้งทอด","same name, macros differ (different sample/recipe)",T365,เผือกชุบแป้งทอด
+not-matched,USDA-171009,มายองเนส,"same name, macros differ (different sample/recipe)",K14,มายองเนส
+flag,1047,บะหมี่กึ่งสำเร็จรูปพร้อมเครื่องปรุงรสหมู,water+macros+ash 106 g/100 g,A69,
+flag,3009,"งาดำ, อบ",fibre > total carbohydrate,C128,
+flag,3027,"ถั่วเน่า, แห้ง",fibre > total carbohydrate,,
+flag,3033,"ถั่วแระ, ดิบ",fibre > total carbohydrate,C31,
+flag,3037,"ถั่วลิสง, ดิบ",fibre > total carbohydrate,,
+flag,4002,"กระเจี๊ยบมอญ/กระเจี๊ยบเขียว, ฝักอ่อน",fibre > total carbohydrate,,
+flag,4005,"กระถิน, ยอดอ่อน",fibre > total carbohydrate,,
+flag,4006,กระทือขาว,fibre > total carbohydrate,,
+flag,4007,กระทือแดง,fibre > total carbohydrate,,
+flag,4012,"กวางตุ้ง, ต้นและใบ",fibre > total carbohydrate,,
+flag,4014,"กะทกรก, ยอด",fibre > total carbohydrate,,
+flag,4015,"กะเพราขาว, ใบ",fibre > total carbohydrate,,
+flag,4016,"กะเพราแดง, ใบ",fibre > total carbohydrate,,
+flag,4018,"กะหล่ำ, แขนง/ยอดผัก",fibre > total carbohydrate,,
+flag,4024,"ขนุน, อ่อน",fibre > total carbohydrate,D15,
+flag,4032,"ขี้เหล็ก, ดอก",fibre > total carbohydrate,D20,
+flag,4034,คื่นช่าย,fibre > total carbohydrate,D86,
+flag,4036,"แค, ดอก",fibre > total carbohydrate,D25,
+flag,4040,จวง/เทพธาโร,fibre > total carbohydrate,D326,
+flag,4041,จากง,fibre > total carbohydrate,,
+flag,4044,"จิกนอนวัน/จิกหาวนอน, ยอด",fibre > total carbohydrate,,
+flag,4047,"ชะพลู, ใบ",fibre > total carbohydrate,D28,
+flag,4050,"เดือยดิน/มะเดื่อดิน, ยอดและใบอ่อน",fibre > total carbohydrate,,
+flag,4054,ต้นอ่อนทานตะวัน,fibre > total carbohydrate,,
+flag,4056,"ตั้งโอ๋, ใบ",fibre > total carbohydrate,D33,
+flag,4072,ถั่วพู,fibre > total carbohydrate,,
+flag,4073,ถั่วไร่,fibre > total carbohydrate,,
+flag,4082,บร็อคโคลี่,fibre > total carbohydrate,D50,
+flag,4094,ปรงทะเล,fibre > total carbohydrate,,
+flag,4097,ผักกะเฉด,fibre > total carbohydrate,,
+flag,4103,ผักกาดหางหงส์,fibre > total carbohydrate,,
+flag,4104,ผักกีบม้า,fibre > total carbohydrate,,
+flag,4107,ผักขาเขียด/ผักลิ้น/ผักขี้ใต้,fibre > total carbohydrate,,
+flag,4112,ผักชี,fibre > total carbohydrate,,
+flag,4113,ผักชีฝรั่ง,fibre > total carbohydrate,D88,
+flag,4114,ผักชีล้อม,fibre > total carbohydrate,,
+flag,4115,ผักชีลาว,fibre > total carbohydrate,D89,
+flag,4116,ผักติ้ว ดอก,fibre > total carbohydrate,,
+flag,4120,ผักบุ้งจีน,fibre > total carbohydrate,D94,
+flag,4121,"ผักบุ้งไทย, ต้นขาว",fibre > total carbohydrate,D93,
+flag,4122,"ผักบุ้งไทย, ต้นแดง",fibre > total carbohydrate,D95,
+flag,4125,ผักไผ่/ผักแพว,fibre > total carbohydrate,,
+flag,4128,ผักแมะ,fibre > total carbohydrate,,
+flag,4133,"ผักหวาน, บ้าน",fibre > total carbohydrate,D213,
+flag,4134,"ผักหวาน, ป่า",fibre > total carbohydrate,,
+flag,4138,พริกขี้หนู,fibre > total carbohydrate,D335,
+flag,4140,"พริกจินดา/พริกซุปเปอร์ฮอท, เขียว",fibre > total carbohydrate,,
+flag,4141,"พริกจินดา/พริกซุปเปอร์ฮอท, แดง",fibre > total carbohydrate,,
+flag,4145,พริกหนุ่ม,fibre > total carbohydrate,D339,
+flag,4149,"พาโหม, ยอด",fibre > total carbohydrate,D341,
+flag,4158,"ฟักแม้ว/มะเขือเครือ/มะระหวาน, ยอด",fibre > total carbohydrate,,
+flag,4159,"มะกอก, ยอดอ่อน",fibre > total carbohydrate,,
+flag,4168,"มะเขือไข่เต่า, สีขาว",fibre > total carbohydrate,,
+flag,4175,มะเขือพวง,fibre > total carbohydrate,,
+flag,4177,"มะเขือยาว, สีม่วง",sugar set aside (> carbs); fibre > total carbohydrate,D370,
+flag,4180,"มะดัน, ใบอ่อน",fibre > total carbohydrate,,
+flag,4183,"มะยม, ยอดอ่อน",fibre > total carbohydrate; kcal 31 vs 83 from macros,,
+flag,4185,มะระขึ้นก,fibre > total carbohydrate,,
+flag,4193,"มันปู, ใบอ่อน",fibre > total carbohydrate,,
+flag,4200,"ยี่หร่า, ใบ",fibre > total carbohydrate,,
+flag,4205,ลูกเนียงรอก,fibre > total carbohydrate,,
+flag,4210,"สะเดา, ดอก",fibre > total carbohydrate,,
+flag,4216,"สำประศรี, ต้นอ่อน",fibre > total carbohydrate,,
+flag,4217,เสม็ด,fibre > total carbohydrate,D330,
+flag,4219,"หญ้าปักกิ่ง, ราก",fibre > total carbohydrate,D315,
+flag,4220,"หญ้าปักกิ่ง, ต้นและใบ",fibre > total carbohydrate,D316,
+flag,4223,"หน่อไม้พันธุ์กิมซุง, ต้ม",fibre > total carbohydrate,,
+flag,4230,หมรุย/สมุย/หัสคุณ,fibre > total carbohydrate,,
+flag,4231,หมากหมก/ผักหวานใบแหลม,fibre > total carbohydrate,D333,
+flag,4247,เห็ดหอมสด,fibre > total carbohydrate,D181,
+flag,4249,"เหลียง, ใบ",fibre > total carbohydrate,,
+flag,4252,เอื้องน้ำ,fibre > total carbohydrate,D355,
+flag,5005,"กล้วยตะกุ่ย, สุก",sugar set aside (> carbs),,
+flag,5007,"กล้วยทิพรส, สุก",sugar set aside (> carbs),,
+flag,5008,"กล้วยเทพรส, สุก",sugar set aside (> carbs),,
+flag,5009,"กล้วยนมสาว, สุก",sugar set aside (> carbs),E5,
+flag,5014,"กล้วยน้ำไทย, สุก",water+macros+ash 107 g/100 g,E7,
+flag,5023,"กล้วยหอมทิพย์, สุก",sugar set aside (> carbs),,
+flag,5024,"กล้วยหอมผลสั้น, สุก",sugar set aside (> carbs),,
+flag,5031,"ขนุน, จำปา",sugar set aside (> carbs),,
+flag,5032,"ขนุน, หนัง",sugar set aside (> carbs),,
+flag,5034,"แคนตาลูป, เนื้อเหลือง",sugar set aside (> carbs),,
+flag,5036,"เงาะ, โรงเรียน",sugar set aside (> carbs),E18,
+flag,5048,เชอร์รี่นอก,kcal 49 vs 139 from macros,,
+flag,5051,"แตงโม, กินรี",sugar set aside (> carbs),,
+flag,5062,ทุเรียนเทศ/ทุเรียนน้ำ,sugar set aside (> carbs),,
+flag,5083,"มะปราง, สุก",sugar set aside (> carbs),E57,
+flag,5084,มะเฟือง,sugar set aside (> carbs),E59,
+flag,5097,"มะม่วง, ยายกล่ำ, สุก",sugar set aside (> carbs),,
+flag,5105,มะยงชิด,sugar set aside (> carbs),,
+flag,5108,"มะละกอ, ฮอลแลนด์, สุก",sugar set aside (> carbs),,
+flag,5113,ลองกอง,sugar set aside (> carbs),E145,
+flag,5114,ละมุดไทย/ละมุดสีดา,sugar set aside (> carbs),,
+flag,5118,"ลำใย, กะโหลก",sugar set aside (> carbs),E92,
+flag,5121,"ลิ้นจี่, กะโหลกใบอ้อ",sugar set aside (> carbs),,
+flag,5122,"ลิ้นจี่, ค่อม",sugar set aside (> carbs),,
+flag,5133,"ส้ม, เขียวหวาน",sugar set aside (> carbs),E115,
+flag,5138,ส้มสายน้ำผึ้ง,sugar set aside (> carbs),E153,
+flag,5145,"สับปะรด, นางแล",sugar set aside (> carbs),,
+flag,5148,"สัปปะรด, ศรีราชา",sugar set aside (> carbs),E154,
+flag,5153,องุ่นเขียว,sugar set aside (> carbs),E130,
+flag,5154,องุ่นดำ,sugar set aside (> carbs),,
+flag,5155,"องุ่นแดง, ลูกใหญ่",sugar set aside (> carbs),,
+flag,5158,"แอปเปิ้ลแดง, ฟูจิ",sugar set aside (> carbs),,
+flag,7058,"ปลาส้ม, ตัวใหญ่, ปลาหมัก",kcal 85 vs 107 from macros,,
+flag,9022,"นมผง, ขาดมันเนย",sugar set aside (> carbs),J72,
+flag,11124,"ปลาแมกเคอเรล, ในซอสมะเขือเทศ",fibre > total carbohydrate,G250,
+flag,11148,"น้ำพริก, ปลาร้า, ผักลวก",fibre > total carbohydrate,,
+flag,11172,"ผัดคั่วกลิ้ง, เนื้อวัว",fibre > total carbohydrate,,
+flag,11183,น้ำพริกอ่อง,fibre > total carbohydrate,T303,
+flag,11184,"ลาบคั่ว, หมู",fibre > total carbohydrate,,
+flag,11200,ตำมะเขือพวง,fibre > total carbohydrate,,
+flag,12001,กล้วยแขก,sugar set aside (> carbs),,
+flag,12002,"กล้วยไข่, เชื่อม",sugar set aside (> carbs),T313,
+flag,12004,ขนมเกลือ/เข้าหนมเกือ,sugar set aside (> carbs),,
+flag,12017,ข้าวต้มมัด/ข้าวต้มผัด,sugar set aside (> carbs),,
+flag,12020,"ข้าวเหนียวดำ, เปียก",sugar set aside (> carbs),,
+flag,12021,ข้าวเหนียวมูล,sugar set aside (> carbs),T139,
+flag,12022,ซาหริ่ม,sugar set aside (> carbs),T164,
+flag,12023,ตะโก้แห้ว,sugar set aside (> carbs),T140,
+flag,12025,ทองหยิบ,sugar set aside (> carbs),T142,
+flag,12026,บัวลอยเผือก,sugar set aside (> carbs),,
+flag,12027,ปลากริม,sugar set aside (> carbs),,
+flag,12029,"เปียกปูน, สีดำ",sugar set aside (> carbs),,
+flag,12032,ลอดช่องไทย น้ำกะทิ,sugar set aside (> carbs),T163,
+flag,12033,ลูกชุบ,sugar set aside (> carbs),,
+flag,12034,"วุ้นกะทิ, ใบเตย",sugar set aside (> carbs),T150,
+flag,12035,"สังขยา, ไข่",sugar set aside (> carbs),,
+flag,12036,หม้อแกงไข่,sugar set aside (> carbs),,
+flag,12037,หม้อแกงถั่ว,sugar set aside (> carbs),,
+flag,12038,"ขนมปัง, หน้าเนย",sugar set aside (> carbs),,
+flag,12039,"ขนมปังพิซซ่า, ไก่",sugar set aside (> carbs),,
+flag,12040,"ขนมปังพิซซ่า, ทูน่า",sugar set aside (> carbs),,
+flag,12041,"ขนมปังพิซซ่า, ไส้กรอกหมู",sugar set aside (> carbs),,
+flag,12042,"ขนมปังพิซซ่า,ไส้กรอก",sugar set aside (> carbs),,
+flag,12043,ครัวซอง,sugar set aside (> carbs),,
+flag,12044,"ครัวซอง, เนยสด",sugar set aside (> carbs),,
+flag,12045,"ครัวซอง, มาการีน",sugar set aside (> carbs),,
+flag,12046,"คุกกี้, เนย",sugar set aside (> carbs),,
+flag,12047,เค้ก,sugar set aside (> carbs),,
+flag,12048,"แซนด์วิช, ทูน่า",sugar set aside (> carbs),,
+flag,12049,"แซนด์วิช, ทูน่าสลัด",sugar set aside (> carbs),,
+flag,12050,"แซนด์วิช, แฮมชีส",sugar set aside (> carbs),,
+flag,12051,"แซนด์วิช, แฮมทูน่า",sugar set aside (> carbs),,
+flag,12052,"โดนัท, บาวาเรียน",sugar set aside (> carbs),,
+flag,12053,"โดนัท, โรยน้ำตาล",sugar set aside (> carbs),,
+flag,12054,ทอฟฟี่เค้ก,sugar set aside (> carbs),,
+flag,12055,บราวนี่,sugar set aside (> carbs),,
+flag,12056,"พัฟ, ทูน่า",sugar set aside (> carbs),,
+flag,12057,"พาย, ทูน่า",sugar set aside (> carbs),,
+flag,12058,แยมโรล,sugar set aside (> carbs),,
+flag,12059,"แยมโรล, วนิลา",sugar set aside (> carbs),,
+flag,12060,เอแคลร์,sugar set aside (> carbs),,
+flag,14036,"มันฝรั่ง, ทอด",water+macros+ash 105 g/100 g,S37,
+flag,INMU-Q40,ชานม,water+macros+ash 105 g/100 g,Q40,
+flag,INMU-N126,ซอสปรุงรส (protein,water+macros+ash 120 g/100 g,N126,
+flag,INMU-N51,"ซอสปรุงรส (protein>10 กรัม), ต่อ 100 มล.",water+macros+ash 125 g/100 g,N51,
+flag,INMU-N129,ซอสพริกผสมมะเขือเทศ,sugar set aside (> carbs),N129,
+flag,INMU-N130,ซอสมะเขือเทศผสมแครอท,sugar set aside (> carbs),N130,
+flag,INMU-N132,ซอสหอยนางรม สูตรผสมกระเทียม,sugar set aside (> carbs),N132,
+flag,INMU-N136,"ซีอิ้วขาว (ไม่ระบุเกรต), ต่อ 100 มล.",water+macros+ash 121 g/100 g,N136,
+flag,INMU-N134,"ซีอิ๊วขาว, สูตร 1, ต่อ 100 มล.",water+macros+ash 119 g/100 g,N134,
+flag,INMU-N62,"ซีอิ๊วขาว, สูตร 2, ต่อ 100 มล.",water+macros+ash 119 g/100 g,N62,
+flag,INMU-N135,"ซีอิ๊วขาว, สูตร 3, ต่อ 100 มล.",water+macros+ash 117 g/100 g,N135,
+flag,INMU-N146,ซุปก้อน รสต่างๆ,sugar set aside (> carbs),N146,
+flag,INMU-N72,"น้ำปลา, เกรด1, ต่อ 100 มล.",water+macros+ash 122 g/100 g,N72,
+flag,INMU-N71,"น้ำปลาแท้, ต่อ 100 มล.",water+macros+ash 111 g/100 g,N71,
+flag,INMU-N149,"น้ำปลาผสม, ต่อ 100 มล.",water+macros+ash 121 g/100 g,N149,
+flag,INMU-N100,น้ำพริกแกงมัสมั่น,sugar set aside (> carbs),N100,
+flag,INMU-C130,"แมคคาเดเมียนัท, เฉพาะเนื้อ",sugar set aside (> carbs),C130,
+flag,INMU-D295,"เห็ดเข็มทอง, ต้ม 15 วินาที",sugar set aside (> carbs),D295,
+flag,INMU-D17,"ข้าวโพดอ่อน, ในน้ำเกลือ, บรรจุกระป๋อง, ไม่รวมน้ำ",sugar set aside (> carbs),D17,
+flag,INMU-D357,"ถั่วงอก, ในน้ำเกลือ",sugar set aside (> carbs),D357,
+flag,INMU-D76,"ผักกาด, ดอง, เปรี้ยว",sugar set aside (> carbs),D76,
+flag,INMU-D155,"หน่อไม้ไผ่ตง, ดอง",sugar set aside (> carbs),D155,
+flag,INMU-E56,"ขนุนจำปา, สุก",sugar set aside (> carbs),E56,
+flag,INMU-E16,"ขนุนหนัง, สุก",sugar set aside (> carbs),E16,
+flag,INMU-E80,"แคนตาลูป, เนื้อสีเหลือง, สุก",sugar set aside (> carbs),E80,
+flag,INMU-E77,"มะยงชิด, สุก",sugar set aside (> carbs),E77,
+flag,INMU-E82,"มะละกอ, สุก",sugar set aside (> carbs),E82,
+flag,INMU-E119,"ส้มโอ, พันธุ์ต่างๆ",sugar set aside (> carbs),E119,
+flag,INMU-E120,"สับปะรด, พันธุ์ต่างๆ",sugar set aside (> carbs),E120,
+flag,INMU-E131,องุ่นแดง,sugar set aside (> carbs),E131,
+flag,INMU-E156,"องุ่นดำ, ไทย",sugar set aside (> carbs),E156,
+flag,INMU-F55,"กบ, หนัง, ทอด",water+macros+ash 106 g/100 g,F55,
+flag,INMU-G231,ทูน่าสเปรด,sugar set aside (> carbs),G231,
+flag,INMU-G240,"ปลาฉิ้งฉ้าง/ไส้ตัน/กะตัก, กรอบ, ปรุงรส",sugar set aside (> carbs),G240,
+flag,INMU-J11,"นมคืนรูปปรุงแต่ง, พร่องมันเนย, ยูเอชที, รสต่างๆ, ต่อ 100 มล.",water+macros+ash 105 g/100 g,J11,
+flag,INMU-J12,"นมคืนรูปปรุงแต่ง, ยูเอชที, รสต่างๆ, ต่อ 100 มล.",water+macros+ash 106 g/100 g,J12,
+flag,INMU-J14,"นมปรุงแต่ง, อัดเม็ด, รสต่างๆ",sugar set aside (> carbs),J14,
+flag,INMU-J10,"นมเปรี้ยว, พร้อมดื่ม, ขาดมันเนย, พาสเจอร์ไรส์, รสต่างๆ, ต่อ 100 มล.",water+macros+ash 106 g/100 g,J10,
+flag,INMU-J15,"นมเปรี้ยว, พร้อมดื่ม, ขาดมันเนย, ยูเอชที, รสต่างๆ, แคลเซียมสูง, ต่อ 100 มล.",water+macros+ash 107 g/100 g,J15,
+flag,INMU-J13,"นมเปรี้ยว, พร้อมดื่ม, ขาดมันเนย, ยูเอชที, รสต่างๆ, ต่อ 100 มล.",water+macros+ash 106 g/100 g,J13,
+flag,INMU-J17,"นมเปรี้ยว, พร้อมดื่ม, พร่องมันเนย, พาสเจอร์ไรส์, รสต่างๆ, ต่อ 100 มล.",water+macros+ash 105 g/100 g,J17,
+flag,INMU-J25,"นมเปรี้ยว, พร้อมดื่ม, พาสเจอร์ไรส์, รสต่างๆ ต่อ 100 มล.",water+macros+ash 105 g/100 g,J25,
+flag,INMU-J20,"นมเปรี้ยว, พร้อมดื่ม, พาสเจอร์ไรส์, รสธรรมชาติ, ต่อ 100 มล.",water+macros+ash 106 g/100 g,J20,
+flag,INMU-J34,"นมเปรี้ยว, พร้อมดื่ม, ยูเอชที, รสต่างๆ, ต่อ 100 มล.",water+macros+ash 106 g/100 g,J34,
+flag,INMU-J21,"นมเปรี้ยว, พร้อมดื่ม,ยูเอชที, รสธรรมชาติ, ต่อ 100 มล.",water+macros+ash 107 g/100 g,J21,
+flag,INMU-J9,"นมเปรี้ยว ยาคูลท์, ต่อ 100 มล.",water+macros+ash 107 g/100 g,J9,
+flag,INMU-J23,"นมผงดัดแปลง, สูตรต่อเนื่อง, สำหรับทารกและเด็กเล็ก (อายุตั้งแต่ 6 เดือน ถึง 3 ปี)",sugar set aside (> carbs),J23,
+flag,INMU-J22,"นมผงดัดแปลง, สูตรต่อเนื่อง, สำหรับทารกและเด็กเล็ก (อายุตั้งแต่แรกเกิด ถึง 1 ปี)",sugar set aside (> carbs),J22,
+flag,INMU-J1,"นมพร่องมันเนย, สเตอริไลส์, ต่อ 100 มล.",sugar set aside (> carbs),J1,
+flag,INMU-J31,"นมพร่องมันเนย, ยูเอชที รสต่างๆ, ต่อ 100 มล.",water+macros+ash 105 g/100 g,J31,
+flag,INMU-J38,"นมพาสเจอร์ไรส์, รสกาแฟ, ต่อ 100 มล.",sugar set aside (> carbs); water+macros+ash 105 g/100 g,J38,
+flag,INMU-J40,"นมพาสเจอร์ไรส์, รสช็อกโกแลต, ต่อ 100 มล.",water+macros+ash 105 g/100 g,J40,
+flag,INMU-K17,"มะพร้าว, คั่ว",sugar set aside (> carbs),K17,
+flag,INMU-K46,"น้ำสลัด, ซอสญี่ปุ่น",sugar set aside (> carbs),K46,
+flag,INMU-K18,"น้ำสลัด, เทาซัน ไอร์แลนด์ เดรสซิ่ง",sugar set aside (> carbs),K18,
+flag,INMU-Q43,"น้ำเก็กฮวย, ต่อ 100 มล.",sugar set aside (> carbs),Q43,
+flag,INMU-Q44,"น้ำขิง, ต่อ 100 มล.",sugar set aside (> carbs),Q44,
+flag,INMU-Q46,"น้ำตาลสด, ต่อ 100 มล.",water+macros+ash 108 g/100 g,Q46,
+flag,INMU-Q47,"น้ำฝรั่ง 100%, ต่อ 100 มล.",sugar set aside (> carbs),Q47,
+flag,INMU-Q51,"น้ำมังคุด, ต่อ 100 มล.",water+macros+ash 106 g/100 g,Q51,
+flag,INMU-Q52,"น้ำรากบัว, ต่อ 100 มล.",sugar set aside (> carbs),Q52,
+flag,INMU-Q24,"น้ำลิ้นจี่ 25%, ต่อ 100 มล.",water+macros+ash 106 g/100 g,Q24,
+flag,INMU-Q54,"น้ำสตรอเบอรี่ 25%, ต่อ 100 มล.",water+macros+ash 107 g/100 g,Q54,
+flag,INMU-Q27,"น้ำส้ม 100%, ต่อ 100 มล.",water+macros+ash 105 g/100 g,Q27,
+flag,INMU-Q57,"น้ำส้ม 15%, ต่อ 100 มล.",water+macros+ash 106 g/100 g,Q57,
+flag,INMU-Q56,"น้ำส้ม 25%, ต่อ 100 มล.",sugar set aside (> carbs),Q56,
+flag,INMU-Q55,"น้ำสับปะรด, ต่อ 100 มล.",water+macros+ash 107 g/100 g,Q55,
+flag,INMU-Q34,"น้ำองุ่น 100%, ต่อ 100 มล.",water+macros+ash 106 g/100 g,Q34,
+flag,INMU-T225,ผัดพริกขิงไก่ใส่ถั่วฝักยาว,sugar set aside (> carbs),T225,
+flag,INMU-T395,สปาเก็ตตี้ซอส รสต่างๆ,sugar set aside (> carbs),T395,
+flag,INMU-B25,"แก่นตะวัน, ปอกเปลือก, ต้ม",sugar set aside (> carbs),B25,
+flag,INMU-B26,"แก่นตะวัน, ปอกเปลือก, สด",sugar set aside (> carbs),B26,

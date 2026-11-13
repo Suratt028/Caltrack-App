@@ -128,6 +128,29 @@ describe('per-user data (requireSelf)', () => {
     });
   }
 
+  test('stores separate work and exercise activity fields on a profile', async () => {
+    const body = {
+      name: 'Alice',
+      gender: 'female',
+      age: 30,
+      heightCm: 165,
+      weightKg: 62,
+      activityLevel: 'sedentary',
+      workActivityLevel: 'sedentary',
+      exerciseDaysPerWeek: 3,
+      exerciseMinutes: 45,
+      exerciseIntensity: 'moderate',
+      goal: 'maintain',
+    };
+    const saved = await request('PUT', `/api/profiles/${alice.id}`, { token: alice.token, body });
+    assert.equal(saved.status, 200);
+    assert.equal(saved.body.profile.workActivityLevel, 'sedentary');
+    assert.equal(saved.body.profile.exerciseDaysPerWeek, 3);
+    assert.equal(saved.body.profile.exerciseMinutes, 45);
+    assert.equal(saved.body.profile.exerciseIntensity, 'moderate');
+    await api.model('Profile').deleteOne({ userId: alice.id });
+  });
+
   test('writes to another user\'s data are rejected and leave nothing behind', async () => {
     const log = await request('POST', `/api/logs/${alice.id}`, { token: bob.token, body: { entry: { name: 'x', kcal: 1 } } });
     assert.equal(log.status, 403);

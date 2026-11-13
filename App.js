@@ -3,7 +3,10 @@ import { View, ActivityIndicator, Platform } from 'react-native'; // เพิ�
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { AppProvider, useApp } from './src/context/AppContext';
+import { persistOptions, queryClient, wireNativeQueryManagers } from './src/data/queryClient';
+import { useProfile } from './src/data/useUserData';
 import { FONT_ASSETS } from './src/theme/fonts';
 import AuthScreen from './src/screens/AuthScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
@@ -12,8 +15,14 @@ import AdminScreen from './src/screens/Admin/AdminScreen';
 import { colors } from './src/theme/colors';
 import styles from './src/style/AppStyles';
 
+wireNativeQueryManagers();
+
 function Gate() {
-  const { isLoading, profile, user } = useApp();
+  const { isLoading: isSessionLoading, user } = useApp();
+  const { profile, isProfileLoading } = useProfile();
+  // Signed in but the profile is still on its first fetch: wait instead of
+  // flashing onboarding.
+  const isLoading = isSessionLoading || (Boolean(user) && isProfileLoading);
   
   // ตรวจสอบว่าเป็น Web และมี window.location อยู่จริงก่อนเรียกใช้
   const [pathname, setPathname] = useState(() => {
@@ -86,10 +95,12 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <AppProvider>
-        <StatusBar style="dark" />
-        <Gate />
-      </AppProvider>
+      <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>
+        <AppProvider>
+          <StatusBar style="dark" />
+          <Gate />
+        </AppProvider>
+      </PersistQueryClientProvider>
     </SafeAreaProvider>
   );
 }

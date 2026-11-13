@@ -6,6 +6,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { searchNutritionFoods } from '../services/foodService';
 import { calculateNutrition } from '../services/nutritionService';
+import { inferServingUnit } from '../utils/foodPortions';
+import { getFoodDisplayName } from '../utils/foodDisplayName';
 import PrimaryButton from './PrimaryButton';
 import Banner from './Banner';
 import styles from '../style/components/FoodScanReviewStyles';
@@ -73,8 +75,9 @@ function toCandidate(candidate) {
   const per100g = candidate.per100g || {};
   return {
     foodId: String(candidate.foodId),
-    name: candidate.nameTh || candidate.nameEn || 'อาหารไม่ทราบชื่อ',
+    name: getFoodDisplayName(candidate.nameTh || candidate.nameEn || 'อาหารไม่ทราบชื่อ'),
     nameEn: candidate.nameEn || '',
+    servingUnit: inferServingUnit(candidate),
     confident: Boolean(candidate.confident),
     estimated: Array.isArray(candidate.estimated) ? candidate.estimated : [],
     per100g: {
@@ -102,7 +105,14 @@ function initialItem(item, index) {
   const aiGrams = Number(item.estimated_grams?.likely ?? item.estimatedGrams) || 0;
   const baseGrams = aiGrams || DEFAULT_MANUAL_GRAMS;
   const chosen = best || (item.foodId
-    ? { foodId: String(item.foodId), name: aiName, nameEn: item.name_en || '', per100g: item.per100g || null, estimated: [] }
+    ? {
+        foodId: String(item.foodId),
+        name: aiName,
+        nameEn: item.name_en || '',
+        servingUnit: inferServingUnit({ nameTh: aiName, nameEn: item.name_en }),
+        per100g: item.per100g || null,
+        estimated: [],
+      }
     : null);
   return {
     ...item,
@@ -115,6 +125,7 @@ function initialItem(item, index) {
     estimatedGrams: aiGrams,
     estimatedNutrition: item.estimated_nutrition || item.estimatedNutrition || null,
     foodId: chosen ? chosen.foodId : '',
+    servingUnit: chosen ? chosen.servingUnit || null : null,
     per100g: chosen ? chosen.per100g : null,
     estimatedFields: chosen ? chosen.estimated || [] : [],
     autoMatched: Boolean(best),
@@ -217,6 +228,7 @@ export default function FoodScanReview({ analysis, onConfirm, onReset }) {
       foodId: food.foodId,
       name: food.name,
       nameEn: food.nameEn,
+      servingUnit: food.servingUnit || null,
       per100g: food.per100g,
       estimatedFields: food.estimated || [],
       autoMatched: false,
@@ -235,6 +247,7 @@ export default function FoodScanReview({ analysis, onConfirm, onReset }) {
     updateItem(item.id, {
       foodId: '',
       name: item.aiName,
+      servingUnit: null,
       per100g: null,
       estimatedFields: [],
       autoMatched: false,
@@ -465,8 +478,17 @@ export default function FoodScanReview({ analysis, onConfirm, onReset }) {
                       >
                         <Text style={styles.searchResultName}>{food.name}</Text>
                         <Text style={styles.searchResultMeta}>
-                          {food.estimated?.includes('kcal') ? '≈' : ''}
-                          {food.per100g.kcal ?? '—'} kcal / 100 กรัม
+                          {food.estimated?.includes('kcal') || food.servingUnit ? '≈' : ''}
+                          {food.per100g.kcal == null
+                            ? '—'
+                            : Math.round(
+                                Number(food.per100g.kcal) *
+                                  (food.servingUnit?.grams || 100) /
+                                  100
+                              )}{' '}
+                          kcal {food.servingUnit
+                            ? `/ 1 ${food.servingUnit.unit} (${food.servingUnit.grams} กรัม)`
+                            : '/ 100 กรัม'}
                         </Text>
                       </Pressable>
                     ))}

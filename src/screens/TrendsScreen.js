@@ -4,10 +4,10 @@ import { Text } from '../components/AppText';
 import { TextInput } from '../components/AppTextInput';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import Svg, { Circle, Polyline, Text as SvgText } from 'react-native-svg';
+import Svg, { Circle, Line, Path, Polyline, Text as SvgText } from 'react-native-svg';
 import { colors, spacing } from '../theme/colors';
-import { useApp } from '../context/AppContext';
-import { calculateMacroGoals, lastNDays, todayKey } from '../utils/calculations';
+import { useFoodLogs, useProfile, useWeights } from '../data/useUserData';
+import { calculateAgeBasedMacroGoals, calculateBMI, lastNDays, todayKey } from '../utils/calculations';
 import Card from '../components/Card';
 import PrimaryButton from '../components/PrimaryButton';
 import Banner from '../components/Banner';
@@ -15,9 +15,8 @@ import EmptyState from '../components/EmptyState';
 import ScreenHeader from '../components/ScreenHeader';
 import SegmentedControl from '../components/SegmentedControl';
 import TrendStatCard from '../components/TrendStatCard';
-import TrendBarChart from '../components/TrendBarChart';
-import MacroGoalCharts from '../components/MacroGoalCharts';
-import TrendDataTable from '../components/TrendDataTable';
+import ProfileCalorieCumulativeChart from '../components/ProfileCalorieCumulativeChart';
+import MacroGroupedChart from '../components/MacroGroupedChart';
 import styles from '../style/screens/TrendsScreenStyles';
 
 const WEIGHT_CHART_HEIGHT = 160;
@@ -85,8 +84,95 @@ function WeightTrendChart({ points, width }) {
   );
 }
 
+function BmiTrendChart({ points, width }) {
+  if (points.length < 2) return null;
+  const values = points.map((point) => point.bmi);
+  const padding = { left: 34, right: 8, top: 16, bottom: 24 };
+  const plotWidth = width - padding.left - padding.right;
+  const plotHeight = WEIGHT_CHART_HEIGHT - padding.top - padding.bottom;
+  const min = Math.min(16, ...values);
+  const max = Math.max(32, ...values);
+  const range = max - min;
+  const firstTime = parseKey(points[0].date).getTime();
+  const lastTime = parseKey(points[points.length - 1].date).getTime();
+  const x = (point) => padding.left + (
+    lastTime === firstTime
+      ? plotWidth / 2
+      : ((parseKey(point.date).getTime() - firstTime) / (lastTime - firstTime)) * plotWidth
+  );
+  const y = (value) => padding.top + plotHeight - ((value - min) / range) * plotHeight;
+  const coords = points.map((point) => ({ x: x(point), y: y(point.bmi), point }));
+  const linePath = coords.reduce(
+    (path, coord, index) => `${path}${index === 0 ? `M ${coord.x} ${coord.y}` : ` L ${coord.x} ${coord.y}`}`,
+    ''
+  );
+  const dateLabels = [...new Set([0, Math.floor((points.length - 1) / 2), points.length - 1])]
+    .map((index) => coords[index]);
+
+  return (
+    <View
+      accessible
+      accessibilityRole="image"
+      accessibilityLabel={`กราฟเส้น BMI ตั้งแต่ ${points[0].date} ถึง ${points[points.length - 1].date} ค่าสูงสุด ${Math.max(...values).toFixed(1)} ต่ำสุด ${Math.min(...values).toFixed(1)}`}
+    >
+      <Svg width={width} height={WEIGHT_CHART_HEIGHT}>
+        {[18.5, 23, 25, 30].map((threshold) => (
+          <Line
+            key={threshold}
+            x1={padding.left}
+            x2={width - padding.right}
+            y1={y(threshold)}
+            y2={y(threshold)}
+            stroke={threshold === 23 ? colors.turmeric : threshold >= 25 ? colors.danger : colors.border}
+            strokeWidth={1.2}
+            strokeDasharray="4,4"
+          />
+        ))}
+        {[18.5, 23, 25, 30].map((threshold) => (
+          <SvgText
+            key={`label-${threshold}`}
+            x={padding.left - 5}
+            y={y(threshold) - 3}
+            fontSize="9"
+            fill={threshold === 23 ? colors.turmericDark : threshold >= 25 ? colors.danger : colors.inkFaint}
+            textAnchor="end"
+          >
+            {threshold}
+          </SvgText>
+        ))}
+        <Path d={linePath} fill="none" stroke={colors.primary} strokeWidth={3} strokeLinejoin="round" strokeLinecap="round" />
+        {coords.map(({ point, x: pointX, y: pointY }, index) => (
+          <Circle
+            key={point.date}
+            cx={pointX}
+            cy={pointY}
+            r={index === coords.length - 1 ? 5 : 3.5}
+            fill={index === coords.length - 1 ? colors.primary : colors.barPast}
+            stroke={colors.surface}
+            strokeWidth={2}
+          />
+        ))}
+        {dateLabels.map(({ point, x: pointX }, index) => (
+          <SvgText
+            key={`date-${point.date}`}
+            x={pointX}
+            y={WEIGHT_CHART_HEIGHT - 5}
+            fontSize="10"
+            fill={colors.inkMuted}
+            textAnchor={index === 0 ? 'start' : index === dateLabels.length - 1 ? 'end' : 'middle'}
+          >
+            {`${parseKey(point.date).getUTCDate()}/${parseKey(point.date).getUTCMonth() + 1}`}
+          </SvgText>
+        ))}
+      </Svg>
+    </View>
+  );
+}
+
 export default function TrendsScreen({ navigation }) {
-  const { profile, logsByDay, weightsByDay, logWeight, getDayTotals } = useApp();
+  const { profile } = useProfile();
+  const { logsByDay, getDayTotals } = useFoodLogs();
+  const { weightsByDay, logWeight } = useWeights();
   const { width: windowWidth } = useWindowDimensions();
   // Mirrors the web breakpoints: controls sit side by side from sm (640),
   // stat cards form a row from lg (1024).
@@ -101,10 +187,11 @@ export default function TrendsScreen({ navigation }) {
   const [weightInput, setWeightInput] = useState('');
   const [weightNotice, setWeightNotice] = useState('');
   const [weightError, setWeightError] = useState('');
+  const [selectedMacroDate, setSelectedMacroDate] = useState(null);
 
   const today = todayKey();
   const goal = Number(profile?.calorieGoal) > 0 ? Number(profile.calorieGoal) : null;
-  const macroGoals = goal ? profile?.macroGoals || calculateMacroGoals(goal) : null;
+  const macroGoals = goal ? profile?.macroGoals || calculateAgeBasedMacroGoals(goal, profile) : null;
   const windowLength = range === '30' ? 30 : 7;
 
   // Selected window: last 7 / 30 days (optionally shifted back) or a custom range.
@@ -163,7 +250,9 @@ export default function TrendsScreen({ navigation }) {
     : completeDays.length
       ? 'ไม่นับวันนี้ที่ยังไม่ครบวัน · จากวันที่บันทึกเท่านั้น'
       : 'มีแค่วันนี้ที่ยังไม่ครบวัน';
-  const selectedDay = dayData.length ? dayData[dayData.length - 1] : null;
+  const selectedDay = dayData.find((day) => day.date === selectedMacroDate)
+    || dayData[dayData.length - 1]
+    || null;
 
   const firstDay = days[0];
   const lastDay = days[days.length - 1];
@@ -188,15 +277,6 @@ export default function TrendsScreen({ navigation }) {
     return `ข้อมูลจาก ${shortDateFull(firstDay)} – ${shortDateFull(lastDay)}`;
   }, [firstDay, lastDay]);
 
-  const monthCaption = useMemo(() => {
-    if (!lastDay) return rangeLabel;
-    if (lastDay === today) {
-      const to = parseKey(lastDay);
-      return `${THAI_MONTHS_LONG[to.getUTCMonth()]} ${to.getUTCFullYear() + 543} · วันที่ ${dayNumber(lastDay)} ยังบันทึกไม่ครบวัน`;
-    }
-    return rangeLabel;
-  }, [lastDay, today, rangeLabel]);
-
   const canGoForward =
     range === 'custom'
       ? isDateKey(customFrom) && isDateKey(customTo) && customTo < today
@@ -216,9 +296,15 @@ export default function TrendsScreen({ navigation }) {
     setRangeOffset((prev) => (direction < 0 ? prev + 1 : Math.max(prev - 1, 0)));
   };
 
-  const energyData = useMemo(
-    () => dayData.map((day) => ({ date: day.date, value: day.kcal, highlight: day.date === today })),
-    [dayData, today]
+  const calorieEntries = useMemo(
+    () => Object.entries(logsByDay).flatMap(([dateKey, entries]) =>
+      entries.map((entry) => ({
+        dateKey,
+        loggedAt: entry.loggedAt || entry.time,
+        kcal: entry.kcal,
+      }))
+    ),
+    [logsByDay]
   );
   const macroData = useMemo(
     () =>
@@ -229,12 +315,6 @@ export default function TrendsScreen({ navigation }) {
       })),
     [dayData, today]
   );
-  const tableRows = useMemo(
-    () => dayData.map((day) => ({ ...day, isToday: day.date === today })),
-    [dayData, today]
-  );
-  const showYear = Boolean(firstDay && lastDay && firstDay.slice(0, 4) !== lastDay.slice(0, 4));
-
   const weightPoints = useMemo(
     () =>
       Object.entries(weightsByDay)
@@ -242,6 +322,12 @@ export default function TrendsScreen({ navigation }) {
         .slice(-14)
         .map(([date, weight]) => ({ date, weight })),
     [weightsByDay]
+  );
+  const bmiPoints = useMemo(
+    () => weightPoints
+      .map((point) => ({ ...point, bmi: calculateBMI(point.weight, profile?.heightCm) }))
+      .filter((point) => Number.isFinite(point.bmi)),
+    [weightPoints, profile?.heightCm]
   );
 
   const onWeightChartLayout = (event) => {
@@ -354,6 +440,15 @@ export default function TrendsScreen({ navigation }) {
           </Card>
         )}
 
+        <Card style={styles.chartCard}>
+          <Text style={styles.cardTitle}>จังหวะการบันทึกพลังงาน</Text>
+          <ProfileCalorieCumulativeChart
+            entries={calorieEntries}
+            goalValue={goal || undefined}
+            dateRange={days}
+          />
+        </Card>
+
         {!enough ? (
           <>
             <Card style={styles.tipCard}>
@@ -417,25 +512,14 @@ export default function TrendsScreen({ navigation }) {
               />
             </View>
 
-            {/* Energy chart */}
-            <Card style={styles.chartCard}>
-              <Text style={styles.cardTitle}>พลังงานในแต่ละวัน</Text>
-              <TrendBarChart
-                data={energyData}
-                goalValue={goal || undefined}
-                goalLabel={goal ? `เป้าหมายโปรไฟล์ ${formatNumber(goal)}` : ''}
-                axisUnit="กิโลแคลอรี"
-                caption={monthCaption}
-                title="พลังงานในแต่ละวัน"
-                description="กราฟแท่งแสดงพลังงานที่บันทึกในแต่ละวัน หน่วยกิโลแคลอรี"
-              />
-            </Card>
-
             {/* One mini chart per macro, each against its own goal */}
             <Card style={styles.chartCard}>
-              <Text style={styles.cardTitle}>{macroGoals ? 'สารอาหารเทียบเป้าหมาย' : 'สารอาหารในแต่ละวัน'}</Text>
-              <Text style={styles.cardNote}>หน่วยกรัม ดูตัวเลขรายวันได้จากตารางด้านล่าง</Text>
-              <MacroGoalCharts data={macroData} goals={macroGoals} />
+              <Text style={styles.cardTitle}>สารอาหารในแต่ละวัน</Text>
+              <MacroGroupedChart
+                data={macroData}
+                selectedDate={selectedDay?.date}
+                onSelectDay={setSelectedMacroDate}
+              />
               {selectedDay && (
                 <Text style={styles.selectedDay}>
                   {`วันที่ ${shortDateFull(selectedDay.date)} · โปรตีน ${formatNumber(selectedDay.protein)} / คาร์บ ${formatNumber(
@@ -443,6 +527,10 @@ export default function TrendsScreen({ navigation }) {
                   )} / ไขมัน ${formatNumber(selectedDay.fat)} กรัม`}
                 </Text>
               )}
+              <Text style={styles.cardNote}>
+                ปริมาณเป็นกรัม ไม่ได้สัดส่วนพลังงาน{'\n'}
+                ดูตัวเลขรายวันได้จากการกดที่แท่งกราฟ
+              </Text>
             </Card>
 
             {/* Reminder */}
@@ -453,14 +541,6 @@ export default function TrendsScreen({ navigation }) {
               </Text>
             </Card>
 
-            {/* Data table (accessible alternative) */}
-            <Card style={styles.tableCard}>
-              <TrendDataTable
-                title={goal ? `เป้าหมายโปรไฟล์ ${formatNumber(goal)} kcal` : 'ข้อมูลที่บันทึก'}
-                rows={tableRows}
-                showYear={showYear}
-              />
-            </Card>
           </>
         )}
 
@@ -501,6 +581,26 @@ export default function TrendsScreen({ navigation }) {
               style={styles.bannerSpacing}
             />
           )}
+        </Card>
+        <Card style={styles.weightCard}>
+          <Text style={styles.cardTitle}>แนวโน้ม BMI</Text>
+          <Text style={styles.cardSubtitle}>
+            คำนวณจากน้ำหนักที่บันทึกและส่วนสูงในโปรไฟล์ · เส้นอ้างอิงผู้ใหญ่เอเชีย 18.5, 23, 25 และ 30
+          </Text>
+          {Number(profile?.age) < 18 ? (
+            <Text style={styles.cardNote}>ผู้มีอายุต่ำกว่า 18 ปีต้องแปลผล BMI ด้วยเกณฑ์เฉพาะอายุและเพศ</Text>
+          ) : bmiPoints.length >= 2 ? (
+            <View style={styles.chartWrap} onLayout={onWeightChartLayout}>
+              <BmiTrendChart points={bmiPoints} width={chartWidth} />
+            </View>
+          ) : (
+            <Text style={styles.cardNote}>บันทึกน้ำหนักอย่างน้อย 2 ครั้งเพื่อดูกราฟ BMI</Text>
+          )}
+          {bmiPoints.length > 0 && Number(profile?.age) >= 18 ? (
+            <Text style={styles.cardNote}>
+              BMI ล่าสุดประมาณ {bmiPoints[bmiPoints.length - 1].bmi.toFixed(1)} · เป็นค่าคัดกรอง ไม่ใช่การวินิจฉัย
+            </Text>
+          ) : null}
         </Card>
       </ScrollView>
     </SafeAreaView>

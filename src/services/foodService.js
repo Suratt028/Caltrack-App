@@ -2,6 +2,8 @@
 // Food lookups against the CalTrack server (MongoDB "foods" collection, values per 100 g).
 import { API_BASE_URL } from '../config';
 import { fetchWithTimeout } from './atlasService';
+import { getFoodDisplayName } from '../utils/foodDisplayName';
+import { inferServingUnit } from '../utils/foodPortions';
 
 const NUTRIENT_FIELDS = {
   kcal: 'kcal',
@@ -23,9 +25,10 @@ function normalizeNutritionFood(food) {
   return {
     id: String(food.foodId),
     foodId: String(food.foodId),
-    name: food.nameTh || food.nameEn || 'อาหารไม่ทราบชื่อ',
+    name: getFoodDisplayName(food.nameTh || food.nameEn || 'อาหารไม่ทราบชื่อ'),
     nameEn: food.nameEn || '',
     serving: food.servingSize || 'ต่อ 100 กรัม',
+    servingUnit: inferServingUnit(food),
     per100g,
     // Fields calculated by scripts/clean-foods.js rather than measured (e.g. ['kcal']).
     estimated: Array.isArray(food.estimated) ? food.estimated : [],

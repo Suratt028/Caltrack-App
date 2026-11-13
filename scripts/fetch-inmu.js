@@ -2,10 +2,13 @@
 // (Institute of Nutrition, Mahidol University, online version 3, Aug 2025) and
 // saves a dated snapshot. Read-only towards INMU; nothing is written to our database.
 //
-//   node scripts/fetch-inmu.js
+//   node scripts/fetch-inmu.js           the foods scripts/propose-food-updates.js uses
+//   node scripts/fetch-inmu.js --all     every food in the database (ids are scanned
+//                                        in order; takes ~30 min at a gentle pace)
 //
-// Output: data/inmu/inmu-foods.json  — one entry per INMU food id, values per
-// 100 g edible portion, mapped to our field names, plus the source reference.
+// Output: data/inmu/inmu-foods.json (selection) or data/inmu/inmu-all.json (--all)
+// — one entry per INMU food id, values per 100 g edible portion, mapped to our
+// field names, plus the source reference.
 //
 // INMU terms: free for non-commercial use with acknowledgement; commercial use
 // needs permission (kunchit.jud@mahidol.ac.th). Cite as:
@@ -17,7 +20,16 @@ const fs = require('fs');
 const path = require('path');
 
 const BASE = 'https://inmu.mahidol.ac.th/thaifcd';
-const OUT = path.join(__dirname, '..', 'data', 'inmu', 'inmu-foods.json');
+const ALL = process.argv.includes('--all');
+const OUT = path.join(__dirname, '..', 'data', 'inmu', ALL ? 'inmu-all.json' : 'inmu-foods.json');
+// --all: INMU ids are sparse integers (currently ~100–1,800). Scan upward and
+// stop once this many ids past the last food found return nothing. A few
+// requests run at once (each ~1–3 s); progress is saved so a rerun resumes.
+const ALL_START_ID = 1;
+const ALL_STOP_AFTER_MISSES = 400;
+const ALL_WORKERS = 4;
+const DELAY_MS = 300; // pause per worker between requests, to be gentle with INMU's server
+const PARTIAL = `${OUT}.partial`;
 
 // INMU internal ids used by scripts/propose-food-updates.js (see the reasons there).
 const INMU_IDS = [
@@ -52,6 +64,9 @@ const FIELD_MAP = {
   'Vitamin C': 'vitaminC_mg',
   'Sugars, total': 'sugar_g',
   Cholesterol: 'cholesterol_mg',
+  'Fatty acids, total saturated': 'saturatedFat_g',
+  'Edible portion': 'ediblePortion_pct',
+  Density: 'density_g_per_ml',
 };
 
 const decode = (s) => s
@@ -101,12 +116,63 @@ async function fetchDetail(id) {
   return parsed;
 }
 
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Network hiccups during a long scan: retry a few times before giving up on an id.
+async function fetchWithRetry(id) {
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      return await fetchDetail(id);
+    } catch (error) {
+      if (/could not parse/.test(error.message)) return null; // no food with this id
+      if (attempt >= 3) throw error;
+      await sleep(2000 * attempt);
+    }
+  }
+}
+
 async function main() {
   const foods = {};
-  for (const id of INMU_IDS) {
-    foods[id] = { inmuId: id, ...(await fetchDetail(id)) };
-    console.log(`${id}\t${foods[id].code}\t${foods[id].thai}\t${foods[id].values.kcal ?? '-'} kcal`);
-    await new Promise((r) => setTimeout(r, 300)); // be gentle with INMU's server
+  if (ALL) {
+    if (fs.existsSync(PARTIAL)) Object.assign(foods, JSON.parse(fs.readFileSync(PARTIAL, 'utf8')));
+    const known = Object.keys(foods).map(Number);
+    let lastHit = known.length ? Math.max(...known) : ALL_START_ID;
+    let nextId = ALL_START_ID;
+    let sinceSave = 0;
+    const save = () => {
+      fs.mkdirSync(path.dirname(PARTIAL), { recursive: true });
+      fs.writeFileSync(PARTIAL, JSON.stringify(foods));
+    };
+    const worker = async () => {
+      while (nextId <= lastHit + ALL_STOP_AFTER_MISSES) {
+        const id = nextId;
+        nextId += 1;
+        if (foods[id]) continue;
+        const food = await fetchWithRetry(id);
+        if (food) {
+          foods[id] = { inmuId: id, ...food };
+          lastHit = Math.max(lastHit, id);
+          const count = Object.keys(foods).length;
+          if (count % 50 === 0) console.log(`${count} foods (id ${id}, ${food.code})`);
+          sinceSave += 1;
+          if (sinceSave >= 50) { save(); sinceSave = 0; }
+        }
+        await sleep(DELAY_MS);
+      }
+    };
+    await Promise.all(Array.from({ length: ALL_WORKERS }, worker));
+    // Keep ids in numeric order in the output.
+    for (const id of Object.keys(foods).map(Number).sort((a, b) => a - b)) {
+      const food = foods[id];
+      delete foods[id];
+      foods[id] = food;
+    }
+  } else {
+    for (const id of INMU_IDS) {
+      foods[id] = { inmuId: id, ...(await fetchDetail(id)) };
+      console.log(`${id}\t${foods[id].code}\t${foods[id].thai}\t${foods[id].values.kcal ?? '-'} kcal`);
+      await sleep(DELAY_MS);
+    }
   }
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
   fs.writeFileSync(OUT, `${JSON.stringify({
@@ -117,6 +183,7 @@ async function main() {
     basis: 'per 100 g edible portion',
     foods,
   }, null, 2)}\n`);
+  if (ALL && fs.existsSync(PARTIAL)) fs.unlinkSync(PARTIAL);
   console.log(`saved ${Object.keys(foods).length} foods to ${path.relative(process.cwd(), OUT)}`);
 }
 

@@ -4,14 +4,21 @@ import { Text } from '../components/AppText';
 import { TextInput } from '../components/AppTextInput';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import Svg, { Circle, Path } from 'react-native-svg';
 import { colors, spacing } from '../theme/colors';
 import { useApp } from '../context/AppContext';
+import { useProfile, useWeights } from '../data/useUserData';
 import {
-  ACTIVITY_LEVELS,
+  EXERCISE_INTENSITIES,
+  BMI_CATEGORIES,
   GOALS,
+  WORK_ACTIVITY_LEVELS,
   buildProfileGoals,
+  calculateAgeBasedMacroGoals,
+  calculateBMI,
   calculateCalorieGoal,
-  calculateMacroGoals,
+  getBMIRecommendedGoal,
+  getBMICategory,
 } from '../utils/calculations';
 import { confirmAction } from '../utils/confirm';
 import Card from '../components/Card';
@@ -24,21 +31,104 @@ import ReportScreen from './ReportScreen';
 
 const formatSigned = (value) => `${value > 0 ? '+' : ''}${value}`;
 
+const BMI_FIGURE_COLORS = {
+  low: '#55B8D5',
+  normal: '#83A92B',
+  at_risk: '#F08A24',
+  obesity_1: '#DB4B3F',
+  obesity_2: '#AA418D',
+};
+
+const BMI_FIGURE_SHAPES = [
+  { sh: 9, w: 8.5 },
+  { sh: 10, w: 10.5 },
+  { sh: 11.5, w: 13 },
+  { sh: 13, w: 15.5 },
+  { sh: 14.5, w: 18.5 },
+];
+const BMI_FIGURE_RANGES = ['<18.5', '18.5–22.9', '23–24.9', '25–29.9', '≥30'];
+
+function BmiFigure({ sh, w, color }) {
+  const center = 30;
+  const legX = Math.max(5, w * 0.5);
+  const torso =
+    `M ${center - sh} 25 Q ${center} 21 ${center + sh} 25 ` +
+    `C ${center + w + 2} 34 ${center + w + 2} 50 ${center + w - 1} 60 ` +
+    `L ${center - w + 1} 60 ` +
+    `C ${center - w - 2} 50 ${center - w - 2} 34 ${center - sh} 25 Z`;
+
+  return (
+    <Svg width={52} height={96} viewBox="0 0 60 96" accessible={false}>
+      <Circle cx={center} cy={12} r={8} fill={color} />
+      <Path d={torso} fill={color} />
+      <Path
+        d={`M ${center - sh} 27 L ${center - w - 5} 50 M ${center + sh} 27 L ${center + w + 5} 50`}
+        stroke={color}
+        strokeWidth={5}
+        strokeLinecap="round"
+        fill="none"
+      />
+      <Path
+        d={`M ${center - legX} 58 L ${center - legX} 92 M ${center + legX} 58 L ${center + legX} 92`}
+        stroke={color}
+        strokeWidth={6}
+        fill="none"
+      />
+    </Svg>
+  );
+}
+
+function BmiFigureScale({ activeCategory }) {
+  return (
+    <View
+      style={styles.bmiFigureScale}
+      accessibilityRole="image"
+      accessibilityLabel={`BMI ${activeCategory?.label || ''}. รูปประกอบแสดงช่วง BMI ตั้งแต่ต่ำกว่าเกณฑ์ถึงอ้วนระดับ 2`}
+    >
+      {BMI_CATEGORIES.map((category, index) => {
+        const color = BMI_FIGURE_COLORS[category.key];
+        const active = activeCategory?.key === category.key;
+        return (
+          <View
+            key={category.key}
+            style={[
+              styles.bmiFigureItem,
+              active && { backgroundColor: `${color}1F` },
+            ]}
+          >
+            <BmiFigure {...BMI_FIGURE_SHAPES[index]} color={color} />
+            <Text
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              style={[styles.bmiFigureRange, active && { color, fontWeight: '800' }]}
+            >
+              {BMI_FIGURE_RANGES[index]}
+            </Text>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
 export default function ProfileScreen() {
-  const { profile, updateProfile, logWeight, resetAllData, logout, user } = useApp();
+  const { resetAllData, logout, user } = useApp();
+  const { profile, updateProfile } = useProfile();
+  const { logWeight } = useWeights();
   const [displayName, setDisplayName] = useState(profile.displayName || user?.displayName || '');
   const [weightKg, setWeightKg] = useState(String(profile.weightKg));
-  const [activityLevel, setActivityLevel] = useState(profile.activityLevel);
-  const [selectedGoal, setSelectedGoal] = useState(profile.goal);
+  const [workActivityLevel, setWorkActivityLevel] = useState(profile.workActivityLevel || '');
+  const [exerciseDaysPerWeek, setExerciseDaysPerWeek] = useState(String(profile.exerciseDaysPerWeek ?? 0));
+  const [exerciseMinutes, setExerciseMinutes] = useState(String(profile.exerciseMinutes ?? 30));
+  const [exerciseIntensity, setExerciseIntensity] = useState(profile.exerciseIntensity || 'moderate');
+  const [selectedGoal, setSelectedGoal] = useState(
+    getBMIRecommendedGoal(profile.age, calculateBMI(profile.weightKg, profile.heightCm))
+  );
+  const [goalManuallySelected, setGoalManuallySelected] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [showReport, setShowReport] = useState(false);
-
-  // Keep the form in sync if the profile changes elsewhere.
-  useEffect(() => {
-    setSelectedGoal(profile.goal);
-  }, [profile.goal]);
 
   useEffect(() => {
     setDisplayName(profile.displayName || user?.displayName || '');
@@ -46,6 +136,25 @@ export default function ProfileScreen() {
 
   const weightValue = Number(weightKg);
   const weightValid = Number.isFinite(weightValue) && weightValue >= 20 && weightValue <= 400;
+  const exerciseDays = Number(exerciseDaysPerWeek);
+  const exerciseDuration = Number(exerciseMinutes);
+  const exerciseValid =
+    String(exerciseDaysPerWeek).trim() !== '' &&
+    String(exerciseMinutes).trim() !== '' &&
+    Number.isInteger(exerciseDays) &&
+    exerciseDays >= 0 &&
+    exerciseDays <= 7 &&
+    Number.isFinite(exerciseDuration) &&
+    exerciseDuration >= 0 &&
+    exerciseDuration <= 300 &&
+    (exerciseDays === 0 || exerciseDuration > 0);
+  const bmi = calculateBMI(weightValid ? weightValue : profile.weightKg, profile.heightCm);
+  const bmiCategory = Number(profile.age) >= 18 ? getBMICategory(bmi) : null;
+  const recommendedGoal = getBMIRecommendedGoal(profile.age, bmi);
+
+  useEffect(() => {
+    if (!goalManuallySelected) setSelectedGoal(recommendedGoal);
+  }, [profile.goal, goalManuallySelected, recommendedGoal]);
 
   // Live preview computed with the same helpers the app uses when saving,
   // so people can see how their choices change the daily targets.
@@ -54,34 +163,57 @@ export default function ProfileScreen() {
       return buildProfileGoals({
         ...profile,
         weightKg: weightValid ? weightValue : profile.weightKg,
-        activityLevel,
+        activityLevel: workActivityLevel,
+        workActivityLevel,
+        exerciseDaysPerWeek: exerciseValid ? exerciseDays : 0,
+        exerciseMinutes: exerciseValid ? exerciseDuration : 0,
+        exerciseIntensity,
         goal: selectedGoal || 'maintain',
       });
     } catch (error) {
       return null;
     }
-  }, [profile, weightValue, weightValid, activityLevel, selectedGoal]);
+  }, [profile, weightValue, weightValid, workActivityLevel, exerciseDays, exerciseDuration, exerciseValid, exerciseIntensity, selectedGoal]);
+
+  const restrictLossGoal = bmiCategory?.key === 'low' || Number(profile.age) < 18;
+  const availableGoals = restrictLossGoal
+    ? GOALS.filter((item) => item.key !== 'lose')
+    : GOALS;
 
   // One preset card per real GOALS option, each showing what that goal would
   // produce for the current body data + activity level.
   const presets = useMemo(() => {
     if (!preview) return [];
-    return GOALS.map((item) => {
+    return availableGoals.map((item) => {
       const kcal = calculateCalorieGoal({ tdee: preview.tdee, goalKey: item.key });
-      return { key: item.key, label: item.label, kcal, macroGoals: calculateMacroGoals(kcal) };
+      return {
+        key: item.key,
+        label: item.label,
+        kcal,
+        macroGoals: calculateAgeBasedMacroGoals(kcal, {
+          age: profile.age,
+          weightKg: weightValid ? weightValue : profile.weightKg,
+        }),
+      };
     });
-  }, [preview]);
+  }, [preview, profile.age, profile.weightKg, weightValid, weightValue, availableGoals]);
 
-  const activeActivity = ACTIVITY_LEVELS.find((item) => item.key === activityLevel);
+  const activeActivity = WORK_ACTIVITY_LEVELS.find((item) => item.key === workActivityLevel);
   const activeGoal = GOALS.find((item) => item.key === selectedGoal);
   const hasGoal = !!selectedGoal && !!preview;
+  useEffect(() => {
+    if (restrictLossGoal && selectedGoal === 'lose') {
+      setSelectedGoal(recommendedGoal);
+      setGoalManuallySelected(false);
+    }
+  }, [restrictLossGoal, recommendedGoal, selectedGoal]);
 
   const clearSaved = () => {
     if (saved) setSaved(false);
   };
 
   const save = async () => {
-    if (!weightValid || !selectedGoal || saving) return;
+    if (!weightValid || !exerciseValid || !workActivityLevel || !selectedGoal || saving) return;
     setSaving(true);
     setSaveError('');
     try {
@@ -89,7 +221,11 @@ export default function ProfileScreen() {
       await updateProfile({
         displayName: displayName.trim() || profile.displayName || user?.displayName || 'ผู้ใช้ CalTrack',
         weightKg: weightValue,
-        activityLevel,
+        activityLevel: workActivityLevel,
+        workActivityLevel,
+        exerciseDaysPerWeek: exerciseDays,
+        exerciseMinutes: exerciseDuration,
+        exerciseIntensity,
         goal: selectedGoal,
       });
       // Record the new weight as today's weigh-in so the weight trend matches.
@@ -182,25 +318,89 @@ export default function ProfileScreen() {
           </View>
         </Card>
 
-        {/* Activity level */}
+        {/* BMI screening */}
         <Card style={styles.cardSpacing}>
-          <Text style={styles.sectionTitle}>ระดับกิจกรรมในแต่ละวัน</Text>
+          <Text style={styles.sectionTitle}>BMI และช่วงอ้างอิง</Text>
+          <View style={styles.bmiSummary}>
+            <Text style={styles.bmiValue}>{bmi?.toFixed(1) || '—'}</Text>
+            <Text
+              style={[
+                styles.bmiCategory,
+                { color: bmiCategory?.key === 'obesity_1' || bmiCategory?.key === 'obesity_2'
+                  ? colors.danger
+                  : bmiCategory?.key === 'at_risk'
+                    ? colors.turmericDark
+                    : bmiCategory?.key === 'low'
+                      ? colors.skyDark
+                      : colors.primary },
+              ]}
+            >
+              {profile.age < 18 ? 'ต้องใช้เกณฑ์เฉพาะอายุ' : bmiCategory?.label || 'ยังประเมินไม่ได้'}
+            </Text>
+          </View>
           <Text style={styles.sectionHint}>
-            ยิ่งทำกิจกรรมมาก ร่างกายยิ่งใช้พลังงานมาก เป้าหมายแคลอรี่จะปรับตามระดับที่เลือก
+            {profile.age < 18
+              ? 'BMI ของผู้มีอายุต่ำกว่า 18 ปีต้องแปลผลเทียบกับอายุและเพศ ไม่ใช้เกณฑ์ผู้ใหญ่'
+              : bmiCategory?.key === 'low'
+                ? 'BMI ต่ำกว่าช่วงอ้างอิง ไม่แนะนำให้ตั้งเป้าลดน้ำหนักจากตัวเลขนี้ ควรปรึกษาบุคลากรสุขภาพหากกังวล'
+                : bmiCategory?.key === 'normal'
+                  ? 'อยู่ในช่วงอ้างอิงตามเกณฑ์เอเชีย หากต้องการเพิ่มกล้ามเนื้อ เลือกเป้าหมายเพิ่มมวลกล้ามเนื้อและฝึกแรงต้านได้ ไม่จำเป็นต้องลดน้ำหนักเพียงเพราะ BMI'
+                  : bmiCategory?.key === 'at_risk'
+                    ? 'เริ่มมีความเสี่ยงตามเกณฑ์คัดกรองเอเชีย ลองปรับพฤติกรรมอย่างค่อยเป็นค่อยไป BMI ไม่ใช่การวินิจฉัยโรค'
+                    : 'BMI สูงกว่าช่วงอ้างอิงตามเกณฑ์คัดกรองเอเชีย ไม่จำเป็นต้องลดน้ำหนักอย่างเร่งด่วนจาก BMI เพียงค่าเดียว หากกังวลควรปรึกษาผู้เชี่ยวชาญ'}
           </Text>
-          {ACTIVITY_LEVELS.map((activity, index) => {
-            const active = activityLevel === activity.key;
+          <BmiFigureScale activeCategory={bmiCategory} />
+          <View style={styles.bmiRanges}>
+            {BMI_CATEGORIES.map((category) => (
+              <View
+                    key={category.key}
+                    style={[
+                      styles.bmiRangeRow,
+                      bmiCategory?.key === category.key && styles.bmiRangeRowActive,
+                    ]}
+              >
+                    <Text style={[
+                      styles.bmiRangeName,
+                      bmiCategory?.key === category.key && styles.bmiRangeNameActive,
+                    ]}>
+                      {category.label}
+                    </Text>
+                    <Text style={[
+                      styles.bmiRangeValue,
+                      bmiCategory?.key === category.key && styles.bmiRangeNameActive,
+                    ]}>
+                      {category.range}
+                    </Text>
+              </View>
+            ))}
+          </View>
+          <Text style={styles.bmiNote}>เกณฑ์คัดกรองสำหรับผู้ใหญ่เอเชียเท่านั้น · BMI ไม่ใช่การวินิจฉัยโรค</Text>
+        </Card>
+
+        {/* Work and daily activity */}
+        <Card style={styles.cardSpacing}>
+          <Text style={styles.sectionTitle}>กิจกรรมจากงาน/ชีวิตประจำวัน</Text>
+          <Text style={styles.sectionHint}>
+            เลือกงานที่ใกล้เคียงกับกิจวัตรส่วนใหญ่ โดยไม่นับช่วงออกกำลังกาย
+          </Text>
+          {!profile.workActivityLevel ? (
+            <Text style={styles.activityHint}>
+              โปรไฟล์เดิมยังไม่ได้แยกกิจกรรมจากงานกับการออกกำลังกาย เลือกประเภทงานของคุณเพื่อคำนวณเป้าหมายใหม่
+            </Text>
+          ) : null}
+          {WORK_ACTIVITY_LEVELS.map((activity, index) => {
+            const active = workActivityLevel === activity.key;
             return (
               <Pressable
                 key={activity.key}
                 onPress={() => {
-                  setActivityLevel(activity.key);
+                  setWorkActivityLevel(activity.key);
                   clearSaved();
                 }}
                 accessibilityRole="radio"
                 accessibilityState={{ selected: active }}
                 accessibilityLabel={`${activity.label} ${activity.sublabel}`}
-                style={[styles.optionRow, index === ACTIVITY_LEVELS.length - 1 && styles.optionRowLast]}
+                style={[styles.optionRow, index === WORK_ACTIVITY_LEVELS.length - 1 && styles.optionRowLast]}
               >
                 <View style={styles.optionTextWrap}>
                   <Text style={styles.optionText}>{activity.label}</Text>
@@ -214,32 +414,98 @@ export default function ProfileScreen() {
           })}
         </Card>
 
+        {/* Exercise activity */}
+        <Card style={styles.cardSpacing}>
+          <Text style={styles.sectionTitle}>การออกกำลังกาย</Text>
+          <Text style={styles.sectionHint}>
+            ใส่จำนวนวันที่ออกกำลังต่อสัปดาห์และเวลาโดยประมาณต่อครั้ง เพื่อนำไปประเมิน TDEE ร่วมกับกิจกรรมจากงาน
+          </Text>
+          <View style={styles.activityInputs}>
+            <View style={styles.activityInputWrap}>
+              <Text style={styles.fieldLabel}>วันต่อสัปดาห์ (0–7)</Text>
+              <TextInput
+                style={[styles.input, !exerciseValid && styles.inputError]}
+                value={exerciseDaysPerWeek}
+                onChangeText={(text) => {
+                  setExerciseDaysPerWeek(text);
+                  clearSaved();
+                }}
+                keyboardType="number-pad"
+                accessibilityLabel="จำนวนวันที่ออกกำลังกายต่อสัปดาห์"
+              />
+            </View>
+            <View style={styles.activityInputWrap}>
+              <Text style={styles.fieldLabel}>นาที</Text>
+              <TextInput
+                style={[styles.input, !exerciseValid && styles.inputError]}
+                value={exerciseMinutes}
+                onChangeText={(text) => {
+                  setExerciseMinutes(text);
+                  clearSaved();
+                }}
+                keyboardType="number-pad"
+                accessibilityLabel="ระยะเวลาออกกำลังกายต่อนาทีต่อครั้ง"
+              />
+            </View>
+          </View>
+          {!exerciseValid && (
+            <Text style={styles.inputHintError}>กรอกวันเป็นจำนวนเต็ม 0–7 และเวลา 0–60 นาที (ถ้าออกกำลัง ต้องมากกว่า 0 นาที)</Text>
+          )}
+          <Text style={styles.fieldLabel}>ความชอบในการออกกำลังกาย</Text>
+          {EXERCISE_INTENSITIES.map((intensity, index) => {
+            const active = exerciseIntensity === intensity.key;
+            return (
+              <Pressable
+                key={intensity.key}
+                onPress={() => {
+                  setExerciseIntensity(intensity.key);
+                  clearSaved();
+                }}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: active }}
+                accessibilityLabel={`${intensity.label} ${intensity.sublabel}`}
+                style={[styles.optionRow, index === EXERCISE_INTENSITIES.length - 1 && styles.optionRowLast]}
+              >
+                <View style={styles.optionTextWrap}>
+                  <Text style={styles.optionText}>{intensity.label}</Text>
+                  <Text style={styles.optionSub}>{intensity.sublabel}</Text>
+                </View>
+                <View style={[styles.radio, active && styles.radioActive]}>
+                  {active && <Ionicons name="checkmark" size={15} color={colors.white} />}
+                </View>
+              </Pressable>
+            );
+          })}
+          <Text style={styles.activityHint}>การใช้พลังงานเป็นค่าประมาณจากน้ำหนัก ความหนัก(ความชอบในการออกกำลังกาย) และเวลาที่กรอก</Text>
+        </Card>
+
         {/* Weight-goal direction */}
         <Card style={styles.cardSpacing}>
           <Text style={styles.sectionTitle}>เป้าหมายน้ำหนัก</Text>
           <Text style={styles.sectionHint}>
-            ระบบจะปรับแคลอรี่เป้าหมายให้เหมาะกับเป้าหมายที่เลือก โดยไม่ต่ำกว่า 1,200 kcal ต่อวัน
+            ระบบเลือกเป้าหมายเริ่มต้นตาม BMI และคุณเปลี่ยนได้ตามความต้องการ · BMI เป็นเพียงเกณฑ์คัดกรอง
           </Text>
-          {GOALS.map((item, index) => {
+          {availableGoals.map((item, index) => {
             const active = selectedGoal === item.key;
             return (
               <Pressable
                 key={item.key}
                 onPress={() => {
                   setSelectedGoal(item.key);
+                  setGoalManuallySelected(true);
                   clearSaved();
                 }}
                 accessibilityRole="radio"
                 accessibilityState={{ selected: active }}
                 accessibilityLabel={item.label}
-                style={[styles.optionRow, index === GOALS.length - 1 && styles.optionRowLast]}
+                style={[styles.optionRow, index === availableGoals.length - 1 && styles.optionRowLast]}
               >
                 <View style={styles.optionTextWrap}>
                   <Text style={styles.optionText}>{item.label}</Text>
                   <Text style={styles.optionSub}>
                     {item.adjustment === 0
-                      ? 'กินให้พอดีกับพลังงานที่ใช้ต่อวัน'
-                      : `ปรับพลังงาน ${formatSigned(item.adjustment)} kcal/วัน`}
+                      ? `กินให้พอดีกับพลังงานที่ใช้ต่อวัน${item.key === recommendedGoal ? ' · แนะนำตาม BMI' : ''}`
+                      : `ปรับพลังงาน ${formatSigned(item.adjustment)} kcal/วัน${item.key === recommendedGoal ? ' · แนะนำตาม BMI' : ''}`}
                   </Text>
                 </View>
                 <View style={[styles.radio, active && styles.radioActive]}>
@@ -256,14 +522,15 @@ export default function ProfileScreen() {
 
           {hasGoal ? (
             <View style={styles.goalSummary}>
-              <Text style={styles.goalSummaryTitle}>พลังงานต่อวัน</Text>
-              <View style={styles.goalValueRow}>
-                <Text style={styles.goalValue}>{preview.calorieGoal.toLocaleString('th-TH')}</Text>
-                <Text style={styles.goalUnit}>kcal</Text>
-              </View>
               <Text style={styles.goalMacroRow}>
                 โปรตีน {preview.macroGoals.protein} / คาร์บ {preview.macroGoals.carbs} / ไขมัน {preview.macroGoals.fat} กรัม
               </Text>
+              <Text style={styles.goalNote}>
+                โปรตีนคำนวณจากน้ำหนัก × ค่าอ้างอิงตามวัย (ผู้ใหญ่ 19 ปีขึ้นไปใช้ 0.8 กรัม/กก./วัน) แล้วแบ่งพลังงานที่เหลือเป็นคาร์บ 60% และไขมัน 40% เป็นค่าอ้างอิงทั่วไป ไม่ใช่เป้าหมายเฉพาะสำหรับเพิ่มกล้ามเนื้อหรือรักษาโรค
+              </Text>
+              {Number(profile.age) < 18 ? (
+                <Text style={styles.goalNote}>อายุต่ำกว่า 18 ปี สูตรพลังงานในแอปเป็นเพียงค่าประมาณ ควรปรึกษาแพทย์หรือนักกำหนดอาหารก่อนใช้เป้าหมาย</Text>
+              ) : null}
               <Text style={styles.goalNote}>
                 BMR ประมาณ {preview.bmr.toLocaleString('th-TH')} kcal · พลังงานที่ใช้ต่อวัน (TDEE) ประมาณ {preview.tdee.toLocaleString('th-TH')} kcal
                 {activeGoal?.adjustment
@@ -318,8 +585,8 @@ export default function ProfileScreen() {
               title="บันทึกเป้าหมาย"
               onPress={save}
               loading={saving}
-              disabled={!weightValid || !selectedGoal}
-              accessibilityHint="บันทึกชื่อ น้ำหนัก ระดับกิจกรรม และเป้าหมายที่เลือกไว้"
+              disabled={!weightValid || !exerciseValid || !workActivityLevel || !selectedGoal}
+              accessibilityHint="บันทึกชื่อ น้ำหนัก กิจกรรมจากงาน การออกกำลังกาย และเป้าหมายที่เลือกไว้"
               style={styles.actionBtn}
             />
           </View>
@@ -342,7 +609,7 @@ export default function ProfileScreen() {
 
           {!!activeActivity && (
             <Text style={styles.activityHint}>
-              ระดับกิจกรรมปัจจุบัน: {activeActivity.label}
+              กิจกรรมจากงาน: {activeActivity.label}
             </Text>
           )}
         </Card>

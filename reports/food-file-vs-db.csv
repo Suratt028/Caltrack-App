@@ -1,0 +1,1228 @@
+﻿foodId,nameTh,field,kind,database,file
+12001,กล้วยแขก,sugar_g,removed,85,
+12002,"กล้วยไข่, เชื่อม",sugar_g,removed,180,
+12004,ขนมเกลือ/เข้าหนมเกือ,sugar_g,removed,36.6,
+12005,ขนมโก๋,carbTotal_g,filled,,75.82
+12005,ขนมโก๋,phosphorus_mg,filled,,97
+12005,ขนมโก๋,iron_mg,filled,,1.5
+12005,ขนมโก๋,betacarotene_ug,filled,,0
+12005,ขนมโก๋,vitaminA_RAE_ug,filled,,0
+12005,ขนมโก๋,thiamin_mg,filled,,0.06
+12005,ขนมโก๋,riboflavin_mg,filled,,0.04
+12007,ขนมขี้มอด,carbTotal_g,filled,,82.7
+12012,ขนมลา,calcium_mg,filled,,44
+12012,ขนมลา,phosphorus_mg,filled,,40
+12012,ขนมลา,thiamin_mg,filled,,0.13
+12012,ขนมลา,riboflavin_mg,filled,,2.09
+12012,ขนมลา,niacin_mg,filled,,2
+12017,ข้าวต้มมัด/ข้าวต้มผัด,sugar_g,removed,39.4,
+12020,"ข้าวเหนียวดำ, เปียก",sugar_g,removed,135.5,
+12021,ข้าวเหนียวมูล,calcium_mg,filled,,1
+12021,ข้าวเหนียวมูล,phosphorus_mg,filled,,18
+12021,ข้าวเหนียวมูล,betacarotene_ug,filled,,0
+12021,ข้าวเหนียวมูล,vitaminA_RAE_ug,filled,,0
+12021,ข้าวเหนียวมูล,riboflavin_mg,filled,,0.03
+12021,ข้าวเหนียวมูล,niacin_mg,filled,,0.3
+12021,ข้าวเหนียวมูล,sugar_g,removed,497,
+12022,ซาหริ่ม,calcium_mg,filled,,7
+12022,ซาหริ่ม,phosphorus_mg,filled,,6
+12022,ซาหริ่ม,iron_mg,filled,,0
+12022,ซาหริ่ม,betacarotene_ug,filled,,0
+12022,ซาหริ่ม,vitaminA_RAE_ug,filled,,0
+12022,ซาหริ่ม,thiamin_mg,filled,,0.01
+12022,ซาหริ่ม,riboflavin_mg,filled,,0
+12022,ซาหริ่ม,niacin_mg,filled,,0.1
+12022,ซาหริ่ม,sugar_g,removed,315,
+12023,ตะโก้แห้ว,calcium_mg,filled,,5
+12023,ตะโก้แห้ว,phosphorus_mg,filled,,19
+12023,ตะโก้แห้ว,iron_mg,filled,,0
+12023,ตะโก้แห้ว,betacarotene_ug,filled,,11
+12023,ตะโก้แห้ว,vitaminA_RAE_ug,filled,,1
+12023,ตะโก้แห้ว,thiamin_mg,filled,,0
+12023,ตะโก้แห้ว,riboflavin_mg,filled,,0
+12023,ตะโก้แห้ว,niacin_mg,filled,,0.2
+12023,ตะโก้แห้ว,sugar_g,removed,38,
+12025,ทองหยิบ,calcium_mg,filled,,66
+12025,ทองหยิบ,phosphorus_mg,filled,,107
+12025,ทองหยิบ,iron_mg,filled,,0.3
+12025,ทองหยิบ,betacarotene_ug,filled,,0
+12025,ทองหยิบ,retinol_ug,filled,,201
+12025,ทองหยิบ,vitaminA_RAE_ug,filled,,201
+12025,ทองหยิบ,thiamin_mg,filled,,0.24
+12025,ทองหยิบ,riboflavin_mg,filled,,0.31
+12025,ทองหยิบ,niacin_mg,filled,,0.1
+12025,ทองหยิบ,sugar_g,removed,107,
+12026,บัวลอยเผือก,sugar_g,removed,320,
+12027,ปลากริม,sugar_g,removed,147.5,
+12029,"เปียกปูน, สีดำ",sugar_g,removed,33.8,
+12031,เม็ดขนุน,calcium_mg,filled,,116
+12031,เม็ดขนุน,phosphorus_mg,filled,,210
+12031,เม็ดขนุน,potassium_mg,filled,,216
+12031,เม็ดขนุน,iron_mg,filled,,0.3
+12031,เม็ดขนุน,betacarotene_ug,filled,,13
+12031,เม็ดขนุน,retinol_ug,filled,,20
+12031,เม็ดขนุน,vitaminA_RAE_ug,filled,,21
+12031,เม็ดขนุน,thiamin_mg,filled,,0.18
+12031,เม็ดขนุน,riboflavin_mg,filled,,0.36
+12031,เม็ดขนุน,niacin_mg,filled,,0.2
+12031,เม็ดขนุน,cholesterol_mg,filled,,236
+12031,เม็ดขนุน,saturatedFat_g,filled,,5.59
+12032,ลอดช่องไทย น้ำกะทิ,calcium_mg,filled,,4
+12032,ลอดช่องไทย น้ำกะทิ,phosphorus_mg,filled,,19
+12032,ลอดช่องไทย น้ำกะทิ,thiamin_mg,filled,,0.02
+12032,ลอดช่องไทย น้ำกะทิ,niacin_mg,filled,,0.6
+12032,ลอดช่องไทย น้ำกะทิ,sugar_g,removed,151.3,
+12033,ลูกชุบ,sugar_g,removed,88,
+12034,"วุ้นกะทิ, ใบเตย",calcium_mg,filled,,1
+12034,"วุ้นกะทิ, ใบเตย",phosphorus_mg,filled,,18
+12034,"วุ้นกะทิ, ใบเตย",iron_mg,filled,,0
+12034,"วุ้นกะทิ, ใบเตย",betacarotene_ug,filled,,10
+12034,"วุ้นกะทิ, ใบเตย",vitaminA_RAE_ug,filled,,1
+12034,"วุ้นกะทิ, ใบเตย",thiamin_mg,filled,,0
+12034,"วุ้นกะทิ, ใบเตย",riboflavin_mg,filled,,0
+12034,"วุ้นกะทิ, ใบเตย",niacin_mg,filled,,0.1
+12034,"วุ้นกะทิ, ใบเตย",sugar_g,removed,53,
+12035,"สังขยา, ไข่",sugar_g,removed,81,
+12036,หม้อแกงไข่,sugar_g,removed,44,
+12037,หม้อแกงถั่ว,sugar_g,removed,44.4,
+12038,"ขนมปัง, หน้าเนย",sugar_g,removed,196,
+12039,"ขนมปังพิซซ่า, ไก่",sugar_g,removed,173,
+12040,"ขนมปังพิซซ่า, ทูน่า",sugar_g,removed,165,
+12041,"ขนมปังพิซซ่า, ไส้กรอกหมู",sugar_g,removed,187,
+12042,"ขนมปังพิซซ่า,ไส้กรอก",sugar_g,removed,176,
+12043,ครัวซอง,sugar_g,removed,248,
+12044,"ครัวซอง, เนยสด",sugar_g,removed,238,
+12045,"ครัวซอง, มาการีน",sugar_g,removed,208,
+12046,"คุกกี้, เนย",sugar_g,removed,252,
+12047,เค้ก,sugar_g,removed,244,
+12048,"แซนด์วิช, ทูน่า",sugar_g,removed,155,
+12049,"แซนด์วิช, ทูน่าสลัด",sugar_g,removed,134,
+12050,"แซนด์วิช, แฮมชีส",sugar_g,removed,161,
+12051,"แซนด์วิช, แฮมทูน่า",sugar_g,removed,172,
+12052,"โดนัท, บาวาเรียน",sugar_g,removed,171,
+12053,"โดนัท, โรยน้ำตาล",sugar_g,removed,244,
+12054,ทอฟฟี่เค้ก,sugar_g,removed,259,
+12055,บราวนี่,sugar_g,removed,190,
+12056,"พัฟ, ทูน่า",sugar_g,removed,207,
+12057,"พาย, ทูน่า",sugar_g,removed,187,
+12058,แยมโรล,sugar_g,removed,231,
+12059,"แยมโรล, วนิลา",sugar_g,removed,212,
+12060,เอแคลร์,sugar_g,removed,130,
+8001,"ไข่ไก่, ไข่ขาว",riboflavin_mg,filled,,0.39
+8002,"ไข่ไก่, ไข่แดง",carbTotal_g,filled,,3.2
+8003,"ไข่ไก่, ทั้งฟอง",carbTotal_g,filled,,1.2
+8003,"ไข่ไก่, ทั้งฟอง",saturatedFat_g,filled,,2.48
+8004,"ไข่จระเข้, ไข่ขาว",carbTotal_g,filled,,0.8
+8005,"ไข่จระเข้, ไข่แดง",carbTotal_g,filled,,1.5
+8006,"ไข่จระเข้, ทั้งฟอง",carbTotal_g,filled,,2.2
+8007,ไข่จาละเม็ด/ไข่เต่าทะเล,carbTotal_g,filled,,1.3
+8008,ไข่นกกะทา,carbTotal_g,filled,,2.4
+8009,"ไข่ปลากระบอก, เค็ม",carbTotal_g,filled,,1.1
+8010,"ไข่เป็ด, ไข่ขาว",carbTotal_g,filled,,1.3
+8011,"ไข่เป็ด, ไข่แดง",carbTotal_g,filled,,4.4
+8012,"ไข่เป็ด, ทั้งฟอง",carbTotal_g,filled,,1.5
+8012,"ไข่เป็ด, ทั้งฟอง",saturatedFat_g,filled,,3.91
+8013,"ไข่เปรี้ยว, ไข่ไก่, ไข่ขาว",carbTotal_g,filled,,2.5
+8015,"ไข่เปรี้ยว, ไข่ไก่, ทั้งฟอง",carbTotal_g,filled,,1.8
+8016,ไข่มดแดง,carbTotal_g,filled,,4
+8017,ไข่มดแดงและตัวอ่อน,carbTotal_g,filled,,4.5
+8018,ไข่แมงมัน,carbTotal_g,filled,,1.4
+10002,"กะปิ, คุณภาพดี",carbTotal_g,filled,,2.8
+10002,"กะปิ, คุณภาพดี",fiber_g,filled,,0
+10002,"กะปิ, คุณภาพดี",sodium_mg,filled,,5205
+10002,"กะปิ, คุณภาพดี",potassium_mg,filled,,3617
+10002,"กะปิ, คุณภาพดี",sugar_g,filled,,0
+10004,ขมิ้นขาว,carbTotal_g,filled,,5.14
+10004,ขมิ้นขาว,ash_g,filled,,0.51
+10004,ขมิ้นขาว,magnesium_mg,filled,,11
+10004,ขมิ้นขาว,sodium_mg,filled,,8
+10004,ขมิ้นขาว,copper_mg,filled,,0.02
+10004,ขมิ้นขาว,zinc_mg,filled,,0.15
+10004,ขมิ้นขาว,retinol_ug,filled,,0
+10005,ขมิ้นชัน,carbTotal_g,filled,,9.42
+10005,ขมิ้นชัน,magnesium_mg,filled,,31
+10005,ขมิ้นชัน,sodium_mg,filled,,21
+10005,ขมิ้นชัน,copper_mg,filled,,0.04
+10005,ขมิ้นชัน,zinc_mg,filled,,0.89
+10006,ข่า,carbTotal_g,filled,,7.79
+10006,ข่า,sodium_mg,filled,,82
+10006,ข่า,copper_mg,filled,,0.15
+10006,ข่า,zinc_mg,filled,,0.72
+10009,ดอกจันทน์เทศ,carbTotal_g,filled,,48.2
+10010,ตะไคร้,carbTotal_g,filled,,15.48
+10010,ตะไคร้,sodium_mg,filled,,12
+10010,ตะไคร้,copper_mg,filled,,0.08
+10010,ตะไคร้,zinc_mg,filled,,0.62
+10018,"พริกชี้ฟ้า, แห้ง",carbTotal_g,filled,,59.92
+10018,"พริกชี้ฟ้า, แห้ง",vitaminC_mg,filled,,107
+10019,"พริกไทย, ขาว",carbTotal_g,filled,,68.6
+10021,"พะโล้, ผง",nameEn,filled,,Five-spice (palo) powder
+10022,"มะกรูด, น้ำ",carbTotal_g,filled,,7.4
+10023,"มะกรูด, ใบ",carbTotal_g,filled,,21.71
+10023,"มะกรูด, ใบ",sodium_mg,filled,,23
+10023,"มะกรูด, ใบ",copper_mg,filled,,1.8
+10023,"มะกรูด, ใบ",zinc_mg,filled,,0.5
+10024,"มะกรูด, ผิว",carbTotal_g,filled,,24.32
+10028,หอมแดง,carbTotal_g,filled,,15
+10028,หอมแดง,fiber_g,filled,,2.4
+10028,หอมแดง,sodium_mg,filled,,22
+10028,หอมแดง,potassium_mg,filled,,283
+10028,หอมแดง,iron_mg,filled,,0.57
+10028,หอมแดง,copper_mg,filled,,0.08
+10028,หอมแดง,zinc_mg,filled,,0.31
+10030,อบเชย,carbTotal_g,filled,,76.6
+10030,อบเชย,iron_mg,filled,,22.2
+3002,"กระจับ, ต้ม",carbTotal_g,filled,,33
+3002,"กระจับ, ต้ม",vitaminC_mg,filled,,9
+3005,"เกาลัด, ดิบ",cholesterol_mg,filled,,0
+3005,"เกาลัด, ดิบ",saturatedFat_g,filled,,0.45
+3006,"งาขาว, คั่ว",carbTotal_g,filled,,3.26
+3006,"งาขาว, คั่ว",cholesterol_mg,filled,,0
+3006,"งาขาว, คั่ว",saturatedFat_g,filled,,9.16
+3009,"งาดำ, อบ",cholesterol_mg,filled,,0
+3009,"งาดำ, อบ",saturatedFat_g,filled,,7.5
+3010,"เต้าเจี้ยว, ขาว",carbTotal_g,filled,,7.77
+3010,"เต้าเจี้ยว, ขาว",sodium_mg,filled,,2575
+3010,"เต้าเจี้ยว, ขาว",cholesterol_mg,filled,,0
+3010,"เต้าเจี้ยว, ขาว",saturatedFat_g,filled,,0.53
+3033,"ถั่วแระ, ดิบ",calcium_mg,filled,,192
+3033,"ถั่วแระ, ดิบ",phosphorus_mg,filled,,250
+3033,"ถั่วแระ, ดิบ",sodium_mg,filled,,92
+3033,"ถั่วแระ, ดิบ",potassium_mg,filled,,313
+3033,"ถั่วแระ, ดิบ",iron_mg,filled,,17.41
+3033,"ถั่วแระ, ดิบ",betacarotene_ug,filled,,50
+3033,"ถั่วแระ, ดิบ",retinol_ug,filled,,0
+3033,"ถั่วแระ, ดิบ",vitaminC_mg,filled,,22
+3033,"ถั่วแระ, ดิบ",cholesterol_mg,filled,,0
+3042,"ถั่วหรั่ง, ดิบ",carbTotal_g,filled,,28.13
+3042,"ถั่วหรั่ง, ดิบ",cholesterol_mg,filled,,0
+3042,"ถั่วหรั่ง, ดิบ",saturatedFat_g,filled,,0.94
+3043,"ถั่วหรั่ง, ต้ม",carbTotal_g,filled,,26.5
+3043,"ถั่วหรั่ง, ต้ม",cholesterol_mg,filled,,0
+3047,"แปะก๊วย, เมล็ด, ไม่มีเปลือก",magnesium_mg,filled,,0
+3047,"แปะก๊วย, เมล็ด, ไม่มีเปลือก",cholesterol_mg,filled,,0
+3047,"แปะก๊วย, เมล็ด, ไม่มีเปลือก",saturatedFat_g,filled,,0.24
+3054,"เมล็ดขนุน, ดิบ",cholesterol_mg,filled,,0
+3054,"เมล็ดขนุน, ดิบ",saturatedFat_g,filled,,0.05
+3058,"เมล็ดบัว, นึ่ง",carbTotal_g,filled,,27.9
+3058,"เมล็ดบัว, นึ่ง",cholesterol_mg,filled,,0
+3060,"เมล็ดบัว, แห้ง, ดิบ",cholesterol_mg,filled,,0
+3060,"เมล็ดบัว, แห้ง, ดิบ",saturatedFat_g,filled,,0.51
+3062,"เมล็ดมะม่วงหิมพานต์, คั่ว",carbTotal_g,filled,,29
+3062,"เมล็ดมะม่วงหิมพานต์, คั่ว",cholesterol_mg,filled,,0
+3062,"เมล็ดมะม่วงหิมพานต์, คั่ว",saturatedFat_g,filled,,7.98
+1001,"ก๋วยเตี๋ยว, เส้นจันท์, แห้ง",carbTotal_g,filled,,81.7
+1002,"ก๋วยเตี๋ยว, เส้นเล็ก, เส้นสด",carbTotal_g,filled,,49.3
+1003,"ก๋วยเตี๋ยว, เส้นใหญ่, เส้นสด",carbTotal_g,filled,,29.6
+1004,"ขนมจีน, แป้งสด",carbTotal_g,filled,,21.1
+1005,"ขนมจีน, แป้งหมัก",carbTotal_g,filled,,18.3
+1005,"ขนมจีน, แป้งหมัก",ash_g,filled,,0.6
+1005,"ขนมจีน, แป้งหมัก",iron_mg,filled,,0.4
+1005,"ขนมจีน, แป้งหมัก",sugar_g,filled,,18.42
+1006,ขนมปังปอนด์,carbTotal_g,filled,,64.5
+1007,"ข้าวกล้อง, งอก, ดิบ",carbTotal_g,filled,,75.6
+1007,"ข้าวกล้อง, งอก, ดิบ",phosphorus_mg,filled,,274
+1007,"ข้าวกล้อง, งอก, ดิบ",sodium_mg,filled,,25
+1007,"ข้าวกล้อง, งอก, ดิบ",iron_mg,filled,,1.23
+1007,"ข้าวกล้อง, งอก, ดิบ",cholesterol_mg,filled,,0
+1008,"ข้าวกล้อง, ดอย, ดิบ",carbTotal_g,filled,,74
+1009,"ข้าวกล้อง, ดอย, สีแดง, ดิบ",carbTotal_g,filled,,72.1
+1010,"ข้าวกล้อง, หอมนิล, ดิบ",carbTotal_g,filled,,70.1
+1011,"ข้าวกล้อง, หอมมะลิ, ดิบ",carbTotal_g,filled,,73.4
+1012,"ข้าวเจ้า, 5%, ดิบ",carbTotal_g,filled,,79.5
+1012,"ข้าวเจ้า, 5%, ดิบ",iron_mg,filled,,0.31
+1012,"ข้าวเจ้า, 5%, ดิบ",copper_mg,filled,,0.14
+1012,"ข้าวเจ้า, 5%, ดิบ",zinc_mg,filled,,0.5
+1012,"ข้าวเจ้า, 5%, ดิบ",betacarotene_ug,filled,,0
+1012,"ข้าวเจ้า, 5%, ดิบ",cholesterol_mg,filled,,0
+1012,"ข้าวเจ้า, 5%, ดิบ",saturatedFat_g,filled,,0.16
+1013,"ข้าวเจ้า, 10%, ดิบ",carbTotal_g,filled,,79.8
+1013,"ข้าวเจ้า, 10%, ดิบ",iron_mg,filled,,0.31
+1013,"ข้าวเจ้า, 10%, ดิบ",copper_mg,filled,,0.14
+1013,"ข้าวเจ้า, 10%, ดิบ",zinc_mg,filled,,0.5
+1013,"ข้าวเจ้า, 10%, ดิบ",betacarotene_ug,filled,,0
+1013,"ข้าวเจ้า, 10%, ดิบ",cholesterol_mg,filled,,0
+1013,"ข้าวเจ้า, 10%, ดิบ",saturatedFat_g,filled,,0.16
+1014,"ข้าวเจ้า, 100%, ดิบ",carbTotal_g,filled,,80.3
+1014,"ข้าวเจ้า, 100%, ดิบ",iron_mg,filled,,0.31
+1014,"ข้าวเจ้า, 100%, ดิบ",copper_mg,filled,,0.14
+1014,"ข้าวเจ้า, 100%, ดิบ",zinc_mg,filled,,0.5
+1014,"ข้าวเจ้า, 100%, ดิบ",betacarotene_ug,filled,,0
+1014,"ข้าวเจ้า, 100%, ดิบ",cholesterol_mg,filled,,0
+1014,"ข้าวเจ้า, 100%, ดิบ",saturatedFat_g,filled,,0.16
+1015,"ข้าวเจ้า, เคลือบ วิตามินบี, ดิบ",carbTotal_g,filled,,79.1
+1016,"ข้าวเจ้า, ซ้อมมือ, ดิบ",carbTotal_g,filled,,76.7
+1017,"ข้าวเจ้า, นึ่ง",carbTotal_g,filled,,31.3
+1018,"ข้าวเจ้า, ปลายข้าว, ดิบ",carbTotal_g,filled,,80.8
+1019,"ข้าวเจ้า, ชุมแสง, ดิบ",carbTotal_g,filled,,79.3
+1020,"ข้าวเจ้า, ชัยนาท 1, ดิบ",carbTotal_g,filled,,80
+1021,"ข้าวเจ้า, มันปู, ดิบ",carbTotal_g,filled,,73.3
+1022,"ข้าวเจ้า, ไรซ์เบอรี่, ดิบ",carbTotal_g,filled,,70.4
+1023,"ข้าวเจ้า, สังข์หยด, ดิบ",carbTotal_g,filled,,70.8
+1024,"ข้าวเจ้า, เสาไห้, ดิบ",carbTotal_g,filled,,79.4
+1025,"ข้าวเจ้า, หอมนิล, ดิบ",carbTotal_g,filled,,73
+1026,"ข้าวเจ้า, หอมมะลิ, ดิบ",carbTotal_g,filled,,80.1
+1027,"ข้าวบัสมาตี, ดิบ",carbTotal_g,filled,,73.5
+1028,"ข้าวบาเลย์, ดิบ",carbTotal_g,filled,,65.1
+1029,"ข้าวโพด, เหลือง, ต้ม",carbTotal_g,filled,,17.9
+1030,"ข้าวโพด, เหลือง, ดิบ",carbTotal_g,filled,,21.8
+1031,"ข้าวโพดข้าวเหนียว, ขาวสลับม่วง, ดิบ",carbTotal_g,filled,,37.1
+1032,"ข้าวฟ่าง, ดิบ",carbTotal_g,filled,,66.4
+1033,"ข้าวสาลี, ดิบ",carbTotal_g,filled,,62.7
+1033,"ข้าวสาลี, ดิบ",ash_g,filled,,1.1
+1033,"ข้าวสาลี, ดิบ",cholesterol_mg,filled,,0
+1033,"ข้าวสาลี, ดิบ",saturatedFat_g,filled,,0.2
+1034,"ข้าวสาลี, จมูกข้าว, อบ",carbTotal_g,filled,,47.2
+1036,"ข้าวเหนียว, ดิบ",carbTotal_g,filled,,80.5
+1036,"ข้าวเหนียว, ดิบ",ash_g,filled,,0.41
+1036,"ข้าวเหนียว, ดิบ",phosphorus_mg,filled,,66
+1036,"ข้าวเหนียว, ดิบ",cholesterol_mg,filled,,0
+1037,"ข้าวเหนียวดำ, ดิบ",carbTotal_g,filled,,72.1
+1037,"ข้าวเหนียวดำ, ดิบ",ash_g,filled,,1.17
+1037,"ข้าวเหนียวดำ, ดิบ",phosphorus_mg,filled,,189
+1037,"ข้าวเหนียวดำ, ดิบ",potassium_mg,filled,,265
+1037,"ข้าวเหนียวดำ, ดิบ",cholesterol_mg,filled,,0
+1037,"ข้าวเหนียวดำ, ดิบ",saturatedFat_g,filled,,0.5
+1038,"ข้าวเหนียวดำ, ข้าวลืมผัว, ดิบ",carbTotal_g,filled,,72
+1038,"ข้าวเหนียวดำ, ข้าวลืมผัว, ดิบ",ash_g,filled,,1.17
+1038,"ข้าวเหนียวดำ, ข้าวลืมผัว, ดิบ",cholesterol_mg,filled,,0
+1038,"ข้าวเหนียวดำ, ข้าวลืมผัว, ดิบ",saturatedFat_g,filled,,0.5
+1039,"ข้าวเหนียว, นึ่ง",carbTotal_g,filled,,51.9
+1039,"ข้าวเหนียว, นึ่ง",ash_g,filled,,0.19
+1039,"ข้าวเหนียว, นึ่ง",phosphorus_mg,filled,,12
+1039,"ข้าวเหนียว, นึ่ง",potassium_mg,filled,,13
+1039,"ข้าวเหนียว, นึ่ง",copper_mg,filled,,0.09
+1039,"ข้าวเหนียว, นึ่ง",zinc_mg,filled,,1.09
+1039,"ข้าวเหนียว, นึ่ง",betacarotene_ug,filled,,0
+1039,"ข้าวเหนียว, นึ่ง",cholesterol_mg,filled,,0
+1039,"ข้าวเหนียว, นึ่ง",saturatedFat_g,filled,,0.05
+1040,"ข้าวเหนียวกล้อง, ดิบ",carbTotal_g,filled,,73.1
+1040,"ข้าวเหนียวกล้อง, ดิบ",ash_g,filled,,1.35
+1040,"ข้าวเหนียวกล้อง, ดิบ",phosphorus_mg,filled,,272
+1040,"ข้าวเหนียวกล้อง, ดิบ",potassium_mg,filled,,280
+1040,"ข้าวเหนียวกล้อง, ดิบ",cholesterol_mg,filled,,0
+1040,"ข้าวเหนียวกล้อง, ดิบ",saturatedFat_g,filled,,0.72
+1041,"ข้าวโอ๊ต, ดิบ",carbTotal_g,filled,,59.4
+1041,"ข้าวโอ๊ต, ดิบ",ash_g,filled,,1.5
+1041,"ข้าวโอ๊ต, ดิบ",cholesterol_mg,filled,,0
+1041,"ข้าวโอ๊ต, ดิบ",saturatedFat_g,filled,,1.03
+1042,น้ำข้าวกล้องงอก,carbTotal_g,filled,,2.6
+1043,น้ำนมข้าวโพด,carbTotal_g,filled,,8.4
+1044,น้ำนมข้าว,carbTotal_g,filled,,5.1
+1045,"น้ำนมข้าวยาคู, ผง",carbTotal_g,filled,,89.9
+1046,"บะหมี่, สด",carbTotal_g,filled,,54.51
+1046,"บะหมี่, สด",ash_g,filled,,2.3
+1046,"บะหมี่, สด",phosphorus_mg,filled,,90
+1047,บะหมี่กึ่งสำเร็จรูปพร้อมเครื่องปรุงรสหมู,carbTotal_g,filled,,65.7
+1047,บะหมี่กึ่งสำเร็จรูปพร้อมเครื่องปรุงรสหมู,ash_g,filled,,6.33
+1047,บะหมี่กึ่งสำเร็จรูปพร้อมเครื่องปรุงรสหมู,phosphorus_mg,filled,,126
+1047,บะหมี่กึ่งสำเร็จรูปพร้อมเครื่องปรุงรสหมู,potassium_mg,filled,,148
+1047,บะหมี่กึ่งสำเร็จรูปพร้อมเครื่องปรุงรสหมู,sugar_g,filled,,3.15
+1047,บะหมี่กึ่งสำเร็จรูปพร้อมเครื่องปรุงรสหมู,saturatedFat_g,filled,,7.55
+1048,แป้งข้าวเจ้า,carbTotal_g,filled,,79.4
+1049,"ลูกเดือย, ดิบ",carbTotal_g,filled,,69.2
+1049,"ลูกเดือย, ดิบ",ash_g,filled,,1.3
+1049,"ลูกเดือย, ดิบ",phosphorus_mg,filled,,256
+1049,"ลูกเดือย, ดิบ",cholesterol_mg,filled,,0
+1050,"เส้นหมี่, แห้ง",carbTotal_g,filled,,81.1
+1050,"เส้นหมี่, แห้ง",ash_g,filled,,0.3
+1050,"เส้นหมี่, แห้ง",cholesterol_mg,filled,,0
+9001,"นม, พาสเจอร์ไรส์, รสธรรมชาติ",carbTotal_g,filled,,5.6
+9002,"นม, พาสเจอร์ไรส์, รสหวาน",carbTotal_g,filled,,9.5
+9003,"นม, ยูเอชที, รสธรรมชาติ",carbTotal_g,filled,,4.1
+9004,"นม, ยูเอชที, รสหวาน",carbTotal_g,filled,,5.5
+9005,"นม, สเตอริไลส์, รสธรรมชาติ",carbTotal_g,filled,,3
+9006,"นมข้นคืนรูป, ไม่หวาน, สูตรน้ำมันปาล์ม",carbTotal_g,filled,,7
+9007,"นมข้นคืนรูป, ไม่หวาน, สูตรมันเนย",carbTotal_g,filled,,3.7
+9008,"นมข้นคืนรูป, หวาน",carbTotal_g,filled,,58.8
+9009,"นมข้นคืนรูป, หวาน, สูตรน้ำมันปาล์ม",carbTotal_g,filled,,59.6
+9010,"นมข้นคืนรูป, หวาน, สูตรมันเนย",carbTotal_g,filled,,58
+9011,นมคน,carbTotal_g,filled,,7.7
+9012,"นมเปรี้ยวพร้อมดื่ม, ไขมันต่ำ, ยูเอชที, รสธรรมชาติ",carbTotal_g,filled,,11.5
+9013,"นมเปรี้ยวพร้อมดื่ม, ไขมันต่ำ, ยูเอชที, รสผลไม้รวม",carbTotal_g,filled,,11.3
+9014,"นมเปรี้ยวพร้อมดื่ม, พาสเจอร์ไรส์, รสธรรมชาติ",carbTotal_g,filled,,12.9
+9015,"นมเปรี้ยวพร้อมดื่ม, พาสเจอร์ไรส์, สูตรนมสด, รสผลไม้รวม",carbTotal_g,filled,,13
+9016,"นมเปรี้ยวพร้อมดื่ม, พาสเจอร์ไรส์, สูตรโยเกิร์ต 35%, รสผลไม้รวม",carbTotal_g,filled,,13
+9017,"นมเปรี้ยวพร้อมดื่ม, พาสเจอร์ไรส์, สูตรโยเกิร์ต 76.5%, รสผลไม้รวม",carbTotal_g,filled,,13
+9018,"นมเปรี้ยวพร้อมดื่ม, ยูเอชที, สูตรนมสด 50%, รสผลไม้รวม",carbTotal_g,filled,,13.6
+9019,"นมเปรี้ยวพร้อมดื่ม, ยูเอชที, สูตรนมสด 85%, รสผลไม้รวม",carbTotal_g,filled,,12.3
+9020,"นมเปรี้ยวพร้อมดื่ม, ยูเอชที, สูตรนมสดผสมนมผง, รสผลไม้รวม",carbTotal_g,filled,,11.6
+9021,นมผง,carbTotal_g,filled,,38.4
+9022,"นมผง, ขาดมันเนย",carbTotal_g,filled,,50.3
+9022,"นมผง, ขาดมันเนย",sodium_mg,filled,,394
+9022,"นมผง, ขาดมันเนย",copper_mg,filled,,0.2
+9022,"นมผง, ขาดมันเนย",saturatedFat_g,filled,,0.38
+9023,นมชนิดเม็ด,carbTotal_g,filled,,60.1
+9024,"นมพร่องมันเนย, พาสเจอร์ไรส์, รสธรรมชาติ",carbTotal_g,filled,,4.1
+9025,"นมพร่องมันเนย, ยูเอชที, รสธรรมชาติ",carbTotal_g,filled,,3.2
+9026,"นมพร่องมันเนย, ยูเอชที, สูตรนมสดผสมนมผงพร่องมันเนย (อัตราส่วน 22:78), รสธรรมชาติ",carbTotal_g,filled,,4
+9027,"นมพร่องมันเนย, ยูเอชที, สูตรนมสดผสมนมผงพร่องมันเนย (อัตราส่วน 46:6), รสธรรมชาติ",carbTotal_g,filled,,4
+9028,"นมแพะ, ดิบ",carbTotal_g,filled,,4.3
+9029,"นมแพะ, ต้ม",carbTotal_g,filled,,5.2
+9030,"นมแพะ, พลาสเจอร์ไรส์",carbTotal_g,filled,,3.9
+9031,"นมวัว, ดิบ",carbTotal_g,filled,,3.4
+9032,"เนย, ชนิดเค็ม",carbTotal_g,filled,,3.5
+9033,"เนยแข็ง, เชดดาร์",carbTotal_g,filled,,15.7
+9034,"โยเกิร์ต, ไขมันต่ำ, รสผลไม้รวม",carbTotal_g,filled,,17.9
+9035,"โยเกิร์ต, รสธรรมชาติ",carbTotal_g,filled,,13.9
+9035,"โยเกิร์ต, รสธรรมชาติ",sodium_mg,filled,,63
+9035,"โยเกิร์ต, รสธรรมชาติ",sugar_g,filled,,5.92
+9035,"โยเกิร์ต, รสธรรมชาติ",saturatedFat_g,filled,,2.09
+9036,"โยเกิร์ต, สูตรนมสดผสมนมพร่องมันเนย",carbTotal_g,filled,,10.4
+9037,"โยเกิร์ต, สูตรนมสดผสมนมพร่องมันเนย 73:4, รสผลไม้รวม",carbTotal_g,filled,,22.3
+9038,"โยเกิร์ต, สูตรนมสดผสมนมพร่องมันเนย 73:3, รสผลไม้รวม",carbTotal_g,filled,,20.7
+6004,"ไก่, ตับ, ดิบ",retinol_ug,filled,,9579
+6004,"ไก่, ตับ, ดิบ",vitaminA_RAE_ug,filled,,9579
+6004,"ไก่, ตับ, ดิบ",thiamin_mg,filled,,0.36
+6004,"ไก่, ตับ, ดิบ",riboflavin_mg,filled,,2.57
+6004,"ไก่, ตับ, ดิบ",niacin_mg,filled,,7.98
+6004,"ไก่, ตับ, ดิบ",vitaminC_mg,filled,,2
+6004,"ไก่, ตับ, ดิบ",cholesterol_mg,filled,,428
+6004,"ไก่, ตับ, ดิบ",saturatedFat_g,filled,,2.85
+6005,"ไก่, เนื้อ, ดิบ",phosphorus_mg,filled,,137
+6005,"ไก่, เนื้อ, ดิบ",magnesium_mg,filled,,19
+6005,"ไก่, เนื้อ, ดิบ",sodium_mg,filled,,90
+6005,"ไก่, เนื้อ, ดิบ",potassium_mg,filled,,188
+6005,"ไก่, เนื้อ, ดิบ",iron_mg,filled,,0.5
+6005,"ไก่, เนื้อ, ดิบ",copper_mg,filled,,0.05
+6005,"ไก่, เนื้อ, ดิบ",retinol_ug,filled,,3
+6005,"ไก่, เนื้อ, ดิบ",vitaminA_RAE_ug,filled,,3
+6005,"ไก่, เนื้อ, ดิบ",thiamin_mg,filled,,0.05
+6005,"ไก่, เนื้อ, ดิบ",riboflavin_mg,filled,,0.13
+6005,"ไก่, เนื้อ, ดิบ",niacin_mg,filled,,4.56
+6005,"ไก่, เนื้อ, ดิบ",vitaminC_mg,filled,,0
+6005,"ไก่, เนื้อ, ดิบ",cholesterol_mg,filled,,81
+6005,"ไก่, เนื้อ, ดิบ",saturatedFat_g,filled,,3.97
+6007,"ไก่ดำ, กิ๊น, ดิบ",iron_mg,filled,,4.6
+6008,"ไก่ดำ, น่อง, เนื้อและหนัง, ดิบ",iron_mg,filled,,1.8
+6008,"ไก่ดำ, น่อง, เนื้อและหนัง, ดิบ",niacin_mg,filled,,1.8
+6009,"ไก่ดำ, ปีก, เนื้อและหนัง, ดิบ",iron_mg,filled,,2.2
+6009,"ไก่ดำ, ปีก, เนื้อและหนัง, ดิบ",niacin_mg,filled,,1.3
+6010,"ไก่ดำ, สะโพก, เนื้อและหนัง, ดิบ",iron_mg,filled,,2.4
+6010,"ไก่ดำ, สะโพก, เนื้อและหนัง, ดิบ",niacin_mg,filled,,1.6
+6011,"ไก่ดำ, หน้าอก, เนื้อและหนัง, ดิบ",iron_mg,filled,,1.2
+6011,"ไก่ดำ, หน้าอก, เนื้อและหนัง, ดิบ",niacin_mg,filled,,3.3
+6013,"ไก่บ้าน, น่อง, เนื้อและหนัง, ดิบ",phosphorus_mg,filled,,9
+6013,"ไก่บ้าน, น่อง, เนื้อและหนัง, ดิบ",iron_mg,filled,,7.8
+6014,"ไก่บ้าน, ปีก, เนื้อและหนัง, ดิบ",phosphorus_mg,filled,,31
+6014,"ไก่บ้าน, ปีก, เนื้อและหนัง, ดิบ",iron_mg,filled,,15.56
+6014,"ไก่บ้าน, ปีก, เนื้อและหนัง, ดิบ",riboflavin_mg,filled,,0.17
+6015,"ไก่บ้าน, สะโพก, เนื้อและหนัง, ดิบ",phosphorus_mg,filled,,19
+6015,"ไก่บ้าน, สะโพก, เนื้อและหนัง, ดิบ",iron_mg,filled,,0
+6015,"ไก่บ้าน, สะโพก, เนื้อและหนัง, ดิบ",niacin_mg,filled,,2.8
+6016,"ไก่บ้าน, อก, เนื้อและหนัง, ดิบ",phosphorus_mg,filled,,20
+6016,"ไก่บ้าน, อก, เนื้อและหนัง, ดิบ",iron_mg,filled,,2.8
+6016,"ไก่บ้าน, อก, เนื้อและหนัง, ดิบ",niacin_mg,filled,,2.7
+6024,"แคบหมู, ไม่มีมัน",iron_mg,filled,,3.4
+6026,"เป็ด, เนื้อ, ดิบ",iron_mg,filled,,1.7
+6027,"เป็ด, เลือด, สุก",kcal,changed,16,24
+6027,"เป็ด, เลือด, สุก",water_g,changed,86.8,93.4
+6027,"เป็ด, เลือด, สุก",protein_g,changed,10.36,5.9
+6027,"เป็ด, เลือด, สุก",fat_g,changed,0.13,0.1
+6027,"เป็ด, เลือด, สุก",carbAvailable_g,changed,1.75,0
+6027,"เป็ด, เลือด, สุก",carbTotal_g,changed,1.75,0
+6027,"เป็ด, เลือด, สุก",ash_g,changed,0.92,0.7
+6027,"เป็ด, เลือด, สุก",calcium_mg,changed,7,14
+6027,"เป็ด, เลือด, สุก",phosphorus_mg,changed,75,41
+6027,"เป็ด, เลือด, สุก",sodium_mg,changed,444,161
+6027,"เป็ด, เลือด, สุก",potassium_mg,changed,1073,8
+6027,"เป็ด, เลือด, สุก",iron_mg,changed,12.4,13.69
+6027,"เป็ด, เลือด, สุก",riboflavin_mg,filled,,0.04
+6027,"เป็ด, เลือด, สุก",niacin_mg,filled,,0.1
+6027,"เป็ด, เลือด, สุก",magnesium_mg,removed,5,
+6027,"เป็ด, เลือด, สุก",copper_mg,removed,0.06,
+6027,"เป็ด, เลือด, สุก",zinc_mg,removed,0.2,
+6036,"วัว, เนื้อสันใน, ดิบ",saturatedFat_g,filled,,0.61
+6050,"หมู, เนื้อ, ดิบ",phosphorus_mg,filled,,245
+6050,"หมู, เนื้อ, ดิบ",sodium_mg,filled,,100
+6050,"หมู, เนื้อ, ดิบ",potassium_mg,filled,,349
+6050,"หมู, เนื้อ, ดิบ",iron_mg,filled,,1.01
+6050,"หมู, เนื้อ, ดิบ",copper_mg,filled,,0.1
+6050,"หมู, เนื้อ, ดิบ",zinc_mg,filled,,1.83
+6050,"หมู, เนื้อ, ดิบ",retinol_ug,filled,,6
+6050,"หมู, เนื้อ, ดิบ",vitaminC_mg,filled,,0
+6050,"หมู, เนื้อ, ดิบ",cholesterol_mg,filled,,45
+6050,"หมู, เนื้อ, ดิบ",saturatedFat_g,filled,,1.52
+6052,"หมู, เลือด, สุก",saturatedFat_g,filled,,0.02
+6054,"หมู, ตับ, ดิบ",magnesium_mg,filled,,26
+6054,"หมู, ตับ, ดิบ",sodium_mg,filled,,119
+6054,"หมู, ตับ, ดิบ",iron_mg,filled,,13.26
+6054,"หมู, ตับ, ดิบ",copper_mg,filled,,6.4
+6054,"หมู, ตับ, ดิบ",zinc_mg,filled,,0.5
+6054,"หมู, ตับ, ดิบ",cholesterol_mg,filled,,249
+6054,"หมู, ตับ, ดิบ",saturatedFat_g,filled,,1.52
+6055,"หมู, เนื้อซี่โครงอ่อน, ดิบ",phosphorus_mg,filled,,120
+6055,"หมู, เนื้อซี่โครงอ่อน, ดิบ",saturatedFat_g,filled,,6.22
+6058,"หมู, ยอ",sodium_mg,filled,,757
+6058,"หมู, ยอ",iron_mg,filled,,2.85
+6060,"หมู, สันคอ, ดิบ",phosphorus_mg,filled,,170
+6060,"หมู, สันคอ, ดิบ",saturatedFat_g,filled,,5.06
+6061,"หมู, สันใน, ดิบ",niacin_mg,filled,,4.49
+6061,"หมู, สันใน, ดิบ",cholesterol_mg,filled,,37
+6061,"หมู, สันใน, ดิบ",saturatedFat_g,filled,,1.28
+7001,"กระเพาะปลา, ทอด",niacin_mg,filled,,0.6
+7002,"กุ้งกุลาดำ, เนื้อ, สด",niacin_mg,filled,,3.5
+7002,"กุ้งกุลาดำ, เนื้อ, สด",vitaminC_mg,filled,,0
+7003,"กุ้งกุลาดำ, หัว, สด",niacin_mg,filled,,2.1
+7004,"กุ้งเคย, สด",calcium_mg,filled,,1
+7013,"ปลากระบอก, สด",cholesterol_mg,filled,,80
+7013,"ปลากระบอก, สด",saturatedFat_g,filled,,1.01
+7016,"ปลาเก๋า, สด",kcal,changed,29,88
+7016,"ปลาเก๋า, สด",niacin_mg,filled,,1.2
+7016,"ปลาเก๋า, สด",cholesterol_mg,filled,,54
+7016,"ปลาเก๋า, สด",saturatedFat_g,filled,,0.11
+7024,"ปลาช่อน, สด",magnesium_mg,filled,,49
+7024,"ปลาช่อน, สด",potassium_mg,filled,,317
+7024,"ปลาช่อน, สด",copper_mg,filled,,0.07
+7024,"ปลาช่อน, สด",vitaminC_mg,filled,,0
+7024,"ปลาช่อน, สด",cholesterol_mg,filled,,149
+7024,"ปลาช่อน, สด",saturatedFat_g,filled,,2.5
+7031,"ปลาตะเพียน, สด",magnesium_mg,filled,,30
+7031,"ปลาตะเพียน, สด",potassium_mg,filled,,202
+7031,"ปลาตะเพียน, สด",copper_mg,filled,,0.08
+7031,"ปลาตะเพียน, สด",zinc_mg,filled,,0.14
+7031,"ปลาตะเพียน, สด",cholesterol_mg,filled,,80
+7031,"ปลาตะเพียน, สด",saturatedFat_g,filled,,1.49
+7034,"ปลาทู, นึ่ง",magnesium_mg,filled,,54
+7034,"ปลาทู, นึ่ง",potassium_mg,filled,,629
+7034,"ปลาทู, นึ่ง",copper_mg,filled,,0.14
+7034,"ปลาทู, นึ่ง",vitaminC_mg,filled,,0
+7034,"ปลาทู, นึ่ง",cholesterol_mg,filled,,88
+7034,"ปลาทู, นึ่ง",saturatedFat_g,filled,,1.29
+7041,"ปลานิล, สด",calcium_mg,filled,,51
+7041,"ปลานิล, สด",phosphorus_mg,filled,,170
+7041,"ปลานิล, สด",magnesium_mg,filled,,24
+7041,"ปลานิล, สด",sodium_mg,filled,,87
+7041,"ปลานิล, สด",potassium_mg,filled,,316
+7041,"ปลานิล, สด",iron_mg,filled,,0.91
+7041,"ปลานิล, สด",copper_mg,filled,,0.03
+7041,"ปลานิล, สด",cholesterol_mg,filled,,58
+7041,"ปลานิล, สด",saturatedFat_g,filled,,0.55
+7059,"ปลาสลิด, สด",niacin_mg,filled,,2
+7062,"ปลาสวาย, สด",magnesium_mg,filled,,31
+7062,"ปลาสวาย, สด",potassium_mg,filled,,272
+7062,"ปลาสวาย, สด",copper_mg,filled,,0.02
+7062,"ปลาสวาย, สด",vitaminC_mg,filled,,2
+7062,"ปลาสวาย, สด",cholesterol_mg,filled,,51
+7062,"ปลาสวาย, สด",saturatedFat_g,filled,,6.45
+7069,"ปลาหมึกกล้วย, สด",magnesium_mg,filled,,32
+7069,"ปลาหมึกกล้วย, สด",potassium_mg,filled,,107
+7069,"ปลาหมึกกล้วย, สด",copper_mg,filled,,0.19
+7069,"ปลาหมึกกล้วย, สด",vitaminC_mg,filled,,0
+7069,"ปลาหมึกกล้วย, สด",cholesterol_mg,filled,,329
+7069,"ปลาหมึกกล้วย, สด",saturatedFat_g,filled,,0.12
+7074,"ปลาไหล, สด",magnesium_mg,filled,,34
+7074,"ปลาไหล, สด",potassium_mg,filled,,253
+7074,"ปลาไหล, สด",copper_mg,filled,,0.03
+7074,"ปลาไหล, สด",zinc_mg,filled,,0.83
+7074,"ปลาไหล, สด",cholesterol_mg,filled,,121
+7074,"ปลาไหล, สด",saturatedFat_g,filled,,0.14
+7076,"ปลาอีสร้อย, สด",carbTotal_g,filled,,11.9
+7090,"หอยกะพง, สด",vitaminC_mg,filled,,5
+7091,"หอยขม, สด",potassium_mg,filled,,190
+7094,"หอยแครง, สด",magnesium_mg,filled,,58
+7094,"หอยแครง, สด",sodium_mg,filled,,386
+7094,"หอยแครง, สด",potassium_mg,filled,,175
+7094,"หอยแครง, สด",copper_mg,filled,,0.15
+7094,"หอยแครง, สด",zinc_mg,filled,,2.2
+7095,"หอยจูน, สด",nameEn,filled,,"Hoi joon shellfish, fresh"
+7095,"หอยจูน, สด",vitaminA_RAE_ug,filled,,0
+7098,"หอยแมลงภู่, สด",magnesium_mg,filled,,31
+7098,"หอยแมลงภู่, สด",sodium_mg,filled,,211
+7098,"หอยแมลงภู่, สด",potassium_mg,filled,,72
+7098,"หอยแมลงภู่, สด",copper_mg,filled,,0.17
+7098,"หอยแมลงภู่, สด",zinc_mg,filled,,1
+7098,"หอยแมลงภู่, สด",vitaminC_mg,filled,,11
+5001,"กล้วยไข่, สุก",sugar_g,filled,,21.5
+5004,"กล้วยงาช้าง, สุก",retinol_ug,filled,,0
+5005,"กล้วยตะกุ่ย, สุก",sugar_g,removed,19.08,
+5007,"กล้วยทิพรส, สุก",sugar_g,removed,19.98,
+5008,"กล้วยเทพรส, สุก",sugar_g,removed,25.31,
+5011,"กล้วยนางพญา, สุก",retinol_ug,filled,,0
+5014,"กล้วยน้ำไทย, สุก",carbTotal_g,filled,,36.2
+5014,"กล้วยน้ำไทย, สุก",fiber_g,filled,,7.2
+5014,"กล้วยน้ำไทย, สุก",magnesium_mg,filled,,29
+5014,"กล้วยน้ำไทย, สุก",sodium_mg,filled,,1
+5014,"กล้วยน้ำไทย, สุก",potassium_mg,filled,,318
+5014,"กล้วยน้ำไทย, สุก",zinc_mg,filled,,0.15
+5014,"กล้วยน้ำไทย, สุก",betacarotene_ug,filled,,229
+5014,"กล้วยน้ำไทย, สุก",retinol_ug,filled,,0
+5014,"กล้วยน้ำไทย, สุก",sugar_g,filled,,21
+5015,"กล้วยน้ำว้า, สุก",magnesium_mg,filled,,25
+5015,"กล้วยน้ำว้า, สุก",sodium_mg,filled,,4
+5015,"กล้วยน้ำว้า, สุก",potassium_mg,filled,,241
+5015,"กล้วยน้ำว้า, สุก",copper_mg,filled,,0.08
+5015,"กล้วยน้ำว้า, สุก",zinc_mg,filled,,0.13
+5015,"กล้วยน้ำว้า, สุก",sugar_g,filled,,18.47
+5023,"กล้วยหอมทิพย์, สุก",sugar_g,removed,18.28,
+5024,"กล้วยหอมผลสั้น, สุก",sugar_g,removed,17.3,
+5026,"กล้วยหักมุกนวล, สุก",retinol_ug,filled,,0
+5029,"แก้วมังกร, เนื้อสีขาว",calcium_mg,filled,,3
+5029,"แก้วมังกร, เนื้อสีขาว",magnesium_mg,filled,,23
+5029,"แก้วมังกร, เนื้อสีขาว",sodium_mg,filled,,4
+5029,"แก้วมังกร, เนื้อสีขาว",potassium_mg,filled,,271
+5029,"แก้วมังกร, เนื้อสีขาว",copper_mg,filled,,0.06
+5029,"แก้วมังกร, เนื้อสีขาว",zinc_mg,filled,,0.2
+5031,"ขนุน, จำปา",sugar_g,removed,28.2,
+5032,"ขนุน, หนัง",sugar_g,removed,21.45,
+5033,"แคนตาลูป, เนื้อเขียว",retinol_ug,filled,,0
+5034,"แคนตาลูป, เนื้อเหลือง",sugar_g,removed,9.9,
+5035,เงาะ,carbTotal_g,filled,,17.92
+5035,เงาะ,sodium_mg,filled,,14
+5035,เงาะ,copper_mg,filled,,0.15
+5035,เงาะ,zinc_mg,filled,,0.13
+5036,"เงาะ, โรงเรียน",magnesium_mg,filled,,10
+5036,"เงาะ, โรงเรียน",sodium_mg,filled,,3
+5036,"เงาะ, โรงเรียน",copper_mg,filled,,0.11
+5036,"เงาะ, โรงเรียน",zinc_mg,filled,,0.1
+5036,"เงาะ, โรงเรียน",sugar_g,removed,18,
+5037,"เงาะ, สีชมพู",magnesium_mg,filled,,21
+5037,"เงาะ, สีชมพู",sodium_mg,filled,,5
+5037,"เงาะ, สีชมพู",copper_mg,filled,,0.2
+5037,"เงาะ, สีชมพู",zinc_mg,filled,,0.07
+5037,"เงาะ, สีชมพู",retinol_ug,filled,,0
+5038,"ชมพู่, แก้มแหม่ม",carbTotal_g,filled,,3.8
+5039,"ชมพู่, แขกดำ",carbTotal_g,filled,,5.3
+5040,"ชมพู่, ทับทิมจันทร์",retinol_ug,filled,,0
+5041,"ชมพู่, ทูลเกล้า",carbTotal_g,filled,,8.4
+5042,"ชมพู่, นาค",carbTotal_g,filled,,6.45
+5042,"ชมพู่, นาค",retinol_ug,filled,,0
+5043,ชมพู่ มะเหมี่ยว,retinol_ug,filled,,0
+5044,"ชมพู่,เมืองเพชร",carbTotal_g,filled,,5.6
+5044,"ชมพู่,เมืองเพชร",retinol_ug,filled,,0
+5045,"ชมพู่, สาแหรก",carbTotal_g,filled,,7.8
+5045,"ชมพู่, สาแหรก",retinol_ug,filled,,0
+5046,"ชมพู่, สีชาด",carbTotal_g,filled,,4.8
+5046,"ชมพู่, สีชาด",retinol_ug,filled,,0
+5048,เชอร์รี่นอก,carbTotal_g,filled,,33
+5049,ตะขบ,carbTotal_g,filled,,14.7
+5050,"แตงไทย,สุก",carbTotal_g,filled,,2.3
+5051,"แตงโม, กินรี",carbTotal_g,filled,,7.3
+5051,"แตงโม, กินรี",sugar_g,removed,11.2,
+5052,"แตงโม, ตอปิโด",carbTotal_g,filled,,7.3
+5053,"แตงโม, เหยียบไม่แตก",carbTotal_g,filled,,9
+5054,แตงโมเหลือง,carbTotal_g,filled,,5.9
+5055,"ทุเรียน, กระดุม",carbTotal_g,filled,,20.5
+5056,ทุเรียนกวน,carbTotal_g,filled,,65.5
+5056,ทุเรียนกวน,ash_g,filled,,1.85
+5056,ทุเรียนกวน,sodium_mg,filled,,62
+5056,ทุเรียนกวน,sugar_g,filled,,39.7
+5057,"ทุเรียนกวน, ก้านยาว",carbTotal_g,filled,,67.5
+5057,"ทุเรียนกวน, ก้านยาว",ash_g,filled,,1.85
+5057,"ทุเรียนกวน, ก้านยาว",sodium_mg,filled,,62
+5057,"ทุเรียนกวน, ก้านยาว",sugar_g,filled,,39.7
+5058,"ทุเรียนกวน, ก้านยาว+ชะนี",carbTotal_g,filled,,66.6
+5059,"ทุเรียนกวน, ก้านยาว+หมอนทอง",carbTotal_g,filled,,67.8
+5059,"ทุเรียนกวน, ก้านยาว+หมอนทอง",ash_g,filled,,1.85
+5059,"ทุเรียนกวน, ก้านยาว+หมอนทอง",sodium_mg,filled,,62
+5059,"ทุเรียนกวน, ก้านยาว+หมอนทอง",sugar_g,filled,,39.7
+5060,"ทุเรียน, ก้านยาว",carbTotal_g,filled,,18.1
+5061,"ทุเรียน, ชะนี",carbTotal_g,filled,,17.8
+5062,ทุเรียนเทศ/ทุเรียนน้ำ,carbTotal_g,filled,,2
+5062,ทุเรียนเทศ/ทุเรียนน้ำ,sugar_g,removed,13.38,
+5063,"ทุเรียน, หมอนทอง",carbTotal_g,filled,,31.1
+5063,"ทุเรียน, หมอนทอง",ash_g,filled,,1.05
+5063,"ทุเรียน, หมอนทอง",magnesium_mg,filled,,24
+5063,"ทุเรียน, หมอนทอง",copper_mg,filled,,0.14
+5063,"ทุเรียน, หมอนทอง",zinc_mg,filled,,0.19
+5063,"ทุเรียน, หมอนทอง",retinol_ug,filled,,0
+5063,"ทุเรียน, หมอนทอง",cholesterol_mg,filled,,0
+5063,"ทุเรียน, หมอนทอง",saturatedFat_g,filled,,1.02
+5064,"ทุเรียน, อีลวง",carbTotal_g,filled,,27.5
+5065,น้อยหน่า,carbTotal_g,filled,,20.5
+5065,น้อยหน่า,magnesium_mg,filled,,21
+5065,น้อยหน่า,sodium_mg,filled,,4
+5065,น้อยหน่า,copper_mg,filled,,0.11
+5065,น้อยหน่า,zinc_mg,filled,,0.16
+5065,น้อยหน่า,retinol_ug,filled,,0
+5065,น้อยหน่า,sugar_g,filled,,17.23
+5066,"ฝรั่ง, กลมสาลี่",carbTotal_g,filled,,7.4
+5067,"ฝรั่ง, กิมจู",carbTotal_g,filled,,6.4
+5068,ฝรั่ง. ซันจู,carbTotal_g,filled,,7.4
+5069,"ฝรั่ง, แป้นสีทอง",carbTotal_g,filled,,7
+5070,"ฝรั่ง, ไร้เมล็ด",carbTotal_g,filled,,8.2
+5071,พลับ,carbTotal_g,filled,,13.4
+5072,"พุทรา, ลูกยาว",carbTotal_g,filled,,25.5
+5072,"พุทรา, ลูกยาว",ash_g,filled,,0.5
+5072,"พุทรา, ลูกยาว",retinol_ug,filled,,0
+5073,พุทราไทย,carbTotal_g,filled,,18.71
+5073,พุทราไทย,copper_mg,filled,,0.13
+5073,พุทราไทย,zinc_mg,filled,,0.17
+5073,พุทราไทย,retinol_ug,filled,,0
+5074,"พุทรา, แอปเปิ้ล",carbTotal_g,filled,,9.2
+5075,"แพชชั่นฟรุท, กวน",carbTotal_g,filled,,72.7
+5075,"แพชชั่นฟรุท, กวน",ash_g,filled,,0.9
+5075,"แพชชั่นฟรุท, กวน",retinol_ug,filled,,0
+5076,"แพชชั่นฟรุท, น้ำคั้น",carbTotal_g,filled,,13
+5077,"แพชชั่นฟรุท, เนื้อภายนอก",carbTotal_g,filled,,8.3
+5077,"แพชชั่นฟรุท, เนื้อภายนอก",ash_g,filled,,1.7
+5077,"แพชชั่นฟรุท, เนื้อภายนอก",retinol_ug,filled,,0
+5078,"แพชชั่นฟรุท, เมล็ด",retinol_ug,filled,,0
+5079,มะกอกฝรั่ง,carbTotal_g,filled,,12.3
+5079,มะกอกฝรั่ง,ash_g,filled,,0.6
+5079,มะกอกฝรั่ง,retinol_ug,filled,,0
+5080,มะขามเทศ,carbTotal_g,filled,,13.2
+5080,มะขามเทศ,ash_g,filled,,0.6
+5081,มะขามป้อม,carbTotal_g,filled,,13.8
+5081,มะขามป้อม,ash_g,filled,,0.4
+5081,มะขามป้อม,retinol_ug,filled,,0
+5082,มะขามหวาน,carbTotal_g,filled,,83.7
+5082,มะขามหวาน,ash_g,filled,,4.3
+5082,มะขามหวาน,sodium_mg,filled,,8
+5082,มะขามหวาน,retinol_ug,filled,,0
+5082,มะขามหวาน,sugar_g,filled,,50.9
+5083,"มะปราง, สุก",carbTotal_g,filled,,11.5
+5083,"มะปราง, สุก",ash_g,filled,,0.2
+5083,"มะปราง, สุก",retinol_ug,filled,,0
+5084,มะเฟือง,carbTotal_g,filled,,7.2
+5084,มะเฟือง,sugar_g,removed,9.66,
+5085,มะไฟ,carbTotal_g,filled,,10.5
+5085,มะไฟ,iron_mg,filled,,3.3
+5085,มะไฟ,retinol_ug,filled,,0
+5086,"มะม่วง, แก้ว, ดิบ",carbTotal_g,filled,,15.9
+5086,"มะม่วง, แก้ว, ดิบ",ash_g,filled,,0.43
+5086,"มะม่วง, แก้ว, ดิบ",magnesium_mg,filled,,14
+5086,"มะม่วง, แก้ว, ดิบ",copper_mg,filled,,0.06
+5086,"มะม่วง, แก้ว, ดิบ",zinc_mg,filled,,0.04
+5086,"มะม่วง, แก้ว, ดิบ",retinol_ug,filled,,0
+5087,"มะม่วง, แก้ว, สุก",carbTotal_g,filled,,21
+5087,"มะม่วง, แก้ว, สุก",ash_g,filled,,0.2
+5087,"มะม่วง, แก้ว, สุก",retinol_ug,filled,,0
+5087,"มะม่วง, แก้ว, สุก",cholesterol_mg,filled,,0
+5087,"มะม่วง, แก้ว, สุก",saturatedFat_g,filled,,0.02
+5088,"มะม่วง, เขียวสะอาด, ดิบ",carbTotal_g,filled,,10.9
+5089,"มะม่วง, เขียวเสวย, ดิบ",carbTotal_g,filled,,18.4
+5089,"มะม่วง, เขียวเสวย, ดิบ",cholesterol_mg,filled,,0
+5089,"มะม่วง, เขียวเสวย, ดิบ",saturatedFat_g,filled,,0.05
+5090,"มะม่วง, เขียวเสวย, สุก",carbTotal_g,filled,,18.2
+5090,"มะม่วง, เขียวเสวย, สุก",retinol_ug,filled,,0
+5091,"มะม่วง, คาราบาว, สุก",carbTotal_g,filled,,13.3
+5092,"มะม่วง, ทองดำ, ดิบ",carbTotal_g,filled,,19.91
+5092,"มะม่วง, ทองดำ, ดิบ",ash_g,filled,,0.3
+5092,"มะม่วง, ทองดำ, ดิบ",retinol_ug,filled,,0
+5093,"มะม่วง, น้ำดอกไม้, สุก",carbTotal_g,filled,,18.1
+5094,"มะม่วง, พราหมณ์, สุก",carbTotal_g,filled,,10.8
+5095,"มะม่วง, พิมเสน, สุก",carbTotal_g,filled,,13.9
+5096,"มะม่วง, พิมเสนมัน, ดิบ",carbTotal_g,filled,,19.2
+5096,"มะม่วง, พิมเสนมัน, ดิบ",ash_g,filled,,0.3
+5096,"มะม่วง, พิมเสนมัน, ดิบ",retinol_ug,filled,,0
+5097,"มะม่วง, ยายกล่ำ, สุก",carbTotal_g,filled,,12.1
+5097,"มะม่วง, ยายกล่ำ, สุก",sugar_g,removed,13.94,
+5098,"มะม่วง, แรด, ดิบ",carbTotal_g,filled,,10.6
+5099,"มะม่วงลิ้นงูเห่า/มันขุนศรีบ้านแพ้ว, สุก",carbTotal_g,filled,,17.3
+5100,"มะม่วง, หนังกลางวัน, สุก",carbTotal_g,filled,,20.3
+5100,"มะม่วง, หนังกลางวัน, สุก",ash_g,filled,,0.35
+5100,"มะม่วง, หนังกลางวัน, สุก",iron_mg,filled,,0.31
+5100,"มะม่วง, หนังกลางวัน, สุก",retinol_ug,filled,,0
+5101,"มะม่วง, แห้วมัน, ดิบ",carbTotal_g,filled,,14.5
+5102,"มะม่วง, อกร่อง, สุก",carbTotal_g,filled,,17.7
+5102,"มะม่วง, อกร่อง, สุก",ash_g,filled,,0.43
+5102,"มะม่วง, อกร่อง, สุก",magnesium_mg,filled,,8
+5102,"มะม่วง, อกร่อง, สุก",sodium_mg,filled,,44
+5102,"มะม่วง, อกร่อง, สุก",copper_mg,filled,,0.06
+5102,"มะม่วง, อกร่อง, สุก",zinc_mg,filled,,0.07
+5102,"มะม่วง, อกร่อง, สุก",retinol_ug,filled,,0
+5102,"มะม่วง, อกร่อง, สุก",sugar_g,filled,,12.86
+5102,"มะม่วง, อกร่อง, สุก",cholesterol_mg,filled,,0
+5102,"มะม่วง, อกร่อง, สุก",saturatedFat_g,filled,,0.05
+5103,มะม่วงหาวมะนาวโห่,carbTotal_g,filled,,7.7
+5104,"มะม่วงหิมพานต์, ผล, สุก",carbTotal_g,filled,,9.2
+5104,"มะม่วงหิมพานต์, ผล, สุก",ash_g,filled,,0.3
+5104,"มะม่วงหิมพานต์, ผล, สุก",retinol_ug,filled,,0
+5105,มะยงชิด,carbTotal_g,filled,,12.8
+5105,มะยงชิด,sugar_g,removed,13.05,
+5106,"มะละกอ, ค่อนข้างสุก",carbTotal_g,filled,,3
+5106,"มะละกอ, ค่อนข้างสุก",ash_g,filled,,0.2
+5106,"มะละกอ, ค่อนข้างสุก",retinol_ug,filled,,0
+5107,"มะละกอ, แขกดำ, สุก",carbTotal_g,filled,,8.6
+5108,"มะละกอ, ฮอลแลนด์, สุก",carbTotal_g,filled,,8.5
+5108,"มะละกอ, ฮอลแลนด์, สุก",sugar_g,removed,9,
+5109,"มะละกอ, ฮาวาย, สุก",carbTotal_g,filled,,11.2
+5110,มังคุด,carbTotal_g,filled,,18.6
+5110,มังคุด,ash_g,filled,,0.22
+5110,มังคุด,magnesium_mg,filled,,12
+5110,มังคุด,sodium_mg,filled,,2
+5110,มังคุด,copper_mg,filled,,0.11
+5110,มังคุด,zinc_mg,filled,,0.1
+5110,มังคุด,retinol_ug,filled,,0
+5110,มังคุด,sugar_g,filled,,17.34
+5111,ระกำ,carbTotal_g,filled,,14.3
+5111,ระกำ,calcium_mg,filled,,8
+5111,ระกำ,phosphorus_mg,filled,,18
+5111,ระกำ,iron_mg,filled,,0.4
+5111,ระกำ,retinol_ug,filled,,0
+5112,ราสเบอรี่,carbTotal_g,filled,,6
+5113,ลองกอง,carbTotal_g,filled,,13.8
+5113,ลองกอง,sugar_g,removed,16.02,
+5114,ละมุดไทย/ละมุดสีดา,carbTotal_g,filled,,16
+5114,ละมุดไทย/ละมุดสีดา,sugar_g,removed,17,
+5115,"ละมุดฝรั่ง, พันธุ์มะกอก",carbTotal_g,filled,,7.2
+5116,ลางสาด,carbTotal_g,filled,,15.6
+5116,ลางสาด,copper_mg,filled,,0.09
+5116,ลางสาด,zinc_mg,filled,,0.22
+5116,ลางสาด,retinol_ug,filled,,0
+5117,ลำใย,carbTotal_g,filled,,24.1
+5118,"ลำใย, กะโหลก",carbTotal_g,filled,,14.8
+5118,"ลำใย, กะโหลก",retinol_ug,filled,,0
+5118,"ลำใย, กะโหลก",vitaminC_mg,filled,,86
+5119,"ลำใย, เบี้ยวเขียว",carbTotal_g,filled,,14.3
+5119,"ลำใย, เบี้ยวเขียว",sodium_mg,filled,,9
+5119,"ลำใย, เบี้ยวเขียว",copper_mg,filled,,0.07
+5119,"ลำใย, เบี้ยวเขียว",zinc_mg,filled,,0.12
+5119,"ลำใย, เบี้ยวเขียว",retinol_ug,filled,,0
+5120,ลิ้นจี่,carbTotal_g,filled,,6.8
+5121,"ลิ้นจี่, กะโหลกใบอ้อ",carbTotal_g,filled,,15.4
+5121,"ลิ้นจี่, กะโหลกใบอ้อ",sugar_g,removed,90,
+5122,"ลิ้นจี่, ค่อม",carbTotal_g,filled,,15.9
+5122,"ลิ้นจี่, ค่อม",sugar_g,removed,18,
+5123,"ลิ้นจี่, จักรพรรดิ์",carbTotal_g,filled,,16.8
+5124,"ลิ้นจี่, สำเภาแก้ว",carbTotal_g,filled,,17.5
+5125,"ลิ้นจี่, ฮงฮวย",carbTotal_g,filled,,16.4
+5126,ลูกจันทน์/จันทน์เทศ,carbTotal_g,filled,,66.3
+5127,ลูกตาล,carbTotal_g,filled,,8.2
+5128,ลูกท้อ,carbTotal_g,filled,,8.6
+5129,ลูกหว้า,carbTotal_g,filled,,11
+5130,ลูกไหน/ลูกพลัม,carbTotal_g,filled,,10.7
+5131,สตรอว์เบอร์รี่,carbTotal_g,filled,,5.7
+5132,"ส้ม, เกลี้ยง",carbTotal_g,filled,,12.6
+5132,"ส้ม, เกลี้ยง",ash_g,filled,,0.1
+5132,"ส้ม, เกลี้ยง",retinol_ug,filled,,0
+5133,"ส้ม, เขียวหวาน",carbTotal_g,filled,,9.6
+5133,"ส้ม, เขียวหวาน",ash_g,filled,,0.57
+5133,"ส้ม, เขียวหวาน",sugar_g,removed,11.34,
+5134,"ส้ม, โชกุน",carbTotal_g,filled,,9.6
+5134,"ส้ม, โชกุน",ash_g,filled,,0.4
+5134,"ส้ม, โชกุน",iron_mg,filled,,0
+5135,ส้มแก้ว,carbTotal_g,filled,,11.4
+5136,ส้มจีนไร้เมล็ด,carbTotal_g,filled,,10
+5137,ส้มเช้ง,kcal,filled,,46
+5137,ส้มเช้ง,water_g,filled,,87.2
+5137,ส้มเช้ง,protein_g,filled,,0.94
+5137,ส้มเช้ง,fat_g,filled,,0.08
+5137,ส้มเช้ง,carbAvailable_g,filled,,9.34
+5137,ส้มเช้ง,carbTotal_g,filled,,11.3
+5137,ส้มเช้ง,fiber_g,changed,0.43,2
+5137,ส้มเช้ง,ash_g,changed,0.43,0.47
+5137,ส้มเช้ง,calcium_mg,filled,,17
+5137,ส้มเช้ง,phosphorus_mg,filled,,19
+5137,ส้มเช้ง,magnesium_mg,filled,,11
+5137,ส้มเช้ง,sodium_mg,filled,,4
+5137,ส้มเช้ง,potassium_mg,filled,,124
+5137,ส้มเช้ง,iron_mg,filled,,0.2
+5137,ส้มเช้ง,copper_mg,filled,,0.05
+5137,ส้มเช้ง,zinc_mg,changed,1,0.04
+5137,ส้มเช้ง,thiamin_mg,changed,0,0.07
+5137,ส้มเช้ง,riboflavin_mg,filled,,0.03
+5137,ส้มเช้ง,niacin_mg,changed,46,0.49
+5137,ส้มเช้ง,vitaminC_mg,changed,0.06,30
+5137,ส้มเช้ง,sugar_g,changed,0.06,9.43
+5138,ส้มสายน้ำผึ้ง,carbTotal_g,filled,,10.6
+5138,ส้มสายน้ำผึ้ง,ash_g,filled,,0.48
+5138,ส้มสายน้ำผึ้ง,sugar_g,removed,10.71,
+5139,"ส้มโอ, ทองดี",carbTotal_g,filled,,9.2
+5140,"ส้มโอ, บางขุนนนท์",carbTotal_g,filled,,11.8
+5141,"ส้มโอ, ขาวแตงกวา",carbTotal_g,filled,,8.1
+5142,"ส้มโอ, ขาวน้ำผึ้ง",carbTotal_g,filled,,8.3
+5143,"ส้มโอ, ขาวใหญ่",carbTotal_g,filled,,10.7
+5144,สละ,carbTotal_g,filled,,15.7
+5144,สละ,sodium_mg,filled,,6
+5144,สละ,copper_mg,filled,,0.07
+5144,สละ,zinc_mg,filled,,0.15
+5144,สละ,retinol_ug,filled,,0
+5145,"สับปะรด, นางแล",carbTotal_g,filled,,13.1
+5145,"สับปะรด, นางแล",sugar_g,removed,13.5,
+5146,"สับปะรด, ภูแล",carbTotal_g,filled,,13.9
+5147,"สัปปะรด, ภูเก็ต",carbTotal_g,filled,,15.3
+5148,"สัปปะรด, ศรีราชา",sugar_g,removed,12.6,
+5153,องุ่นเขียว,sugar_g,removed,13,
+5154,องุ่นดำ,sugar_g,removed,12,
+5155,"องุ่นแดง, ลูกใหญ่",sugar_g,removed,9.2,
+5158,"แอปเปิ้ลแดง, ฟูจิ",sugar_g,removed,9,
+4001,"กระเจี๊ยบเปรี้ยว, ใบ",betacarotene_ug,filled,,797
+4001,"กระเจี๊ยบเปรี้ยว, ใบ",vitaminA_RAE_ug,filled,,66
+4017,"กะหล่ำ, ดอก",carbTotal_g,filled,,4.1
+4017,"กะหล่ำ, ดอก",fiber_g,filled,,2
+4017,"กะหล่ำ, ดอก",magnesium_mg,filled,,13
+4017,"กะหล่ำ, ดอก",sodium_mg,filled,,45
+4017,"กะหล่ำ, ดอก",copper_mg,filled,,0.04
+4017,"กะหล่ำ, ดอก",zinc_mg,filled,,0.3
+4022,"กุยช่าย, ดอก",sodium_mg,filled,,11
+4022,"กุยช่าย, ดอก",potassium_mg,filled,,229
+4022,"กุยช่าย, ดอก",iron_mg,filled,,1.23
+4022,"กุยช่าย, ดอก",copper_mg,filled,,0.1
+4023,"ขจร, ดอก",carbTotal_g,filled,,12.1
+4025,ขมิ้นมะม่วง (ขมิ้นขาว),nameTh,changed,ขมิ้นขาว,ขมิ้นมะม่วง (ขมิ้นขาว)
+4030,"ขิง, แก่",carbTotal_g,filled,,5.93
+4030,"ขิง, แก่",sodium_mg,filled,,19
+4030,"ขิง, แก่",copper_mg,filled,,0.03
+4030,"ขิง, แก่",zinc_mg,filled,,0.14
+4031,"ขิง, อ่อน",retinol_ug,filled,,0
+4034,คื่นช่าย,magnesium_mg,filled,,45
+4034,คื่นช่าย,sodium_mg,filled,,125
+4034,คื่นช่าย,potassium_mg,filled,,352
+4034,คื่นช่าย,iron_mg,filled,,2.73
+4034,คื่นช่าย,copper_mg,filled,,0.06
+4034,คื่นช่าย,zinc_mg,filled,,0.49
+4036,"แค, ดอก",sodium_mg,filled,,42
+4036,"แค, ดอก",copper_mg,filled,,0.02
+4036,"แค, ดอก",zinc_mg,filled,,0.2
+4041,จากง,nameEn,filled,,Cha kong (local leafy vegetable)
+4045,จุมปา/กุมปลา,nameEn,filled,,Jum pa / kum pla (local vegetable)
+4052,"ต้นหอม, ดอก",potassium_mg,filled,,156
+4055,"ตะลิงปลิง, ผล",carbTotal_g,filled,,2.5
+4056,"ตั้งโอ๋, ใบ",retinol_ug,filled,,0
+4061,แตงกวา,magnesium_mg,filled,,18
+4061,แตงกวา,sodium_mg,filled,,8
+4061,แตงกวา,copper_mg,filled,,0.05
+4061,แตงกวา,zinc_mg,filled,,0.15
+4063,แตงไทยอ่อน,carbTotal_g,filled,,2.7
+4064,แตงโมอ่อน,carbTotal_g,filled,,2.4
+4069,ถั่วปี,carbTotal_g,filled,,7.1
+4069,ถั่วปี,phosphorus_mg,filled,,3
+4070,ถั่วฝักยาว,iron_mg,filled,,0.75
+4070,ถั่วฝักยาว,copper_mg,filled,,0.17
+4070,ถั่วฝักยาว,zinc_mg,filled,,0.44
+4076,"ทองหลาง, ใบ",carbTotal_g,filled,,9.33
+4085,บวบเหลี่ยม,carbTotal_g,filled,,4.5
+4085,บวบเหลี่ยม,fiber_g,filled,,1.2
+4085,บวบเหลี่ยม,magnesium_mg,filled,,11
+4085,บวบเหลี่ยม,sodium_mg,filled,,4
+4085,บวบเหลี่ยม,copper_mg,filled,,0.06
+4085,บวบเหลี่ยม,zinc_mg,filled,,0.15
+4085,บวบเหลี่ยม,cholesterol_mg,filled,,0
+4085,บวบเหลี่ยม,saturatedFat_g,filled,,0.02
+4086,บอนส้ม,nameEn,filled,,"Bon som (sour taro), stalk"
+4087,"บัวบก, ใบ",sodium_mg,filled,,83
+4087,"บัวบก, ใบ",copper_mg,filled,,0.09
+4087,"บัวบก, ใบ",zinc_mg,filled,,0.6
+4087,"บัวบก, ใบ",sugar_g,filled,,0.23
+4088,"บุกเกียง, ยอดอ่อน",carbTotal_g,filled,,4.7
+4095,ปวยเล้ง,carbTotal_g,filled,,4
+4095,ปวยเล้ง,fiber_g,filled,,2.4
+4095,ปวยเล้ง,sodium_mg,filled,,114
+4095,ปวยเล้ง,potassium_mg,filled,,344
+4095,ปวยเล้ง,copper_mg,filled,,0.09
+4095,ปวยเล้ง,zinc_mg,filled,,0.85
+4099,ผักกาดขาว,carbTotal_g,filled,,3.2
+4099,ผักกาดขาว,fiber_g,filled,,2.1
+4099,ผักกาดขาว,magnesium_mg,filled,,9
+4099,ผักกาดขาว,sodium_mg,filled,,29
+4099,ผักกาดขาว,potassium_mg,filled,,219
+4099,ผักกาดขาว,copper_mg,filled,,0.05
+4099,ผักกาดขาว,zinc_mg,filled,,0.17
+4100,ผักกาดเขียว,carbTotal_g,filled,,3.01
+4119,ผักบ่อ,nameEn,filled,,Phak bo (local vegetable)
+4120,ผักบุ้งจีน,cholesterol_mg,filled,,0
+4120,ผักบุ้งจีน,saturatedFat_g,filled,,0.04
+4121,"ผักบุ้งไทย, ต้นขาว",cholesterol_mg,filled,,0
+4121,"ผักบุ้งไทย, ต้นขาว",saturatedFat_g,filled,,0.09
+4122,"ผักบุ้งไทย, ต้นแดง",copper_mg,filled,,0.04
+4122,"ผักบุ้งไทย, ต้นแดง",cholesterol_mg,filled,,0
+4122,"ผักบุ้งไทย, ต้นแดง",saturatedFat_g,filled,,0.05
+4130,"ผักเสี้ยว (ชงโค), ยอด",carbTotal_g,filled,,7
+4133,"ผักหวาน, บ้าน",sodium_mg,filled,,8
+4133,"ผักหวาน, บ้าน",potassium_mg,filled,,166
+4133,"ผักหวาน, บ้าน",copper_mg,filled,,0.2
+4133,"ผักหวาน, บ้าน",zinc_mg,filled,,0.44
+4133,"ผักหวาน, บ้าน",retinol_ug,filled,,0
+4133,"ผักหวาน, บ้าน",cholesterol_mg,filled,,0
+4133,"ผักหวาน, บ้าน",saturatedFat_g,filled,,0.25
+4146,พริกหยวก,zinc_mg,filled,,0.2
+4152,"ฟักข้าว, ยอด",carbTotal_g,filled,,4.1
+4153,ฟักเขียว,carbTotal_g,filled,,4.6
+4153,ฟักเขียว,fiber_g,filled,,1.7
+4153,ฟักเขียว,magnesium_mg,filled,,9
+4153,ฟักเขียว,sodium_mg,filled,,7
+4153,ฟักเขียว,potassium_mg,filled,,133
+4153,ฟักเขียว,copper_mg,filled,,0.02
+4153,ฟักเขียว,zinc_mg,filled,,0.1
+4161,"มะกอกป่า, ยอดอ่อน",cholesterol_mg,filled,,0
+4161,"มะกอกป่า, ยอดอ่อน",saturatedFat_g,filled,,0.31
+4163,"มะขาม, ใบอ่อน",carbTotal_g,filled,,10.4
+4163,"มะขาม, ใบอ่อน",retinol_ug,filled,,0
+4169,"มะเขือไข่เต่า, สีเขียว",magnesium_mg,filled,,14
+4176,มะเขือยาว,magnesium_mg,filled,,14
+4177,"มะเขือยาว, สีม่วง",iron_mg,filled,,0.25
+4181,"มะเดื่อ, ผลอ่อน",ash_g,filled,,1
+4187,"มะรุม, ฝัก",kcal,changed,11,35
+4187,"มะรุม, ฝัก",retinol_ug,filled,,0
+4187,"มะรุม, ฝัก",sugar_g,filled,,1.47
+4190,มะแว้ง,carbTotal_g,filled,,15
+4190,มะแว้ง,retinol_ug,filled,,0
+4207,"ส้มเกรียบ, ใบและยอดอ่อน",nameEn,filled,,"Som kriap, leaves and young shoots"
+4214,สันตะวาใบพาย,carbTotal_g,filled,,1.8
+4216,"สำประศรี, ต้นอ่อน",nameEn,filled,,"Sam pra si, young shoots"
+4218,"โสน, ดอก",sugar_g,filled,,0.31
+4225,"หน่อไม้หวาน, หน่อเล็ก",carbTotal_g,filled,,1.8
+4225,"หน่อไม้หวาน, หน่อเล็ก",vitaminC_mg,filled,,15
+4226,"หน่อไม้หวาน, หน่อใหญ่",carbTotal_g,filled,,1.8
+4231,หมากหมก/ผักหวานใบแหลม,nameEn,filled,,Pak-mak-mok
+4231,หมากหมก/ผักหวานใบแหลม,betacarotene_ug,filled,,4384
+4232,"หยวกกล้วย, อ่อน",carbTotal_g,filled,,2.6
+4233,"หยวกกล้วยน้ำว้า, อ่อน",carbTotal_g,filled,,2.6
+4234,หอมหัวใหญ่,magnesium_mg,filled,,8
+4234,หอมหัวใหญ่,sodium_mg,filled,,4
+4234,หอมหัวใหญ่,potassium_mg,filled,,74
+4234,หอมหัวใหญ่,iron_mg,filled,,0.22
+4234,หอมหัวใหญ่,copper_mg,filled,,0.04
+4234,หอมหัวใหญ่,zinc_mg,filled,,0.19
+4238,เห็ดซาง,carbTotal_g,filled,,46.4
+4239,เห็ดตับเต่า,carbTotal_g,filled,,4.9
+4239,เห็ดตับเต่า,sodium_mg,filled,,4
+4239,เห็ดตับเต่า,potassium_mg,filled,,399
+4239,เห็ดตับเต่า,iron_mg,filled,,19.9
+4239,เห็ดตับเต่า,copper_mg,filled,,1.03
+4239,เห็ดตับเต่า,zinc_mg,filled,,0.2
+4239,เห็ดตับเต่า,retinol_ug,filled,,0
+4242,เห็ดนางรม,carbTotal_g,filled,,6.35
+4242,เห็ดนางรม,magnesium_mg,filled,,13
+4242,เห็ดนางรม,sodium_mg,filled,,38
+4242,เห็ดนางรม,potassium_mg,filled,,233
+4242,เห็ดนางรม,copper_mg,filled,,0.06
+4242,เห็ดนางรม,zinc_mg,filled,,0.16
+4246,เห็ดลม/เห็ดกระด้าง,carbTotal_g,filled,,29.96
+4246,เห็ดลม/เห็ดกระด้าง,sodium_mg,filled,,9
+4246,เห็ดลม/เห็ดกระด้าง,potassium_mg,filled,,67
+4246,เห็ดลม/เห็ดกระด้าง,copper_mg,filled,,0.29
+4246,เห็ดลม/เห็ดกระด้าง,zinc_mg,filled,,0.14
+4252,เอื้องน้ำ,betacarotene_ug,filled,,581
+13001,"จิ้งโกร่ง, ดิบ",phosphorus_mg,filled,,143
+13002,"จิ้งหรีด, ดิบ",carbTotal_g,filled,,4.4
+13002,"จิ้งหรีด, ดิบ",fiber_g,filled,,3.5
+13002,"จิ้งหรีด, ดิบ",calcium_mg,filled,,76
+13002,"จิ้งหรีด, ดิบ",phosphorus_mg,filled,,185
+13002,"จิ้งหรีด, ดิบ",sodium_mg,filled,,87
+13002,"จิ้งหรีด, ดิบ",potassium_mg,filled,,306
+13002,"จิ้งหรีด, ดิบ",iron_mg,filled,,9.5
+13002,"จิ้งหรีด, ดิบ",cholesterol_mg,filled,,195
+13002,"จิ้งหรีด, ดิบ",saturatedFat_g,filled,,2
+13004,"ต่อ, ตัวแก่, ดิบ",carbTotal_g,filled,,2.8
+13004,"ต่อ, ตัวแก่, ดิบ",saturatedFat_g,filled,,1.53
+13005,"ต่อ, ตัวอ่อน, ดิบ",carbTotal_g,filled,,4.7
+13005,"ต่อ, ตัวอ่อน, ดิบ",saturatedFat_g,filled,,2.99
+13011,"แมงป่อง, ดิบ",carbTotal_g,filled,,2.8
+13011,"แมงป่อง, ดิบ",fiber_g,filled,,0
+13011,"แมงป่อง, ดิบ",calcium_mg,filled,,51
+13011,"แมงป่อง, ดิบ",phosphorus_mg,filled,,167
+13011,"แมงป่อง, ดิบ",sodium_mg,filled,,157
+13011,"แมงป่อง, ดิบ",potassium_mg,filled,,184
+13011,"แมงป่อง, ดิบ",iron_mg,filled,,11.9
+13011,"แมงป่อง, ดิบ",cholesterol_mg,filled,,97
+13011,"แมงป่อง, ดิบ",saturatedFat_g,filled,,0.6
+13013,"หนอนไม้ไผ่, ดิบ",carbTotal_g,filled,,2.5
+13013,"หนอนไม้ไผ่, ดิบ",calcium_mg,filled,,35
+13013,"หนอนไม้ไผ่, ดิบ",phosphorus_mg,filled,,128
+13013,"หนอนไม้ไผ่, ดิบ",sodium_mg,filled,,12
+13013,"หนอนไม้ไผ่, ดิบ",potassium_mg,filled,,115
+13013,"หนอนไม้ไผ่, ดิบ",iron_mg,filled,,1.48
+13013,"หนอนไม้ไผ่, ดิบ",cholesterol_mg,filled,,34
+13013,"หนอนไม้ไผ่, ดิบ",saturatedFat_g,filled,,9.51
+2001,"กลอย, ดิบ",carbTotal_g,filled,,33.1
+2001,"กลอย, ดิบ",ash_g,filled,,1.2
+2001,"กลอย, ดิบ",iron_mg,filled,,1.8
+2001,"กลอย, ดิบ",niacin_mg,filled,,0.2
+2001,"กลอย, ดิบ",vitaminC_mg,filled,,1
+2001,"กลอย, ดิบ",sugar_g,filled,,0.71
+2002,"แก่นตะวัน, ดิบ",carbTotal_g,filled,,17.4
+2003,"ผักกาดแดง/ผักกาดฝรั่ง, ดิบ",carbTotal_g,filled,,8.9
+2004,"เผือก, ดิบ",carbTotal_g,filled,,24.8
+2005,"มันแกว, ดิบ",carbTotal_g,filled,,7.1
+2005,"มันแกว, ดิบ",ash_g,filled,,0.4
+2005,"มันแกว, ดิบ",zinc_mg,filled,,0.22
+2005,"มันแกว, ดิบ",sugar_g,filled,,4.79
+2006,"มันขี้หนู, หัวเล็ก, ดิบ",carbTotal_g,filled,,18.3
+2007,"มันขี้หนู, หัวใหญ่, ดิบ",carbTotal_g,filled,,18
+2008,"มันตีนแรด, ดิบ",carbTotal_g,filled,,13
+2009,"มันเทศ/มันต่อเผือก, ดิบ",carbTotal_g,filled,,29.6
+2010,"มันเทศ, เนื้อสีส้ม, ดิบ",carbTotal_g,filled,,15.6
+2011,"มันเทศ, เนื้อสีม่วงแดง, ดิบ",carbTotal_g,filled,,17.6
+2011,"มันเทศ, เนื้อสีม่วงแดง, ดิบ",ash_g,filled,,1
+2012,"มันเทศ, เนื้อสีเหลือง, ดิบ",carbTotal_g,filled,,21.6
+2013,"มันฝรั่ง, ดิบ",carbTotal_g,filled,,14.6
+2013,"มันฝรั่ง, ดิบ",ash_g,filled,,0.7
+2013,"มันฝรั่ง, ดิบ",iron_mg,filled,,1.7
+2015,"มันสำปะหลัง, ดิบ",retinol_ug,filled,,1
+2023,"หัวผักกาดแห้ง, หวาน",carbTotal_g,filled,,31.1
+11029,"ก๋วยเตี๋ยวเส้นใหญ่, ราดหน้า, กุ้ง",sodium_mg,filled,,202
+11042,ข้าวขาหมู,sodium_mg,filled,,324
+11042,ข้าวขาหมู,potassium_mg,filled,,52
+11087,ข้าวหมูแดง,sodium_mg,filled,,284
+11094,หมี่กรอบ,riboflavin_mg,filled,,1
+11124,"ปลาแมกเคอเรล, ในซอสมะเขือเทศ",scientificName,filled,,Scomberomorus niphonius
+11124,"ปลาแมกเคอเรล, ในซอสมะเขือเทศ",fiber_g,filled,,2.5
+11124,"ปลาแมกเคอเรล, ในซอสมะเขือเทศ",calcium_mg,filled,,162
+11124,"ปลาแมกเคอเรล, ในซอสมะเขือเทศ",sodium_mg,filled,,405
+11124,"ปลาแมกเคอเรล, ในซอสมะเขือเทศ",iron_mg,filled,,1.2
+11124,"ปลาแมกเคอเรล, ในซอสมะเขือเทศ",thiamin_mg,filled,,0.29
+11124,"ปลาแมกเคอเรล, ในซอสมะเขือเทศ",riboflavin_mg,filled,,0.07
+11124,"ปลาแมกเคอเรล, ในซอสมะเขือเทศ",sugar_g,filled,,1
+11136,แกงบอน,carbTotal_g,filled,,7.5
+11136,แกงบอน,vitaminC_mg,filled,,2
+11138,แกงหมูชะมวง,vitaminC_mg,filled,,3
+11139,"แกงหอยขม, ภาคกลาง",nameTh,changed,แกงหอยขม,"แกงหอยขม, ภาคกลาง"
+11139,"แกงหอยขม, ภาคกลาง",vitaminC_mg,filled,,3
+11146,ซุปหน่อไม้,carbTotal_g,filled,,4.3
+11153,แกงไตปลา,vitaminC_mg,filled,,0
+11163,ขนมจีนน้ำละซอ,nameEn,filled,,Rice noodles with nam la so sauce
+11166,ข้าวยำปักษ์ใต้,carbTotal_g,filled,,27.1
+11166,ข้าวยำปักษ์ใต้,fiber_g,filled,,1.1
+11166,ข้าวยำปักษ์ใต้,calcium_mg,filled,,69
+11166,ข้าวยำปักษ์ใต้,phosphorus_mg,filled,,63
+11166,ข้าวยำปักษ์ใต้,sodium_mg,filled,,474
+11166,ข้าวยำปักษ์ใต้,iron_mg,filled,,1.3
+11177,"เส้นหมี่, ผัดซีอิ้ว",carbTotal_g,filled,,33.9
+11178,แกงขนุนอ่อน,carbTotal_g,filled,,3.4
+11182,"ข้าวซอย, ไก่",vitaminC_mg,filled,,0
+11187,ก้อยอีสาน,carbTotal_g,filled,,7.4
+11191,"แกงหอยขม, ภาคอีสาน",nameTh,changed,แกงหอยขม,"แกงหอยขม, ภาคอีสาน"
+11191,"แกงหอยขม, ภาคอีสาน",carbTotal_g,filled,,5.1
+11192,"แกงอ่อม, เนื้อ",carbTotal_g,filled,,2.1
+11192,"แกงอ่อม, เนื้อ",calcium_mg,filled,,45
+11192,"แกงอ่อม, เนื้อ",phosphorus_mg,filled,,40
+11192,"แกงอ่อม, เนื้อ",iron_mg,filled,,1.5
+11193,"แกงอ่อม, ปลา",carbTotal_g,filled,,0
+11194,ขนมจีนน้ำนัวปลาร้า,nameEn,filled,,Rice noodles with fermented fish (pla ra) sauce
+11202,"ลาบเลือด, อีสาน",carbTotal_g,filled,,6.4
+11204,"ส้มตำ, อีสาน",carbTotal_g,filled,,4.5
+11205,"ไส้กรอก, อีสาน",carbTotal_g,filled,,13.5
+11209,"เกี้ยนทอด, อาหารเจ",carbTotal_g,filled,,31.1
+11210,"แกงส้มผักรวม, อาหารเจ",carbTotal_g,filled,,6.3
+11216,"ทอดมันถั่วเขียว, อาหารเจ",carbTotal_g,filled,,33.6
+11222,"ผัดวุ้นเส้น (ผัดโต๊ะ), อาหารเจ",carbTotal_g,filled,,17.6
+11225,"ยำก๋วยเตี๋ยวเซียงไฮ้, อาหารเจ",carbTotal_g,filled,,21.3
+11226,"เย็นตาโฟ, อาหารเจ",carbTotal_g,filled,,24.6
+11229,"หมี่กรอบ, อาหารเจ",carbTotal_g,filled,,20.7
+11231,"หมี่เหลืองผัดซีอิ๊ว, อาหารเจ",carbTotal_g,filled,,18.5
+14015,"ปลาทู, สด, ทอด",scientificName,filled,,Rastrelliger brachysoma
+14015,"ปลาทู, สด, ทอด",carbTotal_g,filled,,0
+14015,"ปลาทู, สด, ทอด",fiber_g,filled,,0
+14015,"ปลาทู, สด, ทอด",calcium_mg,filled,,114
+14015,"ปลาทู, สด, ทอด",phosphorus_mg,filled,,343
+14015,"ปลาทู, สด, ทอด",sodium_mg,filled,,132
+14015,"ปลาทู, สด, ทอด",potassium_mg,filled,,333
+14015,"ปลาทู, สด, ทอด",iron_mg,filled,,2.4
+14015,"ปลาทู, สด, ทอด",copper_mg,filled,,0.2
+14015,"ปลาทู, สด, ทอด",zinc_mg,filled,,1
+14015,"ปลาทู, สด, ทอด",thiamin_mg,filled,,0.13
+14015,"ปลาทู, สด, ทอด",riboflavin_mg,filled,,0.22
+14015,"ปลาทู, สด, ทอด",niacin_mg,filled,,1.7
+14015,"ปลาทู, สด, ทอด",cholesterol_mg,filled,,85
+14015,"ปลาทู, สด, ทอด",saturatedFat_g,filled,,3.09
+14023,"ลูกชิ้นหมู, ทอด",scientificName,filled,,Sus scrofa domestica
+14023,"ลูกชิ้นหมู, ทอด",kcal,filled,,174
+14023,"ลูกชิ้นหมู, ทอด",water_g,changed,69.5,64.1
+14023,"ลูกชิ้นหมู, ทอด",protein_g,changed,16.93,14.73
+14023,"ลูกชิ้นหมู, ทอด",fat_g,changed,13.62,8.73
+14023,"ลูกชิ้นหมู, ทอด",carbAvailable_g,filled,,9.17
+14023,"ลูกชิ้นหมู, ทอด",carbTotal_g,filled,,9.2
+14023,"ลูกชิ้นหมู, ทอด",fiber_g,filled,,0
+14023,"ลูกชิ้นหมู, ทอด",ash_g,changed,3.03,3.27
+14023,"ลูกชิ้นหมู, ทอด",calcium_mg,filled,,33
+14023,"ลูกชิ้นหมู, ทอด",phosphorus_mg,filled,,183
+14023,"ลูกชิ้นหมู, ทอด",sodium_mg,filled,,668
+14023,"ลูกชิ้นหมู, ทอด",potassium_mg,filled,,168
+14023,"ลูกชิ้นหมู, ทอด",iron_mg,filled,,1.43
+14023,"ลูกชิ้นหมู, ทอด",cholesterol_mg,filled,,37
+14023,"ลูกชิ้นหมู, ทอด",saturatedFat_g,filled,,2.06
+14035,"มันเทศ, ชุบแป้งทอด",scientificName,filled,,Ipomoea batatas
+14035,"มันเทศ, ชุบแป้งทอด",carbTotal_g,filled,,48.1
+14035,"มันเทศ, ชุบแป้งทอด",fiber_g,filled,,3.4
+14035,"มันเทศ, ชุบแป้งทอด",calcium_mg,filled,,42
+14035,"มันเทศ, ชุบแป้งทอด",phosphorus_mg,filled,,99
+14035,"มันเทศ, ชุบแป้งทอด",magnesium_mg,filled,,27
+14035,"มันเทศ, ชุบแป้งทอด",sodium_mg,filled,,190
+14035,"มันเทศ, ชุบแป้งทอด",potassium_mg,filled,,249
+14035,"มันเทศ, ชุบแป้งทอด",iron_mg,filled,,0.53
+14035,"มันเทศ, ชุบแป้งทอด",copper_mg,filled,,0.16
+14035,"มันเทศ, ชุบแป้งทอด",zinc_mg,filled,,0.77
+14035,"มันเทศ, ชุบแป้งทอด",thiamin_mg,filled,,0.04
+14035,"มันเทศ, ชุบแป้งทอด",riboflavin_mg,filled,,0.02
+14035,"มันเทศ, ชุบแป้งทอด",niacin_mg,filled,,0.52
+14035,"มันเทศ, ชุบแป้งทอด",sugar_g,filled,,13.61
+14036,"มันฝรั่ง, ทอด",carbTotal_g,filled,,51.5
+14036,"มันฝรั่ง, ทอด",fiber_g,filled,,5.3
+14036,"มันฝรั่ง, ทอด",calcium_mg,filled,,23
+14036,"มันฝรั่ง, ทอด",phosphorus_mg,filled,,123
+14036,"มันฝรั่ง, ทอด",magnesium_mg,filled,,40
+14036,"มันฝรั่ง, ทอด",sodium_mg,filled,,339
+14036,"มันฝรั่ง, ทอด",potassium_mg,filled,,680
+14036,"มันฝรั่ง, ทอด",iron_mg,filled,,1.38
+14036,"มันฝรั่ง, ทอด",zinc_mg,filled,,0.32
+14036,"มันฝรั่ง, ทอด",cholesterol_mg,filled,,5
+14036,"มันฝรั่ง, ทอด",saturatedFat_g,filled,,6.46
+14046,กาแฟเย็นคาปูชิโน,nameEn,filled,,"Iced cappuccino, bottled"
+14046,กาแฟเย็นคาปูชิโน,kcal,filled,,44
+14046,กาแฟเย็นคาปูชิโน,protein_g,changed,4.8,0.81
+14046,กาแฟเย็นคาปูชิโน,fat_g,changed,11.1,1.88
+14046,กาแฟเย็นคาปูชิโน,carbAvailable_g,filled,,6
+14046,กาแฟเย็นคาปูชิโน,sugar_g,changed,35.2,5.95
+14047,กาแฟเย็นมอคค่า,nameEn,filled,,"Iced mocha, bottled"
+14047,กาแฟเย็นมอคค่า,kcal,filled,,43
+14047,กาแฟเย็นมอคค่า,protein_g,changed,6.5,1.1
+14047,กาแฟเย็นมอคค่า,fat_g,changed,11.4,1.93
+14047,กาแฟเย็นมอคค่า,carbAvailable_g,filled,,5.4
+14047,กาแฟเย็นมอคค่า,sugar_g,changed,32,5.41
+14048,กาแฟเย็นมัจฉะลาเต้,nameEn,filled,,"Iced matcha latte, bottled"
+14048,กาแฟเย็นมัจฉะลาเต้,kcal,filled,,40
+14048,กาแฟเย็นมัจฉะลาเต้,protein_g,changed,5.8,1.23
+14048,กาแฟเย็นมัจฉะลาเต้,fat_g,changed,12.41,2.62
+14048,กาแฟเย็นมัจฉะลาเต้,carbAvailable_g,filled,,2.9
+14048,กาแฟเย็นมัจฉะลาเต้,sugar_g,changed,13.64,2.88
+14049,กาแฟเย็นมัจฉะเอสเพรสโซ่,nameEn,filled,,"Iced matcha espresso, bottled"
+14049,กาแฟเย็นมัจฉะเอสเพรสโซ่,kcal,filled,,44
+14049,กาแฟเย็นมัจฉะเอสเพรสโซ่,protein_g,changed,5.09,1.08
+14049,กาแฟเย็นมัจฉะเอสเพรสโซ่,fat_g,changed,10.61,2.24
+14049,กาแฟเย็นมัจฉะเอสเพรสโซ่,carbAvailable_g,filled,,4.9
+14049,กาแฟเย็นมัจฉะเอสเพรสโซ่,sugar_g,changed,23.13,4.89
+14050,กาแฟเย็นลาเต้,nameEn,filled,,"Iced latte, bottled"
+14050,กาแฟเย็นลาเต้,kcal,filled,,42
+14050,กาแฟเย็นลาเต้,protein_g,changed,6.3,1.07
+14050,กาแฟเย็นลาเต้,fat_g,changed,9.5,1.61
+14050,กาแฟเย็นลาเต้,carbAvailable_g,filled,,5.7
+14050,กาแฟเย็นลาเต้,sugar_g,changed,33.6,5.68
+14051,กาแฟเย็นสูตรโบราณ,nameEn,filled,,"Thai-style iced coffee (kafae boran), bottled"
+14051,กาแฟเย็นสูตรโบราณ,kcal,filled,,41
+14051,กาแฟเย็นสูตรโบราณ,protein_g,changed,3.71,0.63
+14051,กาแฟเย็นสูตรโบราณ,fat_g,changed,9.03,1.53
+14051,กาแฟเย็นสูตรโบราณ,carbAvailable_g,filled,,6.3
+14051,กาแฟเย็นสูตรโบราณ,sugar_g,changed,37.27,6.3
+14052,กาแฟเย็นสูตรอื่นๆ,nameEn,filled,,"Iced coffee, other recipes, bottled"
+14052,กาแฟเย็นสูตรอื่นๆ,kcal,filled,,53
+14052,กาแฟเย็นสูตรอื่นๆ,protein_g,changed,9.3,1.57
+14052,กาแฟเย็นสูตรอื่นๆ,fat_g,changed,14.7,2.49
+14052,กาแฟเย็นสูตรอื่นๆ,carbAvailable_g,filled,,6
+14052,กาแฟเย็นสูตรอื่นๆ,sugar_g,changed,35.2,5.95
+14053,กาแฟเย็นอเมริกาโน,nameEn,filled,,"Iced americano, bottled"
+14053,กาแฟเย็นอเมริกาโน,kcal,filled,,1
+14053,กาแฟเย็นอเมริกาโน,protein_g,changed,0.75,0.16
+14053,กาแฟเย็นอเมริกาโน,fat_g,changed,0.18,0.04
+14053,กาแฟเย็นอเมริกาโน,carbAvailable_g,filled,,0
+14054,กาแฟร้อนคาปูชิโน,nameEn,filled,,Hot cappuccino
+14054,กาแฟร้อนคาปูชิโน,kcal,filled,,90
+14054,กาแฟร้อนคาปูชิโน,protein_g,changed,3.33,1.88
+14054,กาแฟร้อนคาปูชิโน,fat_g,changed,7.8,4.4
+14054,กาแฟร้อนคาปูชิโน,carbAvailable_g,filled,,10.6
+14054,กาแฟร้อนคาปูชิโน,sugar_g,changed,18.8,10.6
+14055,กาแฟร้อนอเมริกาโน,nameEn,filled,,Hot americano
+14055,กาแฟร้อนอเมริกาโน,kcal,filled,,2
+14055,กาแฟร้อนอเมริกาโน,protein_g,changed,0.43,0.24
+14055,กาแฟร้อนอเมริกาโน,fat_g,changed,0.19,0.11
+14055,กาแฟร้อนอเมริกาโน,carbAvailable_g,filled,,0
+14056,ชาเขียวนมสด,nameEn,filled,,"Green tea latte with fresh milk, bottled"
+14056,ชาเขียวนมสด,kcal,filled,,36
+14056,ชาเขียวนมสด,protein_g,changed,2.92,0.49
+14056,ชาเขียวนมสด,fat_g,changed,8.27,1.4
+14056,ชาเขียวนมสด,carbAvailable_g,filled,,5.4
+14056,ชาเขียวนมสด,sugar_g,changed,32.07,5.42
+14057,ชาเย็น,nameEn,filled,,"Thai iced tea, bottled"
+14057,ชาเย็น,kcal,filled,,31
+14057,ชาเย็น,protein_g,changed,2.67,0.45
+14057,ชาเย็น,fat_g,changed,7.34,1.24
+14057,ชาเย็น,carbAvailable_g,filled,,4.5
+14057,ชาเย็น,sugar_g,changed,26.57,4.49
+14058,ชาเย็นนมสด,nameEn,filled,,"Thai iced tea with fresh milk, bottled"
+14058,ชาเย็นนมสด,kcal,filled,,44
+14058,ชาเย็นนมสด,protein_g,changed,3.47,0.59
+14058,ชาเย็นนมสด,fat_g,changed,11.15,1.89
+14058,ชาเย็นนมสด,carbAvailable_g,filled,,6.2
+14058,ชาเย็นนมสด,sugar_g,changed,36.58,6.18

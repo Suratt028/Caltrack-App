@@ -229,4 +229,44 @@ export default StyleSheet.create({
     marginTop: 12,
     lineHeight: 17,
   },
+
+  // "Try a scan before signing up" card
+  trialCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 18,
+    padding: 14,
+    minHeight: 64,
+    backgroundColor: colors.mint,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+  },
+  trialCardPressed: {
+    borderColor: colors.primary,
+  },
+  trialIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  trialTextCol: {
+    flex: 1,
+    minWidth: 0,
+    marginHorizontal: 12,
+  },
+  trialTitle: {
+    color: colors.primaryDark,
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  trialSubtitle: {
+    color: colors.inkMuted,
+    fontSize: 13,
+    marginTop: 2,
+    lineHeight: 19,
+  },
 });

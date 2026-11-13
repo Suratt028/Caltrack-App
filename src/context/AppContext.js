@@ -1,256 +1,111 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { buildProfileGoals, todayKey } from '../utils/calculations';
+import { useIsRestoring, useQueryClient } from '@tanstack/react-query';
 import {
   clearUserData,
-  deleteLog,
   exchangeAppleOAuthTicket,
-  fetchLogs,
-  fetchProfile,
-  fetchWeights,
   loginUser,
   loginWithOAuth,
-  mapRemoteProfile,
   registerUser,
-  saveLog,
-  saveProfile,
-  saveWeight,
   setAuthToken,
   setUnauthorizedHandler,
-  updateLog,
 } from '../services/atlasService';
+import { clearAuthTokens, loadUserToken, saveAdminToken, saveUserToken } from '../services/authStorage';
+import { queryPersister } from '../data/queryClient';
+import {
+  LEGACY_GLOBAL_DATA_KEYS,
+  legacyUserDataKeys,
+  migrateLegacyUserCache,
+  prefetchUserData,
+} from '../data/userDataQueries';
+import { isRemoteUser } from '../data/userDataTransforms';
 
-const STORAGE_KEYS = {
-  profile: '@caltrack/profile',
-  logs: '@caltrack/logs', // { [dateKey]: FoodLogEntry[] }
-  weights: '@caltrack/weights', // { [dateKey]: number }
-  user: '@caltrack/user',
-  adminToken: '@caltrack/admin-token',
-};
+// Session only: who is signed in. The user's profile, logs and weights are
+// server state in TanStack Query — see src/data/useUserData.js.
+// The token itself lives in SecureStore (src/services/authStorage.js), never
+// in this AsyncStorage record.
+const USER_KEY = '@caltrack/user';
 
 const AppContext = createContext(null);
 
-function groupLogsByDate(logs = []) {
-  return logs.reduce((acc, log) => {
-    const dateKey = log.dateKey || todayKey();
-    const entries = acc[dateKey] || [];
-    const entry = log.entry || {};
-    const macros = entry.macros || {};
-    const protein = Number(entry.protein ?? macros.protein) || 0;
-    const carbs = Number(entry.carbs ?? entry.carb ?? macros.carbs ?? macros.carb) || 0;
-    const fat = Number(entry.fat ?? macros.fat) || 0;
-    return {
-      ...acc,
-      [dateKey]: [
-        ...entries,
-        {
-          ...entry,
-          id: String(log._id || entry.id || ''),
-          date: entry.date || dateKey,
-          meal: entry.meal || entry.mealType || 'snack',
-          protein,
-          carbs,
-          fat,
-          macros: { protein, carb: carbs, fat },
-        },
-      ],
-    };
-  }, {});
-}
-
-// Ids the server assigned (Mongo ObjectIds); local-only entries use "<timestamp>_<random>".
-function isServerLogId(entryId) {
-  return /^[a-f\d]{24}$/i.test(String(entryId));
-}
-
-function isRemoteUser(user) {
-  return Boolean(user?.id && !String(user.id).startsWith('local_'));
-}
-
-function userDataStorageKeys(userId) {
-  const prefix = `@caltrack/users/${userId}`;
+function toSessionUser(remoteUser) {
   return {
-    profile: `${prefix}/profile`,
-    logs: `${prefix}/logs`,
-    weights: `${prefix}/weights`,
+    id: remoteUser.id,
+    email: remoteUser.email,
+    displayName: remoteUser.displayName || displayNameFromEmail(remoteUser.email),
+    role: remoteUser.role || 'user',
+    token: remoteUser.token,
   };
 }
 
-function groupWeightsByDate(weights = []) {
-  return weights.reduce((acc, item) => {
-    if (item?.dateKey && Number.isFinite(Number(item.weightKg))) {
-      acc[item.dateKey] = Number(item.weightKg);
-    }
-    return acc;
-  }, {});
-}
-
-function hasCompletedOnboarding(profile) {
-  return Boolean(
-    profile &&
-      (profile.gender === 'male' || profile.gender === 'female') &&
-      Number.isFinite(Number(profile.age)) &&
-      Number(profile.age) >= 1 &&
-      Number(profile.age) <= 120 &&
-      Number.isFinite(Number(profile.heightCm)) &&
-      Number(profile.heightCm) >= 50 &&
-      Number(profile.heightCm) <= 250 &&
-      Number.isFinite(Number(profile.weightKg)) &&
-      Number(profile.weightKg) >= 20 &&
-      Number(profile.weightKg) <= 400 &&
-      typeof profile.activityLevel === 'string' &&
-      profile.activityLevel.length > 0 &&
-      typeof profile.goal === 'string' &&
-      profile.goal.length > 0
-  );
-}
-
 export function AppProvider({ children }) {
-  const [profile, setProfile] = useState(null); // null until onboarding completes
+  const queryClient = useQueryClient();
+  const isRestoring = useIsRestoring();
   const [user, setUser] = useState(null);
-  const [logsByDay, setLogsByDay] = useState({});
-  // Latest logs, updated synchronously so overlapping add/remove/update calls
-  // (e.g. two quick taps on "+") each build on the other's result.
-  const logsRef = useRef({});
-  const setLogs = useCallback((next) => {
-    logsRef.current = next;
-    setLogsByDay(next);
-  }, []);
-  const [weightsByDay, setWeightsByDay] = useState({});
-  const [isLoading, setIsLoading] = useState(true);
+  const [isBootstrapping, setIsBootstrapping] = useState(true);
+  const userRef = useRef(null);
+  userRef.current = user;
+  const bootstrapStarted = useRef(false);
 
-  const loadRemoteData = useCallback(async (userId) => {
-    if (!userId) return;
-
-    const [serverProfile, serverLogs, serverWeights] = await Promise.all([
-      fetchProfile(userId),
-      fetchLogs(userId),
-      fetchWeights(userId),
-    ]);
-    const keys = userDataStorageKeys(userId);
-    const groupedLogs = groupLogsByDate(serverLogs);
-    const groupedWeights = groupWeightsByDate(serverWeights);
-    const completeProfile = hasCompletedOnboarding(serverProfile) ? serverProfile : null;
-    setProfile(completeProfile);
-    setLogs(groupedLogs);
-    setWeightsByDay(groupedWeights);
-    await Promise.all([
-      completeProfile
-        ? AsyncStorage.setItem(keys.profile, JSON.stringify(completeProfile))
-        : AsyncStorage.removeItem(keys.profile),
-      AsyncStorage.setItem(keys.logs, JSON.stringify(groupedLogs)),
-      AsyncStorage.setItem(keys.weights, JSON.stringify(groupedWeights)),
-    ]);
-  }, [setLogs]);
-
-  // Load persisted state once on app start.
+  // Restore the session once the persisted query cache is back in memory.
   useEffect(() => {
+    if (isRestoring || bootstrapStarted.current) return;
+    bootstrapStarted.current = true;
     (async () => {
       try {
-        const rawUser = await AsyncStorage.getItem(STORAGE_KEYS.user);
-        const persistedUser = rawUser ? JSON.parse(rawUser) : null;
-        const keys = persistedUser?.id ? userDataStorageKeys(persistedUser.id) : STORAGE_KEYS;
-        let [rawProfile, rawLogs, rawWeights] = await Promise.all([
-          AsyncStorage.getItem(keys.profile),
-          AsyncStorage.getItem(keys.logs),
-          AsyncStorage.getItem(keys.weights),
-        ]);
-        if (persistedUser?.id && !rawProfile && !rawLogs && !rawWeights) {
-          [rawProfile, rawLogs, rawWeights] = await Promise.all([
-            AsyncStorage.getItem(STORAGE_KEYS.profile),
-            AsyncStorage.getItem(STORAGE_KEYS.logs),
-            AsyncStorage.getItem(STORAGE_KEYS.weights),
-          ]);
-          if (rawProfile || rawLogs || rawWeights) {
-            await Promise.all([
-              rawProfile ? AsyncStorage.setItem(keys.profile, rawProfile) : Promise.resolve(),
-              rawLogs ? AsyncStorage.setItem(keys.logs, rawLogs) : Promise.resolve(),
-              rawWeights ? AsyncStorage.setItem(keys.weights, rawWeights) : Promise.resolve(),
-              AsyncStorage.multiRemove([
-                STORAGE_KEYS.profile,
-                STORAGE_KEYS.logs,
-                STORAGE_KEYS.weights,
-              ]),
-            ]);
-          }
-        }
-        if (rawProfile) {
-          const cachedProfile = JSON.parse(rawProfile);
-          setProfile(hasCompletedOnboarding(cachedProfile) ? cachedProfile : null);
-        }
-        if (rawLogs) setLogs(JSON.parse(rawLogs));
-        if (rawWeights) setWeightsByDay(JSON.parse(rawWeights));
+        const rawUser = await AsyncStorage.getItem(USER_KEY);
+        const persisted = rawUser ? JSON.parse(rawUser) : null;
+        if (!persisted) return;
+
+        // Older builds stored the token inside this record: move it to SecureStore.
+        const { token: legacyToken, ...storedUser } = persisted;
+        const token = await loadUserToken(legacyToken);
+        if (legacyToken) await AsyncStorage.setItem(USER_KEY, JSON.stringify(storedUser));
+
         // Sessions saved before the server issued tokens can't call the API: sign in again.
-        if (persistedUser && isRemoteUser(persistedUser) && !persistedUser.token) {
-          await AsyncStorage.removeItem(STORAGE_KEYS.user);
-        } else if (persistedUser) {
-          setAuthToken(persistedUser.token);
-          setUser(persistedUser);
+        if (isRemoteUser(storedUser) && !token) {
+          await AsyncStorage.removeItem(USER_KEY);
+          return;
         }
+        await migrateLegacyUserCache(queryClient, storedUser);
+        setAuthToken(token);
+        setUser(storedUser);
       } catch (e) {
-        console.warn('Failed to load persisted state', e);
+        console.warn('Failed to load persisted session', e);
       } finally {
-        setIsLoading(false);
+        setIsBootstrapping(false);
       }
     })();
-  }, [setLogs]);
+  }, [isRestoring, queryClient]);
 
-  useEffect(() => {
-    if (isRemoteUser(user)) {
-      loadRemoteData(user.id).catch((error) => {
-        console.warn('Failed to refresh shared account data', error);
-      });
-    }
-  }, [user, loadRemoteData]);
-
-  const persistProfile = useCallback(async (next) => {
-    setProfile(next);
-    const key = user?.id ? userDataStorageKeys(user.id).profile : STORAGE_KEYS.profile;
-    await AsyncStorage.setItem(key, JSON.stringify(next));
-  }, [user?.id]);
-
+  // next: user fields plus `token`; the token goes to SecureStore, the rest to AsyncStorage.
   const persistUser = useCallback(async (next) => {
-    setAuthToken(next?.token);
-    if (next?.id !== user?.id) {
-      setProfile(null);
-      setLogs({});
-      setWeightsByDay({});
-    }
-    setUser(next);
-    if (next) {
-      await AsyncStorage.setItem(STORAGE_KEYS.user, JSON.stringify(next));
-      if (next.id !== user?.id) {
-        const keys = userDataStorageKeys(next.id);
-        const [rawProfile, rawLogs, rawWeights] = await Promise.all([
-          AsyncStorage.getItem(keys.profile),
-          AsyncStorage.getItem(keys.logs),
-          AsyncStorage.getItem(keys.weights),
-        ]);
-        if (rawProfile) {
-          const cachedProfile = mapRemoteProfile(JSON.parse(rawProfile));
-          setProfile(hasCompletedOnboarding(cachedProfile) ? cachedProfile : null);
-        }
-        if (rawLogs) setLogs(JSON.parse(rawLogs));
-        if (rawWeights) setWeightsByDay(JSON.parse(rawWeights));
-      }
-    } else {
-      await AsyncStorage.removeItem(STORAGE_KEYS.user);
-    }
-  }, [user?.id, setLogs]);
+    const { token, ...sessionUser } = next;
+    setAuthToken(token);
+    await saveUserToken(token);
+    await AsyncStorage.setItem(USER_KEY, JSON.stringify(sessionUser));
+    await migrateLegacyUserCache(queryClient, sessionUser);
+    setUser(sessionUser);
+    return sessionUser;
+  }, [queryClient]);
 
-  // update: (currentLogsByDay) => nextLogsByDay, applied to the latest state.
-  const persistLogs = useCallback(async (update) => {
-    const next = update(logsRef.current);
-    setLogs(next);
-    const key = user?.id ? userDataStorageKeys(user.id).logs : STORAGE_KEYS.logs;
-    await AsyncStorage.setItem(key, JSON.stringify(next));
-  }, [user?.id, setLogs]);
-
-  const persistWeights = useCallback(async (next) => {
-    setWeightsByDay(next);
-    const key = user?.id ? userDataStorageKeys(user.id).weights : STORAGE_KEYS.weights;
-    await AsyncStorage.setItem(key, JSON.stringify(next));
-  }, [user?.id]);
+  // Forget the session and every cached byte of the user's data on this device.
+  const clearSessionData = useCallback(async () => {
+    const previousUserId = userRef.current?.id;
+    setAuthToken(null);
+    setUser(null);
+    queryClient.cancelQueries();
+    queryClient.clear();
+    await Promise.all([
+      clearAuthTokens(),
+      queryPersister.removeClient(),
+      AsyncStorage.multiRemove([
+        USER_KEY,
+        ...LEGACY_GLOBAL_DATA_KEYS,
+        ...(previousUserId ? Object.values(legacyUserDataKeys(previousUserId)) : []),
+      ]),
+    ]);
+  }, [queryClient]);
 
   const login = useCallback(async (email, password) => {
     if (!email?.trim() || !password) {
@@ -258,25 +113,11 @@ export function AppProvider({ children }) {
     }
 
     const existingUser = await loginUser(email, password);
-    const nextUser = {
-      id: existingUser.id,
-      email: existingUser.email,
-      displayName: existingUser.displayName || displayNameFromEmail(existingUser.email),
-      role: existingUser.role || 'user',
-      token: existingUser.token,
-    };
-
-    await persistUser(nextUser);
-    if (existingUser.adminToken) {
-      await AsyncStorage.setItem(STORAGE_KEYS.adminToken, existingUser.adminToken);
-    } else {
-      await AsyncStorage.removeItem(STORAGE_KEYS.adminToken);
-    }
-    if (isRemoteUser(nextUser)) {
-      await loadRemoteData(nextUser.id);
-    }
-    return nextUser;
-  }, [persistUser, loadRemoteData]);
+    const sessionUser = await persistUser(toSessionUser(existingUser));
+    await saveAdminToken(existingUser.adminToken || null);
+    await prefetchUserData(queryClient, sessionUser);
+    return sessionUser;
+  }, [persistUser, queryClient]);
 
   const register = useCallback(async (email, password, displayName) => {
     if (!email?.trim() || !password) {
@@ -294,26 +135,16 @@ export function AppProvider({ children }) {
   }, [persistUser]);
 
   const finishOAuthLogin = useCallback(async (existingUser) => {
-    const nextUser = {
-      id: existingUser.id,
-      email: existingUser.email,
-      displayName: existingUser.displayName || displayNameFromEmail(existingUser.email),
-      role: existingUser.role || 'user',
-      token: existingUser.token,
-    };
-
+    const nextUser = toSessionUser(existingUser);
     if (nextUser.role === 'admin') {
       throw new Error('ใช้บัญชีผู้ดูแลระบบผ่าน Google หรือ Apple ไม่ได้');
     }
 
-    await persistUser(nextUser);
-    await AsyncStorage.removeItem(STORAGE_KEYS.adminToken);
-    await AsyncStorage.removeItem('@caltrack/token');
-    if (isRemoteUser(nextUser)) {
-      await loadRemoteData(nextUser.id);
-    }
-    return nextUser;
-  }, [persistUser, loadRemoteData]);
+    const sessionUser = await persistUser(nextUser);
+    await saveAdminToken(null);
+    await prefetchUserData(queryClient, sessionUser);
+    return sessionUser;
+  }, [persistUser, queryClient]);
 
   const loginWithProvider = useCallback(async (provider, idToken) => {
     const existingUser = await loginWithOAuth(provider, idToken);
@@ -324,15 +155,6 @@ export function AppProvider({ children }) {
     const existingUser = await exchangeAppleOAuthTicket(ticket);
     return finishOAuthLogin(existingUser);
   }, [finishOAuthLogin]);
-
-  const clearSessionData = useCallback(async () => {
-    setAuthToken(null);
-    await AsyncStorage.multiRemove(Object.values(STORAGE_KEYS));
-    setProfile(null);
-    setUser(null);
-    setLogs({});
-    setWeightsByDay({});
-  }, [setLogs]);
 
   // The server rejected our token (expired after 30 days, or AUTH_SECRET changed).
   useEffect(() => {
@@ -346,150 +168,23 @@ export function AppProvider({ children }) {
     await clearSessionData();
   }, [clearSessionData]);
 
-  const completeOnboarding = useCallback(
-    async (rawProfile) => {
-      const goals = buildProfileGoals(rawProfile);
-      const merged = { ...rawProfile, ...goals };
-      const shared = isRemoteUser(user) ? await saveProfile(user.id, merged) : merged;
-      const next = mapRemoteProfile(shared) || merged;
-      await persistProfile(next);
-    },
-    [persistProfile, user]
-  );
-
-  const updateProfile = useCallback(
-    async (patch) => {
-      const merged = { ...profile, ...patch };
-      const hasBodyMetrics = ['age', 'heightCm', 'weightKg'].every(
-        (field) => Number.isFinite(Number(merged[field])) && Number(merged[field]) > 0,
-      );
-      const nextProfile = hasBodyMetrics
-        ? { ...merged, ...buildProfileGoals(merged) }
-        : merged;
-      const shared = isRemoteUser(user) ? await saveProfile(user.id, nextProfile) : nextProfile;
-      await persistProfile(mapRemoteProfile(shared) || nextProfile);
-    },
-    [profile, persistProfile, user]
-  );
-
-  const addFoodLog = useCallback(
-    async (entry, dateKey = todayKey()) => {
-      const nextEntry = { ...entry, id: `${Date.now()}_${Math.random().toString(36).slice(2, 7)}`, time: new Date().toISOString() };
-      let savedEntry = nextEntry;
-      if (isRemoteUser(user)) {
-        const log = await saveLog(user.id, { dateKey, entry: nextEntry });
-        if (!log?._id) throw new Error('เซิร์ฟเวอร์ไม่ได้ยืนยันการบันทึกอาหาร กรุณาลองใหม่');
-        savedEntry = { ...log.entry, id: String(log._id) };
-      }
-      await persistLogs((current) => ({
-        ...current,
-        [dateKey]: [...(current[dateKey] || []), savedEntry],
-      }));
-    },
-    [persistLogs, user]
-  );
-
-  const removeFoodLog = useCallback(
-    async (entryId, dateKey = todayKey()) => {
-      if (isRemoteUser(user) && isServerLogId(entryId)) {
-        await deleteLog(user.id, entryId);
-      }
-      await persistLogs((current) => ({
-        ...current,
-        [dateKey]: (current[dateKey] || []).filter((e) => e.id !== entryId),
-      }));
-    },
-    [persistLogs, user]
-  );
-
-  // patch: any of name, meal, time, servings, unit, grams, kcal, protein, carbs, fat, fiber, sugar, sodium.
-  const updateFoodLog = useCallback(
-    async (entryId, dateKey = todayKey(), patch = {}) => {
-      let serverEntry = null;
-      if (isRemoteUser(user) && isServerLogId(entryId)) {
-        const log = await updateLog(user.id, entryId, patch);
-        if (!log?._id) throw new Error('เซิร์ฟเวอร์ไม่ได้ยืนยันการแก้ไขอาหาร กรุณาลองใหม่');
-        serverEntry = { ...log.entry, id: String(log._id) };
-      }
-      await persistLogs((current) => ({
-        ...current,
-        [dateKey]: (current[dateKey] || []).map((e) => {
-          if (e.id !== entryId) return e;
-          if (serverEntry) return serverEntry;
-          const merged = { ...e, ...patch };
-          const protein = Number(merged.protein) || 0;
-          const carbs = Number(merged.carbs) || 0;
-          const fat = Number(merged.fat) || 0;
-          return { ...merged, macros: { protein, carb: carbs, fat } };
-        }),
-      }));
-    },
-    [persistLogs, user]
-  );
-
-  // Today's weigh-in is also the profile's current weight, so goals stay in step.
-  // ProfileScreen passes syncProfile: false because it saves the profile itself.
-  const logWeight = useCallback(
-    async (weightKg, dateKey = todayKey(), { syncProfile = true } = {}) => {
-      if (isRemoteUser(user)) await saveWeight(user.id, dateKey, weightKg);
-      const next = { ...weightsByDay, [dateKey]: weightKg };
-      await persistWeights(next);
-      if (syncProfile && profile && dateKey === todayKey() && Number(profile.weightKg) !== Number(weightKg)) {
-        await updateProfile({ weightKg });
-      }
-    },
-    [weightsByDay, persistWeights, user, profile, updateProfile]
-  );
-
   const resetAllData = useCallback(async () => {
-    if (isRemoteUser(user)) await clearUserData(user.id);
-    const dataKeys = user?.id ? Object.values(userDataStorageKeys(user.id)) : [];
-    setAuthToken(null);
-    await AsyncStorage.multiRemove([...Object.values(STORAGE_KEYS), ...dataKeys]);
-    setProfile(null);
-    setUser(null);
-    setLogs({});
-    setWeightsByDay({});
-  }, [user, setLogs]);
-
-  const getDayTotals = useCallback(
-    (dateKey = todayKey()) => {
-      const entries = logsByDay[dateKey] || [];
-      return entries.reduce(
-        (acc, e) => ({
-          kcal: acc.kcal + (Number(e.kcal) || 0),
-          protein: acc.protein + (Number(e.protein) || 0),
-          carbs: acc.carbs + (Number(e.carbs) || 0),
-          fat: acc.fat + (Number(e.fat) || 0),
-        }),
-        { kcal: 0, protein: 0, carbs: 0, fat: 0 }
-      );
-    },
-    [logsByDay]
-  );
+    if (isRemoteUser(userRef.current)) await clearUserData(userRef.current.id);
+    await clearSessionData();
+  }, [clearSessionData]);
 
   const value = useMemo(
     () => ({
-      isLoading,
-      profile,
+      isLoading: isRestoring || isBootstrapping,
       user,
-      logsByDay,
-      weightsByDay,
       login,
       loginWithProvider,
       loginWithAppleTicket,
       register,
       logout,
-      completeOnboarding,
-      updateProfile,
-      addFoodLog,
-      removeFoodLog,
-      updateFoodLog,
-      logWeight,
       resetAllData,
-      getDayTotals,
     }),
-    [isLoading, profile, user, logsByDay, weightsByDay, login, loginWithProvider, loginWithAppleTicket, register, logout, completeOnboarding, updateProfile, addFoodLog, removeFoodLog, updateFoodLog, logWeight, resetAllData, getDayTotals]
+    [isRestoring, isBootstrapping, user, login, loginWithProvider, loginWithAppleTicket, register, logout, resetAllData]
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

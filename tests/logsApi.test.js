@@ -8,6 +8,7 @@ let api;
 let request;
 let alice;
 let bob;
+let carol; // for tests that write logs; bob must keep none
 
 async function registerUser(email) {
   const res = await request('POST', '/api/auth/register', { body: { email, password: 'secret123', displayName: email.split('@')[0] } });
@@ -24,6 +25,7 @@ before(async () => {
   request = api.request;
   alice = await registerUser('alice-logs@caltrack.test');
   bob = await registerUser('bob-logs@caltrack.test');
+  carol = await registerUser('carol-logs@caltrack.test');
 });
 
 after(async () => {
@@ -73,6 +75,95 @@ describe('POST /api/logs/:userId', () => {
     assert.equal((await createLog(alice, { dateKey: '2026-10-20', entry: { name: 'x'.repeat(201) } })).status, 400);
     assert.equal((await createLog(alice, { dateKey: '2026-10-20', entry: { name: 'x', note: 'y'.repeat(1001) } })).status, 400);
     assert.equal((await createLog(alice, { dateKey: '2026-10-20', entry: { name: 'x', extra: { $where: '1' } } })).status, 400);
+  });
+});
+
+describe('POST /api/logs/:userId with clientId (idempotent retries)', () => {
+  before(async () => {
+    await api.model('Log').init(); // unique {userId, clientId} index must exist before the race test
+  });
+
+  test('a repeated clientId returns the first log instead of saving a copy', async () => {
+    const body = { dateKey: '2026-10-22', clientId: '1760000000000_abcde', entry: { name: 'โจ๊ก', kcal: 250 } };
+    const first = await createLog(alice, body);
+    assert.equal(first.status, 200, JSON.stringify(first.body));
+    const again = await createLog(alice, body);
+    assert.equal(again.status, 200);
+    assert.equal(again.body.duplicate, true);
+    assert.equal(again.body.log._id, first.body.log._id);
+    assert.equal(again.body.userFood.foodName, 'โจ๊ก');
+    assert.equal(await api.model('Log').countDocuments({ userId: alice.id, clientId: body.clientId }), 1);
+    assert.equal(await api.model('UserFood').countDocuments({ logId: first.body.log._id }), 1);
+  });
+
+  test('parallel copies of one request still store a single log', async () => {
+    const body = { dateKey: '2026-10-22', clientId: 'race-0000-0001', entry: { name: 'ชาเย็น', kcal: 180 } };
+    const results = await Promise.all(Array.from({ length: 5 }, () => createLog(alice, body)));
+    assert.ok(results.every((r) => r.status === 200), JSON.stringify(results.map((r) => r.status)));
+    assert.equal(new Set(results.map((r) => r.body.log._id)).size, 1);
+    assert.equal(await api.model('Log').countDocuments({ userId: alice.id, clientId: body.clientId }), 1);
+  });
+
+  test('the same clientId from another user is a separate log', async () => {
+    const body = { dateKey: '2026-10-22', clientId: 'shared-id-0001', entry: { name: 'ไข่ต้ม', kcal: 75 } };
+    const a = await createLog(alice, body);
+    const b = await createLog(carol, body);
+    assert.equal(a.status, 200);
+    assert.equal(b.status, 200);
+    assert.notEqual(a.body.log._id, b.body.log._id);
+  });
+
+  test('rejects a malformed clientId', async () => {
+    for (const clientId of ['short', 'x'.repeat(65), 'has space 123', { $gt: '' }, 12345678]) {
+      const res = await createLog(alice, { dateKey: '2026-10-22', clientId, entry: { name: 'x', kcal: 1 } });
+      assert.equal(res.status, 400, JSON.stringify(clientId));
+    }
+  });
+});
+
+describe('GET /api/logs/:userId date range', () => {
+  before(async () => {
+    for (const dateKey of ['2026-09-01', '2026-09-15', '2026-09-30']) {
+      const res = await createLog(carol, { dateKey, entry: { name: `meal ${dateKey}`, kcal: 100 } });
+      assert.equal(res.status, 200);
+    }
+  });
+
+  test('without from/to returns every log (what the app expects today)', async () => {
+    const res = await request('GET', `/api/logs/${carol.id}`, { token: carol.token });
+    assert.equal(res.status, 200);
+    assert.ok(res.body.logs.length >= 3);
+  });
+
+  test('from/to are inclusive', async () => {
+    const res = await request('GET', `/api/logs/${carol.id}?from=2026-09-15&to=2026-09-30`, { token: carol.token });
+    assert.equal(res.status, 200);
+    assert.deepEqual(res.body.logs.map((l) => l.dateKey), ['2026-09-30', '2026-09-15']);
+    const onlyFrom = await request('GET', `/api/logs/${carol.id}?from=2026-09-30`, { token: carol.token });
+    assert.ok(onlyFrom.body.logs.every((l) => l.dateKey >= '2026-09-30'));
+  });
+
+  test('rejects bad dates, reversed and over-long ranges', async () => {
+    for (const query of ['from=2026-9-1', 'to=yesterday', 'from[$gt]=', 'from=2026-09-30&to=2026-09-01', 'from=2025-01-01&to=2026-09-01']) {
+      const res = await request('GET', `/api/logs/${carol.id}?${query}`, { token: carol.token });
+      assert.equal(res.status, 400, query);
+    }
+  });
+});
+
+describe('request body limits', () => {
+  test('ordinary routes refuse bodies over 1 MB', async () => {
+    const res = await createLog(alice, { dateKey: '2026-10-22', entry: { name: 'x', note: 'y'.repeat(1.5 * 1024 * 1024) } });
+    assert.equal(res.status, 413);
+  });
+
+  test('the scan route checks the token before reading a large photo body', async () => {
+    const imageBase64 = 'A'.repeat(3 * 1024 * 1024);
+    const anonymous = await request('POST', '/api/ai/scan', { body: { imageBase64 } });
+    assert.equal(anonymous.status, 401);
+    // Signed in, the 3 MB body is accepted; the test server has no Gemini key, hence 503.
+    const signedIn = await request('POST', '/api/ai/scan', { token: alice.token, body: { imageBase64 } });
+    assert.equal(signedIn.status, 503);
   });
 });
 

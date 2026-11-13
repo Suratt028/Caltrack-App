@@ -42,7 +42,8 @@ export async function analyzeFoodImage(
   mimeType = 'image/jpeg',
   userId = null,
   storeImage = false,
-  maxRetries = 1
+  maxRetries = 1,
+  { trial = false } = {}
 ) {
   if (!base64) {
     throw new Error('กรุณาระบุข้อมูลรูปภาพก่อนทำการวิเคราะห์');
@@ -56,11 +57,15 @@ export async function analyzeFoodImage(
     let response;
     try {
       response = await fetchWithTimeout(
-        `${API_BASE_URL}/ai/scan`,
+        `${API_BASE_URL}/ai/scan${trial ? '/trial' : ''}`,
         {
           method: 'POST',
-          headers: authHeaders({ 'Content-Type': 'application/json' }),
-          body: JSON.stringify({ imageBase64: cleanBase64, mimeType, userId, storeImage }),
+          headers: trial
+            ? { 'Content-Type': 'application/json' }
+            : authHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify(trial
+            ? { imageBase64: cleanBase64, mimeType }
+            : { imageBase64: cleanBase64, mimeType, userId, storeImage }),
         },
         { timeoutMs: SCAN_TIMEOUT_MS, timeoutMessage: 'วิเคราะห์ภาพนานเกินไป กรุณาลองใหม่อีกครั้ง' }
       );
@@ -77,7 +82,7 @@ export async function analyzeFoodImage(
 
     // 1. ตรวจสอบสถานะ HTTP Response
     if (!response.ok) {
-      if (response.status === 401) {
+      if (response.status === 401 && !trial) {
         throw new Error('เซสชันหมดอายุ กรุณาออกจากระบบแล้วเข้าสู่ระบบใหม่');
       }
 
@@ -120,4 +125,9 @@ export async function analyzeFoodImage(
       scanId: data.scanId || null,
     };
   }
+}
+
+/** Trial scan from the sign-in screen: no account, nothing stored, limited per IP per day. */
+export function analyzeFoodImageTrial(base64, mimeType = 'image/jpeg') {
+  return analyzeFoodImage(base64, mimeType, null, false, 1, { trial: true });
 }

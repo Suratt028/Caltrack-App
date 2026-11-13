@@ -9,6 +9,7 @@ import Banner from '../components/Banner';
 import { useApp } from '../context/AppContext';
 import { requestPasswordReset, resetPassword } from '../services/atlasService';
 import { colors } from '../theme/colors';
+import TrialScanScreen from './TrialScanScreen';
 import styles from '../style/screens/AuthScreenStyles';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -58,6 +59,7 @@ export default function AuthScreen() {
   // Forgot password: 'email' asks for the address, 'code' takes the emailed code + new password.
   const [resetStep, setResetStep] = useState('email');
   const [resetCode, setResetCode] = useState('');
+  const [trialOpen, setTrialOpen] = useState(false);
 
   const isSignup = mode === 'signup';
   const isForgot = mode === 'forgot';
@@ -151,6 +153,18 @@ export default function AuthScreen() {
       setSubmitting(false);
     }
   };
+
+  if (trialOpen) {
+    return (
+      <TrialScanScreen
+        onClose={() => setTrialOpen(false)}
+        onSignup={() => {
+          setTrialOpen(false);
+          switchMode('signup');
+        }}
+      />
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
@@ -352,6 +366,24 @@ export default function AuthScreen() {
                   <Text style={styles.socialText}>Apple</Text>
                 </Pressable>
               </View>
+            )}
+
+            {!isForgot && (
+              <Pressable
+                onPress={() => setTrialOpen(true)}
+                accessibilityRole="button"
+                accessibilityLabel="ทดลองสแกนอาหารก่อนสมัคร"
+                style={({ pressed }) => [styles.trialCard, pressed && styles.trialCardPressed]}
+              >
+                <View style={styles.trialIcon}>
+                  <Ionicons name="camera-outline" size={22} color={colors.primary} />
+                </View>
+                <View style={styles.trialTextCol}>
+                  <Text style={styles.trialTitle}>ลองสแกนอาหารก่อนสมัคร</Text>
+                  <Text style={styles.trialSubtitle}>ถ่ายรูป 1 จาน ดูแคลอรี่ได้ทันที ไม่ต้องสมัคร</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={colors.inkMuted} />
+              </Pressable>
             )}
 
             <Pressable

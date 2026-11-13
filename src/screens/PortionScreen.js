@@ -4,7 +4,7 @@ import { Text } from '../components/AppText';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
-import { useApp } from '../context/AppContext';
+import { useFoodLogActions } from '../data/useUserData';
 import { getNutritionFoodById } from '../services/foodService';
 import Card from '../components/Card';
 import PrimaryButton from '../components/PrimaryButton';
@@ -13,6 +13,7 @@ import SegmentedControl from '../components/SegmentedControl';
 import PortionStepper from '../components/PortionStepper';
 import Banner from '../components/Banner';
 import { defaultMealForNow } from '../components/MealChips';
+import { EGG_SIZE_PORTIONS } from '../utils/foodPortions';
 import styles from '../style/screens/PortionScreenStyles';
 
 // Short meal labels — same wording as the web prototype (meals.*Short).
@@ -38,7 +39,7 @@ const round1 = (value) => Math.round(value * 10) / 10;
  * Receives `{ navigation, route }` with `route.params = { food, meal }`.
  */
 export default function PortionScreen({ navigation, route }) {
-  const { addFoodLog } = useApp();
+  const { addFoodLog } = useFoodLogActions();
   // On web the food object only survives in-app navigation; after a reload the
   // URL holds "[object Object]", so fall back to loading by foodId.
   const routeFoodParam = route?.params?.food;
@@ -50,8 +51,15 @@ export default function PortionScreen({ navigation, route }) {
   const [meal, setMeal] = useState(route?.params?.meal || defaultMealForNow());
   const [amount, setAmount] = useState(1);
   const [unit, setUnit] = useState('จาน');
+  const [eggSize, setEggSize] = useState('3');
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
+
+  useEffect(() => {
+    setUnit(food?.servingUnit?.unit || 'จาน');
+    setAmount(1);
+    setEggSize(food?.servingUnit?.eggSize || '3');
+  }, [food?.foodId]);
 
   useEffect(() => {
     const foodId = route?.params?.foodId;
@@ -107,6 +115,16 @@ export default function PortionScreen({ navigation, route }) {
     carbs: food?.carbs,
     fat: food?.fat,
   };
+  const selectedEggPortion = EGG_SIZE_PORTIONS.find((item) => item.size === eggSize);
+  const servingGrams = food?.servingUnit?.eggSize
+    ? selectedEggPortion?.grams || food.servingUnit.grams
+    : food?.servingUnit?.grams;
+  const unitGrams = food?.servingUnit
+    ? { ...UNIT_GRAMS, [food.servingUnit.unit]: servingGrams }
+    : UNIT_GRAMS;
+  const unitOptions = food?.servingUnit
+    ? [{ value: food.servingUnit.unit, label: food.servingUnit.unit }, ...UNIT_OPTIONS]
+    : UNIT_OPTIONS;
   const base = {
     kcal: Number(per100.kcal) || 0,
     protein: Number(per100.protein) || 0,
@@ -115,7 +133,7 @@ export default function PortionScreen({ navigation, route }) {
   };
 
   const isGrams = unit === 'กรัม';
-  const grams = Math.round(amount * UNIT_GRAMS[unit]);
+  const grams = Math.round(amount * (unitGrams[unit] || 1));
   const multiplier = grams / 100;
   const scaled = {
     kcal: Math.round(base.kcal * multiplier),
@@ -132,7 +150,7 @@ export default function PortionScreen({ navigation, route }) {
 
   // Keep the same total weight when switching units.
   const changeUnit = (nextUnit) => {
-    const nextAmount = grams / UNIT_GRAMS[nextUnit];
+    const nextAmount = grams / unitGrams[nextUnit];
     setUnit(nextUnit);
     setAmount(
       nextUnit === 'กรัม'
@@ -193,9 +211,15 @@ export default function PortionScreen({ navigation, route }) {
     );
   }
 
-  const referenceKcal = isMissing('kcal') ? '—' : `${estimatedFields.includes('kcal') ? '≈' : ''}${Math.round(base.kcal)}`;
-  const servingLine = food.per100g ? 'ต่อ 100 กรัม' : food.serving || 'ต่อ 1 หน่วย';
-  const kcalLine = food.per100g ? `${referenceKcal} kcal / 100 กรัม` : `${referenceKcal} kcal`;
+  const servingLine = food.servingUnit
+    ? `1 ${food.servingUnit.unit} ≈ ${servingGrams} กรัม${food.servingUnit.eggSize ? ' (ส่วนที่กินได้)' : ''}`
+    : 'เลือกปริมาณด้านล่างเพื่อดูค่าตามที่รับประทาน';
+  const servingKcal = isMissing('kcal')
+    ? '—'
+    : Math.round(base.kcal * (servingGrams || 100) / 100);
+  const kcalLine = food.servingUnit
+    ? `${estimatedFields.includes('kcal') ? '≈' : ''}${servingKcal} kcal / ${food.servingUnit.unit}`
+    : '';
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -216,7 +240,7 @@ export default function PortionScreen({ navigation, route }) {
             {food.name}
           </Text>
           <Text style={styles.identityMeta}>{servingLine}</Text>
-          <Text style={styles.identityKcal}>{kcalLine}</Text>
+          {!!kcalLine && <Text style={styles.identityKcal}>{kcalLine}</Text>}
           {estimatedFields.length > 0 && missingNutrients.length === 0 ? (
             <Text style={styles.identityMeta}>≈ บางค่าคำนวณจากสารอาหารอื่น เพราะตารางข้อมูลต้นทางไม่ได้ระบุไว้</Text>
           ) : null}
@@ -246,14 +270,54 @@ export default function PortionScreen({ navigation, route }) {
             unit={unit}
           />
 
+          {food.servingUnit?.eggSize ? (
+            <View style={styles.eggSizeSection}>
+              <Text style={styles.fieldLabel}>ขนาดไข่ไก่</Text>
+              <View style={styles.eggSizeOptions} accessibilityRole="radiogroup" accessibilityLabel="เลือกเบอร์ไข่ไก่">
+                {EGG_SIZE_PORTIONS.map((option) => {
+                  const selected = eggSize === option.size;
+                  return (
+                    <Pressable
+                      key={option.size}
+                      onPress={() => setEggSize(option.size)}
+                      accessibilityRole="radio"
+                      accessibilityState={{ selected }}
+                      accessibilityLabel={`เบอร์ ${option.size} ประมาณ ${option.grams} กรัมส่วนที่กินได้`}
+                      style={[
+                        styles.eggSizeOption,
+                        selected && styles.eggSizeOptionSelected,
+                      ]}
+                    >
+                      <Text style={[
+                        styles.eggSizeOptionText,
+                        selected && styles.eggSizeOptionTextSelected,
+                      ]}>
+                        {`เบอร์ ${option.size}`}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+              <Text style={styles.hint}>
+                น้ำหนักส่วนที่กินได้โดยประมาณ {selectedEggPortion?.grams} กรัมต่อฟอง
+              </Text>
+            </View>
+          ) : null}
+
           <Text style={[styles.fieldLabel, styles.unitLabel]}>หน่วย</Text>
-          <SegmentedControl options={UNIT_OPTIONS} value={unit} onChange={changeUnit} label="หน่วย" size="sm" />
-          <Text style={styles.hint}>{UNIT_HINT}</Text>
+          <SegmentedControl options={unitOptions} value={unit} onChange={changeUnit} label="หน่วย" size="sm" />
+          <Text style={styles.hint}>
+            {food.servingUnit
+              ? `น้ำหนักต่อ ${food.servingUnit.unit} เป็นค่าประมาณ ขนาดจริงอาจต่างกัน เลือก “กรัม” หากชั่งได้`
+              : UNIT_HINT}
+          </Text>
         </Card>
 
         {/* Live calculation */}
         <View style={styles.calcCard} accessibilityRole="alert" accessibilityLiveRegion="polite">
-          <Text style={styles.calcLabel}>ประมาณการ · {grams} กรัม</Text>
+          <Text style={styles.calcLabel}>
+            ประมาณการ · {amount} {unit} ({grams} กรัม)
+          </Text>
           <View style={styles.calcKcalRow}>
             <Text style={styles.calcKcal}>{shown('kcal', scaled.kcal)}</Text>
             <Text style={styles.calcKcalUnit}>kcal</Text>
@@ -261,7 +325,7 @@ export default function PortionScreen({ navigation, route }) {
           <Text style={styles.calcMacros}>
             P {shown('protein', scaled.protein, 'g')} · C {shown('carbs', scaled.carbs, 'g')} · F {shown('fat', scaled.fat, 'g')}
           </Text>
-          <Text style={styles.calcNote}>ค่าตามปริมาณที่เลือก</Text>
+          <Text style={styles.calcNote}>ค่าตามปริมาณที่เลือก · น้ำหนักต่อหน่วยเป็นค่าประมาณ</Text>
         </View>
 
         <Text style={styles.hint}>

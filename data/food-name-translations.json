@@ -1,0 +1,31 @@
+{
+  "note": "Names added where no source has one. Written by the CalTrack team, not taken from a food table: check before relying on them. Applied by scripts/merge-foods.js, which tags each with valueSources.nameEn/nameTh = 'translated'.",
+  "names": {
+    "10021": { "nameEn": "Five-spice (palo) powder" },
+    "7095": { "nameEn": "Hoi joon shellfish, fresh" },
+    "INMU-E123": { "nameEn": "Governor's plum, wild (ta-khop pa)" },
+    "4041": { "nameEn": "Cha kong (local leafy vegetable)" },
+    "4045": { "nameEn": "Jum pa / kum pla (local vegetable)" },
+    "4086": { "nameEn": "Bon som (sour taro), stalk" },
+    "4119": { "nameEn": "Phak bo (local vegetable)" },
+    "4207": { "nameEn": "Som kriap, leaves and young shoots" },
+    "4216": { "nameEn": "Sam pra si, young shoots" },
+    "11163": { "nameEn": "Rice noodles with nam la so sauce" },
+    "11194": { "nameEn": "Rice noodles with fermented fish (pla ra) sauce" },
+    "INMU-T274": { "nameEn": "Job's tears in coconut milk" },
+    "14046": { "nameEn": "Iced cappuccino, bottled" },
+    "14047": { "nameEn": "Iced mocha, bottled" },
+    "14048": { "nameEn": "Iced matcha latte, bottled" },
+    "14049": { "nameEn": "Iced matcha espresso, bottled" },
+    "14050": { "nameEn": "Iced latte, bottled" },
+    "14051": { "nameEn": "Thai-style iced coffee (kafae boran), bottled" },
+    "14052": { "nameEn": "Iced coffee, other recipes, bottled" },
+    "14053": { "nameEn": "Iced americano, bottled" },
+    "14054": { "nameEn": "Hot cappuccino" },
+    "14055": { "nameEn": "Hot americano" },
+    "14056": { "nameEn": "Green tea latte with fresh milk, bottled" },
+    "14057": { "nameEn": "Thai iced tea, bottled" },
+    "14058": { "nameEn": "Thai iced tea with fresh milk, bottled" },
+    "INMU-J9": { "nameTh": "นมเปรี้ยว ยาคูลท์, ต่อ 100 มล." }
+  }
+}

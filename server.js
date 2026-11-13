@@ -19,9 +19,22 @@ const {
   isConfidentMatch,
 } = require('./server/foodMatching');
 
+const { reserveScanSlot } = require('./server/scanQuota');
+
 const app = express();
 app.use(cors());
-app.use(express.json({ limit: '10mb' }));
+// Only the scan route takes photos, so only it gets the big body limit, and it
+// parses after requireUser so anonymous callers can't make us buffer 10 MB.
+const SCAN_PATH = '/api/ai/scan';
+// Guest trial scan: parsed after its per-IP limit, with a smaller cap
+// (the app sends a ~1024 px JPEG, well under 2 MB as base64).
+const TRIAL_SCAN_PATH = '/api/ai/scan/trial';
+const defaultJsonBody = express.json({ limit: '1mb' });
+const scanJsonBody = express.json({ limit: '10mb' });
+const trialScanJsonBody = express.json({ limit: '2mb' });
+app.use((req, res, next) => (
+  req.path === SCAN_PATH || req.path === TRIAL_SCAN_PATH ? next() : defaultJsonBody(req, res, next)
+));
 app.use(express.urlencoded({ extended: false }));
 
 // Maintenance mode (Admin → Settings): block the app's API while keeping the
@@ -190,6 +203,10 @@ const profileSchema = new mongoose.Schema({
   heightCm: Number,
   weightKg: Number,
   activityLevel: String,
+  workActivityLevel: String,
+  exerciseDaysPerWeek: Number,
+  exerciseMinutes: Number,
+  exerciseIntensity: String,
   goal: String,
   targetWeightKg: Number,
   kcalGoal: Number,
@@ -201,10 +218,19 @@ const profileSchema = new mongoose.Schema({
 
 const logSchema = new mongoose.Schema({
   userId: { type: String, required: true },
+  // Id the app made for this entry; a retried POST with the same one returns the
+  // first log instead of saving a duplicate. Older logs don't have it.
+  clientId: { type: String },
   dateKey: String,
   entry: Object,
   createdAt: { type: Date, default: Date.now },
 });
+// Every diary read is "this user's logs", optionally for a date range.
+logSchema.index({ userId: 1, dateKey: -1, createdAt: -1 });
+logSchema.index(
+  { userId: 1, clientId: 1 },
+  { unique: true, partialFilterExpression: { clientId: { $type: 'string' } } }
+);
 
 const weightLogSchema = new mongoose.Schema({
   userId: { type: String, required: true },
@@ -225,6 +251,8 @@ const scanImageSchema = new mongoose.Schema({
 // Images are not stored here; scanId links to scanImages when the user consented.
 const scanLogSchema = new mongoose.Schema({
   userId: { type: String, default: null },
+  // Trial scan from the sign-in screen (no account yet).
+  guest: { type: Boolean, default: false },
   scanId: { type: String, default: null },
   mimeType: String,
   model: { type: String, default: null },
@@ -286,6 +314,8 @@ const userFoodSchema = new mongoose.Schema({
   entry: Object,
   createdAt: { type: Date, default: Date.now },
 });
+// Log edits/deletes update the mirror row by logId.
+userFoodSchema.index({ logId: 1 });
 
 const User = mongoose.model('User', userSchema, 'users');
 const Profile = mongoose.model('Profile', profileSchema, 'profiles');
@@ -555,10 +585,13 @@ function userFoodFieldsFromEntry(entry) {
 // Older accounts hold an unsalted HMAC-SHA256 (keyed with AUTH_SECRET); those
 // still verify and are rehashed on the next successful login.
 const SCRYPT_KEYLEN = 64;
+// Async scrypt runs on libuv's thread pool. scryptSync blocked the event loop
+// for every login, so a burst of sign-ins stalled every other request too.
+const scryptAsync = require('util').promisify(crypto.scrypt);
 
-function hashPassword(password) {
+async function hashPassword(password) {
   const salt = crypto.randomBytes(16);
-  const hash = crypto.scryptSync(String(password), salt, SCRYPT_KEYLEN);
+  const hash = await scryptAsync(String(password), salt, SCRYPT_KEYLEN);
   return `scrypt$${salt.toString('hex')}$${hash.toString('hex')}`;
 }
 
@@ -572,7 +605,7 @@ function safeEqualHex(a, b) {
   return left.length > 0 && left.length === right.length && crypto.timingSafeEqual(left, right);
 }
 
-function verifyPassword(inputPassword, storedPassword) {
+async function verifyPassword(inputPassword, storedPassword) {
   if (!storedPassword) return false;
   if (isLegacyPasswordHash(storedPassword)) {
     const legacy = crypto.createHmac('sha256', authSecret).update(String(inputPassword)).digest('hex');
@@ -580,7 +613,7 @@ function verifyPassword(inputPassword, storedPassword) {
   }
   const [, saltHex, hashHex] = storedPassword.split('$');
   if (!saltHex || !hashHex) return false;
-  const hash = crypto.scryptSync(String(inputPassword), Buffer.from(saltHex, 'hex'), SCRYPT_KEYLEN);
+  const hash = await scryptAsync(String(inputPassword), Buffer.from(saltHex, 'hex'), SCRYPT_KEYLEN);
   return safeEqualHex(hash.toString('hex'), hashHex);
 }
 
@@ -594,7 +627,7 @@ function safeEqualText(a, b) {
 async function upgradePasswordHashIfNeeded(user, password) {
   if (!isLegacyPasswordHash(user.password)) return;
   try {
-    await User.updateOne({ _id: user._id }, { $set: { password: hashPassword(password) } });
+    await User.updateOne({ _id: user._id }, { $set: { password: await hashPassword(password) } });
   } catch (error) {
     console.warn('Password hash upgrade failed:', error.message);
   }
@@ -753,7 +786,7 @@ async function ensureAdminAccount() {
     { email: adminEmail },
     {
       $set: { displayName: adminDisplayName, role: 'admin' },
-      $setOnInsert: { password: hashPassword(adminPassword) },
+      $setOnInsert: { password: await hashPassword(adminPassword) },
     },
     { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true }
   );
@@ -838,7 +871,7 @@ async function seedDemoData() {
   if (!user) {
     user = await User.create({
       email: demoEmail,
-      password: hashPassword('demo1234'),
+      password: await hashPassword('demo1234'),
       displayName: 'Demo User',
     });
   } else {
@@ -1125,7 +1158,7 @@ app.post('/api/auth/register', registerLimit, async (req, res) => {
     const existing = await User.findOne({ email });
     if (existing) return res.status(409).json({ error: 'email already exists' });
 
-    const user = await User.create({ email, password: hashPassword(password), displayName });
+    const user = await User.create({ email, password: await hashPassword(password), displayName });
     return res.json({
       user: { id: user._id.toString(), email: user.email, displayName: user.displayName, token: createUserToken(user) },
     });
@@ -1205,7 +1238,7 @@ app.post('/api/auth/reset-password', resetPasswordLimit, async (req, res) => {
     // Delete first so the same code can't be used twice by concurrent requests.
     const consumed = await PasswordReset.findOneAndDelete({ _id: reset._id, codeHash: reset.codeHash });
     if (!consumed) return invalidCode();
-    await User.updateOne({ _id: user._id }, { $set: { password: hashPassword(password) } });
+    await User.updateOne({ _id: user._id }, { $set: { password: await hashPassword(password) } });
     return res.json({ ok: true });
   } catch (error) {
     console.error('Password reset failed:', error.message);
@@ -1240,7 +1273,7 @@ app.post('/api/auth/login', loginIpLimit, loginAccountLimit, async (req, res) =>
     }
 
     const user = await User.findOne({ email });
-    if (!user || !verifyPassword(password, user.password)) {
+    if (!user || !(await verifyPassword(password, user.password))) {
       return res.status(401).json({ error: 'invalid credentials' });
     }
     await upgradePasswordHashIfNeeded(user, password);
@@ -1267,7 +1300,7 @@ app.post('/api/admin/login', adminLoginLimit, async (req, res) => {
     const configuredAdmin = email === adminEmail && safeEqualText(password, adminPassword);
     const databaseAdmin = await User.findOne({ email, role: 'admin' });
 
-    const databaseAdminOk = Boolean(databaseAdmin) && verifyPassword(password, databaseAdmin.password);
+    const databaseAdminOk = Boolean(databaseAdmin) && await verifyPassword(password, databaseAdmin.password);
     if (!configuredAdmin && !databaseAdminOk) {
       return res.status(401).json({ error: 'invalid admin credentials' });
     }
@@ -1470,7 +1503,7 @@ app.post('/api/admin/users', requireAdmin, async (req, res) => {
     if (existing) return res.status(409).json({ error: 'Email already exists' });
     const user = await User.create({
       email: cleanEmail,
-      password: hashPassword(password),
+      password: await hashPassword(password),
       displayName: String(displayName || '').trim(),
       role: role === 'admin' ? 'admin' : 'user',
     });
@@ -1485,7 +1518,7 @@ app.patch('/api/admin/users/:userId', requireAdmin, async (req, res) => {
     const { displayName, password, role } = req.body;
     const updates = {};
     if (displayName !== undefined) updates.displayName = String(displayName).trim();
-    if (password) updates.password = hashPassword(password);
+    if (password) updates.password = await hashPassword(password);
     if (role) updates.role = role === 'admin' ? 'admin' : 'user';
 
     const target = await User.findById(req.params.userId).lean();
@@ -1659,9 +1692,32 @@ app.delete('/api/users/:userId/data', requireSelf, async (req, res) => {
   }
 });
 
+// GET /api/logs/:userId?from=YYYY-MM-DD&to=YYYY-MM-DD
+// from/to are optional and inclusive. Without them every log is returned, as
+// the app has always expected; new callers should ask for a range.
+const LOGS_MAX_RANGE_DAYS = 366;
+const CLIENT_ID_RE = /^[A-Za-z0-9_-]{8,64}$/;
+
 app.get('/api/logs/:userId', requireSelf, async (req, res) => {
   try {
-    const logs = await Log.find({ userId: req.params.userId }).sort({ createdAt: -1 });
+    const { from, to } = req.query;
+    for (const [name, value] of [['from', from], ['to', to]]) {
+      if (value !== undefined && !isValidDateKey(value)) {
+        return res.status(400).json({ error: `${name} ต้องอยู่ในรูปแบบ YYYY-MM-DD` });
+      }
+    }
+    const filter = { userId: req.params.userId };
+    if (from || to) {
+      if (from && to) {
+        const days = (Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86400000;
+        if (days < 0) return res.status(400).json({ error: 'from ต้องไม่เกิน to' });
+        if (days >= LOGS_MAX_RANGE_DAYS) {
+          return res.status(400).json({ error: `ช่วงวันที่ต้องไม่เกิน ${LOGS_MAX_RANGE_DAYS} วัน` });
+        }
+      }
+      filter.dateKey = { ...(from && { $gte: from }), ...(to && { $lte: to }) };
+    }
+    const logs = await Log.find(filter).sort({ dateKey: -1, createdAt: -1 });
     res.json({ logs: logs.map(normalizeFoodLog) });
   } catch (error) {
     sendServerError(req, res, error);
@@ -1684,15 +1740,47 @@ app.post('/api/logs/:userId', requireSelf, async (req, res) => {
       throw validationError;
     }
 
-    const createdLog = await Log.create({ userId, dateKey, entry });
+    const rawClientId = req.body?.clientId;
+    if (rawClientId !== undefined && (typeof rawClientId !== 'string' || !CLIENT_ID_RE.test(rawClientId))) {
+      return res.status(400).json({ error: 'clientId ต้องเป็นตัวอักษร a-z, 0-9, - หรือ _ ยาว 8–64 ตัว' });
+    }
+    const clientId = rawClientId;
+
+    // Same clientId again (the app retried after a timeout): hand back the first log.
+    const replayExisting = async () => {
+      const existing = await Log.findOne({ userId, clientId });
+      if (!existing) return false;
+      const userFood = await UserFood.findOne({ logId: existing._id }).lean();
+      res.json({ log: normalizeFoodLog(existing), userFood, duplicate: true });
+      return true;
+    };
+    if (clientId && (await replayExisting())) return undefined;
+
+    let createdLog;
+    try {
+      createdLog = await Log.create({ userId, dateKey, entry, ...(clientId && { clientId }) });
+    } catch (createError) {
+      // Two copies of the same request raced past the check above; the unique index let one win.
+      if (createError?.code === 11000 && clientId && (await replayExisting())) return undefined;
+      throw createError;
+    }
     const log = normalizeFoodLog(createdLog);
-    const userFood = await UserFood.create({
-      userId,
-      logId: log._id,
-      dateKey,
-      source: 'log',
-      ...userFoodFieldsFromEntry(entry),
-    });
+    let userFood;
+    try {
+      userFood = await UserFood.create({
+        userId,
+        logId: log._id,
+        dateKey,
+        source: 'log',
+        ...userFoodFieldsFromEntry(entry),
+      });
+    } catch (mirrorError) {
+      // Undo the log so the two collections never disagree; the app sees an error and can retry.
+      await Log.deleteOne({ _id: createdLog._id }).catch((undoError) => {
+        console.error('Could not undo log after user.foods write failed:', undoError.message);
+      });
+      throw mirrorError;
+    }
 
     res.json({ log, userFood });
   } catch (error) {
@@ -1990,11 +2078,35 @@ app.put('/api/admin/ai-scan-config', requireAdmin, async (req, res) => {
   }
 });
 
-app.post('/api/ai/scan', requireUser, async (req, res) => {
+// Guests (not signed in) may try the scanner a few times per IP per day before
+// signing up. 0 turns the trial off. Counts every attempt, failed ones included.
+const GUEST_TRIAL_SCANS_PER_DAY = (() => {
+  const value = Number(process.env.GUEST_TRIAL_SCANS_PER_DAY ?? 3);
+  return Number.isInteger(value) && value >= 0 ? value : 3;
+})();
+const guestScanLimit = rateLimit({
+  name: 'guest-scan', windowMs: 24 * 60 * MINUTE_MS, max: GUEST_TRIAL_SCANS_PER_DAY, keyFn: clientIp,
+});
+
+app.post(SCAN_PATH, requireUser, scanJsonBody, (req, res) => handleScan(req, res));
+
+app.post(TRIAL_SCAN_PATH, (req, res, next) => {
+  if (GUEST_TRIAL_SCANS_PER_DAY === 0) {
+    return res.status(403).json({ error: 'ยังไม่เปิดให้ทดลองสแกน กรุณาสมัครสมาชิกเพื่อใช้งาน', code: 'TRIAL_DISABLED' });
+  }
+  return next();
+}, guestScanLimit, trialScanJsonBody, (req, res) => handleScan(req, res, { guest: true }));
+
+async function handleScan(req, res, { guest = false } = {}) {
+  // Set when a quota slot is taken; given back in `finally` unless the scan counted.
+  let releaseScanSlot = null;
+  let scanCounted = false;
   try {
-    const { imageBase64, mimeType = 'image/jpeg', storeImage = false } = req.body || {};
-    // From the token, not the body, so the daily quota can't be dodged. Admin scans have no user.
-    const userId = req.user?.id || null;
+    const { imageBase64, mimeType = 'image/jpeg' } = req.body || {};
+    // Guest photos are never stored: there is no account to consent or to own them.
+    const storeImage = !guest && req.body?.storeImage === true;
+    // From the token, not the body, so the daily quota can't be dodged. Admin and guest scans have no user.
+    const userId = guest ? null : req.user?.id || null;
     if (typeof imageBase64 !== 'string' || !imageBase64.trim()) {
       return res.status(400).json({ error: 'imageBase64 is required' });
     }
@@ -2007,15 +2119,12 @@ app.post('/api/ai/scan', requireUser, async (req, res) => {
       return res.status(503).json({ error: 'บริการวิเคราะห์ภาพยังไม่พร้อมใช้งาน กรุณาตั้งค่า GEMINI_API_KEY หรือค้นหาอาหารด้วยตนเอง' });
     }
 
-    // Daily free-scan quota (Admin → Settings). Failed scans don't count.
+    // Daily free-scan quota (Admin → Settings). Reserved atomically so parallel
+    // scans can't overshoot it; failed scans hand the slot back (see `finally`).
     const { maxFreeScansPerDay } = await getSystemSettings();
     if (maxFreeScansPerDay > 0 && userId && isMongoReady) {
-      const usedToday = await ScanLog.countDocuments({
-        userId,
-        status: { $ne: 'failed' },
-        createdAt: { $gte: startOfLocalDay() },
-      });
-      if (usedToday >= maxFreeScansPerDay) {
+      releaseScanSlot = await reserveScanSlot({ userId, dateKey: localDateKey(), max: maxFreeScansPerDay });
+      if (!releaseScanSlot) {
         return res.status(429).json({
           error: `วันนี้ใช้สแกนครบ ${maxFreeScansPerDay} ครั้งแล้ว กรุณาลองใหม่พรุ่งนี้ หรือค้นหาอาหารด้วยตนเอง`,
           code: 'SCAN_QUOTA_EXCEEDED',
@@ -2032,6 +2141,7 @@ app.post('/api/ai/scan', requireUser, async (req, res) => {
       if (!isMongoReady) return;
       ScanLog.create({
         userId,
+        guest,
         scanId,
         mimeType,
         model: usedModel,
@@ -2168,6 +2278,7 @@ app.post('/api/ai/scan', requireUser, async (req, res) => {
         return res.status(502).json({ error: 'AI ส่งผลวิเคราะห์ในรูปแบบที่อ่านไม่ได้ กรุณาลองใหม่' });
       }
       if (!Array.isArray(parsed.items) || parsed.items.length === 0) {
+        scanCounted = true; // a "no food" answer still used Gemini, as before
         logScan('no_food');
         return res.status(422).json({ error: 'ไม่พบรายการอาหารในภาพ กรุณาลองถ่ายใหม่หรือค้นหาอาหารด้วยตนเอง' });
       }
@@ -2244,6 +2355,7 @@ app.post('/api/ai/scan', requireUser, async (req, res) => {
       }
 
       const topConfidence = Math.max(...items.map((item) => item.confidence));
+      scanCounted = true;
       logScan(topConfidence < SCAN_LOW_CONFIDENCE ? 'low_conf' : 'success', {
         items: items.map(({ name_th, confidence }) => ({ name_th, confidence })),
         topConfidence,
@@ -2261,8 +2373,12 @@ app.post('/api/ai/scan', requireUser, async (req, res) => {
   } catch (err) {
     console.error('AI Scan Error:', err.message);
     sendServerError(req, res, err);
+  } finally {
+    if (releaseScanSlot && !scanCounted) {
+      releaseScanSlot().catch((releaseError) => console.warn('Scan quota slot could not be released:', releaseError.message));
+    }
   }
-});
+}
 
 app.get('/api/scan-images/:scanId', requireUser, async (req, res) => {
   try {

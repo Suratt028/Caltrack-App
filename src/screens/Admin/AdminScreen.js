@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, View, Modal, StyleSheet } from 'react-native';
 import { Text } from '../../components/AppText';
 import { TextInput } from '../../components/AppTextInput';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL } from '../../config';
+import { clearAuthTokens, loadAdminToken, saveAdminToken } from '../../services/authStorage';
 import { useApp } from '../../context/AppContext';
 import { colors } from '../../theme/colors';
 import styles from '../../style/screens/AdminScreenStyles';
@@ -18,7 +18,6 @@ import Reports from '../../components/admin/Reports';
 import Settings from '../../components/admin/Settings';
 import Support from '../../components/admin/Support';
 
-const TOKEN_KEY = '@caltrack/admin-token';
 const NAV = [
   ['dashboard', 'Overview'],
   ['users', 'Users'],
@@ -90,7 +89,7 @@ export default function AdminScreen() {
 
   async function signOutAdmin(notice = '') {
     try {
-      await AsyncStorage.removeItem(TOKEN_KEY);
+      await saveAdminToken(null);
     } catch (e) {}
     setToken(null);
     setLoginNotice(notice);
@@ -126,7 +125,7 @@ export default function AdminScreen() {
 
   async function handleAdminLogin(nextToken) {
     try {
-      await AsyncStorage.setItem(TOKEN_KEY, nextToken);
+      await saveAdminToken(nextToken);
     } catch (e) {}
     setLoginNotice('');
     setToken(nextToken);
@@ -137,7 +136,7 @@ export default function AdminScreen() {
     (async () => {
       let saved = null;
       try {
-        saved = await AsyncStorage.getItem(TOKEN_KEY);
+        saved = await loadAdminToken();
       } catch (e) {}
       setToken(saved);
       setAuthChecked(true);
@@ -154,8 +153,9 @@ export default function AdminScreen() {
 
   async function logout() {
     try {
-      await AsyncStorage.multiRemove([TOKEN_KEY, '@caltrack/token', '@caltrack/user', '@caltrack/profile', '@caltrack/logs', '@caltrack/weights']);
+      await clearAuthTokens();
     } catch (e) {}
+    // Also clears the user record, legacy data keys and the query cache.
     await clearAppSession();
     setToken(null);
     if (typeof window !== 'undefined') {

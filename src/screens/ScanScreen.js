@@ -14,6 +14,7 @@ import Banner from '../components/Banner';
 import OfflineState from '../components/OfflineState';
 import ScreenHeader from '../components/ScreenHeader';
 import { useApp } from '../context/AppContext';
+import { useFoodLogActions } from '../data/useUserData';
 import { searchNutritionFoods } from '../services/foodService';
 import { isOfflineError } from '../services/atlasService';
 import { analyzeFoodImage, prepareScanImage } from '../services/aiVisionService';
@@ -64,7 +65,8 @@ function FoodBoxOverlays({ items = [] }) {
 }
 
 export default function ScanScreen({ navigation }) {
-  const { addFoodLog, user } = useApp();
+  const { user } = useApp();
+  const { addFoodLog } = useFoodLogActions();
   const [imageUri, setImageUri] = useState(null);
   const [lastAsset, setLastAsset] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
@@ -300,8 +302,17 @@ export default function ScanScreen({ navigation }) {
                       <View style={{ flex: 1 }}>
                         <Text style={styles.searchResultName} numberOfLines={1}>{food.name}</Text>
                         <Text style={styles.searchResultMeta}>
-                          {food.serving ? `${food.serving} · ` : ''}
-                          {food.estimated?.includes('kcal') ? '≈' : ''}{food.per100g?.kcal ?? '—'} kcal / 100 g
+                          {food.estimated?.includes('kcal') || food.servingUnit ? '≈' : ''}
+                          {food.per100g?.kcal == null
+                            ? '—'
+                            : Math.round(
+                                Number(food.per100g.kcal) *
+                                  (food.servingUnit?.grams || 100) /
+                                  100
+                              )}{' '}
+                          kcal {food.servingUnit
+                            ? `/ 1 ${food.servingUnit.unit} (${food.servingUnit.grams} กรัม)`
+                            : '/ 100 กรัม'}
                         </Text>
                       </View>
                       <Ionicons name="chevron-forward" size={18} color={colors.inkFaint} />

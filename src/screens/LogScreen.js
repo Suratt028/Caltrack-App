@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Pressable, ActivityIndicator, ScrollView } from 'react-native';
 import { Text } from '../components/AppText';
 import { TextInput } from '../components/AppTextInput';
@@ -7,7 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { searchNutritionFoods } from '../services/foodService';
 import { isOfflineError } from '../services/atlasService';
-import { useApp } from '../context/AppContext';
+import { useFoodLogs } from '../data/useUserData';
 import FoodSearchRow from '../components/FoodSearchRow';
 import Card from '../components/Card';
 import PrimaryButton from '../components/PrimaryButton';
@@ -17,6 +17,7 @@ import Banner from '../components/Banner';
 import OfflineState from '../components/OfflineState';
 import ScreenHeader from '../components/ScreenHeader';
 import SegmentedControl from '../components/SegmentedControl';
+import { POPULAR_FOODS, recentFoodNames } from '../utils/quickPicks';
 import styles from '../style/screens/LogScreenStyles';
 
 const SEARCH_DEBOUNCE_MS = 200;
@@ -35,7 +36,8 @@ const MEAL_OPTIONS = [
  * real food service, jump to the portion screen with "+", or add a food manually.
  */
 export default function LogScreen({ navigation, route }) {
-  const { addFoodLog } = useApp();
+  const { addFoodLog, logsByDay } = useFoodLogs();
+  const recentNames = useMemo(() => recentFoodNames(logsByDay), [logsByDay]);
   const requestedMeal = route?.params?.meal;
   const [meal, setMeal] = useState(() => requestedMeal || defaultMealForNow());
 
@@ -174,13 +176,25 @@ export default function LogScreen({ navigation, route }) {
         </View>
 
         {!query.trim() ? (
-          <Card style={styles.emptyCard}>
-            <EmptyState
-              icon="search-outline"
-              title="พิมพ์ชื่ออาหารเพื่อค้นหา"
-              message="ค้นได้ทั้งชื่อไทยและอังกฤษ จากฐานข้อมูลอาหารไทยกว่า 1,000 รายการ"
-            />
-          </Card>
+          <View>
+            <Text style={styles.quickPickTitle}>{recentNames.length ? 'ทานล่าสุด' : 'เมนูยอดนิยม'}</Text>
+            <View style={styles.chipRow}>
+              {(recentNames.length ? recentNames : POPULAR_FOODS).map((name) => (
+                <Pressable
+                  key={name}
+                  onPress={() => setQuery(name)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`ค้นหา ${name}`}
+                  style={({ pressed }) => [styles.chip, pressed && styles.chipPressed]}
+                >
+                  <Text style={styles.chipText} numberOfLines={1}>{name}</Text>
+                </Pressable>
+              ))}
+            </View>
+            <Text style={styles.quickPickHint}>
+              แตะเพื่อค้นหา หรือพิมพ์ชื่ออาหารได้ทั้งไทยและอังกฤษ
+            </Text>
+          </View>
         ) : searching ? (
           <View style={styles.loadingRow}>
             <ActivityIndicator size="small" color={colors.primary} />
@@ -209,8 +223,15 @@ export default function LogScreen({ navigation, route }) {
               <FoodSearchRow
                 key={String(food.id)}
                 name={food.name}
-                subtitle={[food.nameEn, 'ต่อ 100 กรัม'].filter(Boolean).join(' · ')}
-                kcal={food.per100g?.kcal}
+                subtitle={[
+                  food.nameEn,
+                  food.servingUnit
+                    ? `1 ${food.servingUnit.unit} ≈ ${food.servingUnit.grams} กรัม`
+                    : 'ต่อ 100 กรัม',
+                ].filter(Boolean).join(' · ')}
+                kcal={food.servingUnit && food.per100g?.kcal != null
+                  ? Number(food.per100g.kcal) * food.servingUnit.grams / 100
+                  : food.per100g?.kcal}
                 kcalEstimated={food.estimated?.includes('kcal')}
                 onPress={() => goToPortion(food)}
               />

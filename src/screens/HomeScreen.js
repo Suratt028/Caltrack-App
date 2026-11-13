@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { useApp } from '../context/AppContext';
+import { useFoodLogs, useProfile } from '../data/useUserData';
 import CalorieRing from '../components/CalorieRing';
 import MacroBar from '../components/MacroBar';
 import Card from '../components/Card';
@@ -13,7 +14,7 @@ import EmptyState from '../components/EmptyState';
 import Banner from '../components/Banner';
 import MealEntryCard from '../components/MealEntryCard';
 import { MEALS, MEAL_LABEL } from '../components/MealChips';
-import { calculateMacroGoals, todayKey } from '../utils/calculations';
+import { calculateAgeBasedMacroGoals, calculateBMI, getBMICategory, todayKey } from '../utils/calculations';
 import { confirmAction } from '../utils/confirm';
 import styles from '../style/screens/HomeScreenStyles';
 
@@ -28,7 +29,9 @@ function dateForOffset(offset) {
 }
 
 export default function HomeScreen({ navigation }) {
-  const { profile, user, getDayTotals, logsByDay, removeFoodLog } = useApp();
+  const { user } = useApp();
+  const { profile } = useProfile();
+  const { getDayTotals, logsByDay, removeFoodLog } = useFoodLogs();
   const [notice, setNotice] = useState(null);
   // 0 = today, -1 = yesterday, …; the header arrows move between days.
   const [dayOffset, setDayOffset] = useState(0);
@@ -50,7 +53,9 @@ export default function HomeScreen({ navigation }) {
   // Every goal value comes from the saved profile — never hardcoded.
   const hasGoal = Number(profile?.calorieGoal) > 0;
   const calorieGoal = hasGoal ? Number(profile.calorieGoal) : 0;
-  const macroGoals = hasGoal ? profile?.macroGoals || calculateMacroGoals(calorieGoal) : null;
+  const macroGoals = hasGoal ? profile?.macroGoals || calculateAgeBasedMacroGoals(calorieGoal, profile) : null;
+  const bmi = profile ? calculateBMI(profile.weightKg, profile.heightCm) : null;
+  const bmiCategory = Number(profile?.age) >= 18 ? getBMICategory(bmi) : null;
   const over = hasGoal && totals.kcal > calorieGoal;
   const overBy = over ? totals.kcal - calorieGoal : 0;
 
@@ -257,6 +262,40 @@ export default function HomeScreen({ navigation }) {
             </Card>
           </>
         )}
+
+        {profile ? (
+          <Card style={styles.block}>
+            <Text style={styles.sectionTitle}>ข้อเสนอแนะสุขภาพ</Text>
+            {bmiCategory ? (
+              <Text style={styles.explainText}>
+                BMI ประมาณ {bmi.toFixed(1)} · {bmiCategory.label} (เกณฑ์คัดกรองผู้ใหญ่เอเชีย)
+              </Text>
+            ) : (
+              <Text style={styles.explainText}>BMI สำหรับผู้มีอายุต่ำกว่า 18 ปีต้องแปลผลด้วยเกณฑ์เฉพาะอายุและเพศ</Text>
+            )}
+            {bmiCategory?.key === 'low' ? (
+              <Text style={styles.explainText}>BMI ต่ำกว่าช่วงอ้างอิง ไม่ควรตั้งเป้าลดน้ำหนักจากตัวเลขนี้เพียงอย่างเดียว</Text>
+            ) : null}
+            {bmiCategory?.key === 'at_risk' ? (
+              <Text style={styles.explainText}>เริ่มมีความเสี่ยงตามเกณฑ์คัดกรอง ลองปรับพฤติกรรมอย่างค่อยเป็นค่อยไป โดย BMI ไม่ใช่การวินิจฉัยโรค</Text>
+            ) : null}
+            {bmiCategory?.key === 'obesity_1' || bmiCategory?.key === 'obesity_2' ? (
+              <Text style={styles.explainText}>BMI สูงกว่าช่วงอ้างอิง ไม่จำเป็นต้องลดน้ำหนักอย่างเร่งด่วนจากตัวเลข BMI เพียงค่าเดียว</Text>
+            ) : null}
+            {bmiCategory?.key === 'normal' && profile.goal === 'gain' ? (
+              <Text style={styles.explainText}>หากต้องการเพิ่มมวลกล้ามเนื้อ การฝึกแรงต้านและโภชนาการที่เหมาะสมเป็นทางเลือกได้ ไม่จำเป็นต้องลดน้ำหนักเพียงเพราะ BMI</Text>
+            ) : null}
+            <Text style={styles.explainText}>
+              โปรตีนคำนวณจากน้ำหนักและค่าอ้างอิงตามวัย (ผู้ใหญ่ 19 ปีขึ้นไปใช้ 0.8 กรัม/กก./วัน) แล้วแบ่งพลังงานที่เหลือเป็นคาร์บ 60% และไขมัน 40% เป็นค่าอ้างอิงทั่วไป ไม่ใช่เป้าหมายรักษาโรคหรือเพิ่มกล้ามเนื้อโดยเฉพาะ
+            </Text>
+            <Text style={styles.explainText}>
+              หากมีโรคไตหรือการทำงานของไตลดลง หรือมีโรคประจำตัวอื่น เป้าหมายโปรตีนและพลังงานอาจต้องปรับเฉพาะบุคคล ควรปรึกษาแพทย์หรือนักกำหนดอาหารก่อนเปลี่ยนเป้าหมาย
+            </Text>
+            {Number(profile.age) < 18 ? (
+              <Text style={styles.explainText}>ผู้มีอายุต่ำกว่า 18 ปีควรปรึกษาแพทย์หรือนักกำหนดอาหารก่อนใช้เป้าหมายพลังงานหรือสารอาหารในแอป</Text>
+            ) : null}
+          </Card>
+        ) : null}
 
         {/* Food for the selected day, grouped by meal */}
         <View style={styles.foodHeader}>
