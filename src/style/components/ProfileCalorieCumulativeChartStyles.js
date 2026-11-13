@@ -12,30 +12,28 @@ export default StyleSheet.create({
     color: colors.ink,
     marginBottom: spacing.sm,
   },
+  // Today (left, accent) and the average day (right, grey), big numbers.
   summaryRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
     gap: spacing.md,
     marginBottom: spacing.xs,
   },
-  summaryColumn: {
-    flex: 1,
-  },
-  summaryLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.inkMuted,
-  },
   summaryValue: {
-    fontSize: 23,
-    lineHeight: 30,
+    fontSize: 30,
+    lineHeight: 40,
     fontWeight: '800',
     color: colors.ink,
     fontVariant: ['tabular-nums'],
   },
+  summaryValueMuted: {
+    color: colors.inkFaint,
+  },
   summaryUnit: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.inkMuted,
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.inkFaint,
   },
   canvas: {
     width: '100%',
@@ -58,24 +56,12 @@ export default StyleSheet.create({
     height: 3,
     borderRadius: 2,
   },
-  goalLegendLine: {
-    height: 0,
-    borderTopWidth: 2,
-    borderTopColor: colors.turmericDark,
-    borderStyle: 'dashed',
-  },
-  avgLegendLine: {
-    height: 0,
-    borderTopWidth: 2,
-    borderTopColor: colors.inkFaint,
-    borderStyle: 'dashed',
-  },
   legendText: {
     fontSize: 13,
     color: colors.inkMuted,
   },
   hint: {
-    fontSize: 12,
+    fontSize: 13,
     color: colors.inkMuted,
     marginTop: spacing.sm,
   },

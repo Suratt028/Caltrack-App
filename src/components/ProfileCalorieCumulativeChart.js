@@ -4,10 +4,17 @@ import Svg, { Circle, Defs, Line, LinearGradient, Path, Stop, Text as SvgText } 
 import { Text } from './AppText';
 import { colors } from '../theme/colors';
 import useDeviceLayout from '../utils/useDeviceLayout';
+import { smoothPath } from './charts/chartKit';
 import styles from '../style/components/ProfileCalorieCumulativeChartStyles';
 
-const PAD = { top: 16, right: 12, bottom: 30, left: 48 };
+// Layout follows the "today vs average" activity chart style: today's total
+// (accent) beside the full-day average (grey), smooth hourly lines, a solid
+// "now" marker, a progress bar along the bottom, and only 00:00 · now · 00:00
+// on the time axis.
+
+const PAD = { top: 14, right: 10, bottom: 34, left: 10 };
 const THAI_MONTHS_SHORT = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+const TICK_FONT = 12;
 
 const formatNumber = (value) => Math.round(Number(value) || 0).toLocaleString('th-TH');
 const dateKey = (date) => (
@@ -37,36 +44,22 @@ function groupEntriesByDay(entries, fallbackDate) {
   }, {});
 }
 
-// Entries without a usable time sit at 24:00; clamp them to the chart's end so
-// today's untimed entries still count toward "so far".
-function cumulativeAt(entries, minute, endMinute = 1440) {
+// Entries without a usable time sit at 24:00; `clampTo` pulls them forward
+// (today's untimed entries count toward "so far").
+function cumulativeAt(entries, minute, clampTo = 1440) {
   return entries.reduce(
-    (sum, entry) => (Math.min(entry.minute, endMinute) <= minute ? sum + entry.kcal : sum),
+    (sum, entry) => (Math.min(entry.minute, clampTo) <= minute ? sum + entry.kcal : sum),
     0
   );
 }
 
-// Cumulative intake jumps when food is logged, so draw it as steps (flat, then
-// straight up at each entry) instead of slanted lines between samples.
-function stepPoints(minutes, valueAt, endMinute) {
-  const points = [{ minute: 0, kcal: valueAt(0) }];
-  [...new Set(minutes.map((m) => Math.min(m, endMinute)))]
-    .filter((m) => m > 0)
-    .sort((a, b) => a - b)
-    .forEach((minute) => points.push({ minute, kcal: valueAt(minute) }));
+/** Samples every hour from 00:00 up to `endMinute` (plus `endMinute` itself). */
+export function hourlySamples(valueAt, endMinute) {
+  const points = [];
+  for (let minute = 0; minute < endMinute; minute += 60) points.push({ minute, kcal: valueAt(minute) });
   points.push({ minute: endMinute, kcal: valueAt(endMinute) });
   return points;
 }
-
-function makeStepPath(points, x, y) {
-  return points.reduce((path, point, index) => {
-    if (index === 0) return `M ${x(point.minute)} ${y(point.kcal)}`;
-    return `${path} H ${x(point.minute)} V ${y(point.kcal)}`;
-  }, '');
-}
-
-const TIME_TICKS = [0, 360, 720, 1080, 1440];
-const TICK_FONT = 12;
 
 export default function ProfileCalorieCumulativeChart({
   entries = [],
@@ -84,76 +77,54 @@ export default function ProfileCalorieCumulativeChart({
   const referenceDate = loggedDates[loggedDates.length - 1] || null;
   const referenceIsToday = referenceDate === todayKey;
   const endMinute = referenceIsToday ? nowMinute : 1440;
-  const comparisonDates = referenceDate
-    ? loggedDates.filter((key) => key !== referenceDate)
-    : [];
+  const comparisonDates = referenceDate ? loggedDates.filter((key) => key !== referenceDate) : [];
   const comparisonCount = comparisonDates.length;
+  const hasReference = Boolean(referenceDate && entriesByDay[referenceDate]?.length);
 
-  const referencePoints = referenceDate
-    ? stepPoints(
-        entriesByDay[referenceDate].map((e) => e.minute),
-        (minute) => cumulativeAt(entriesByDay[referenceDate], minute, endMinute),
-        endMinute
-      )
+  // Today: hourly up to now. Average of the other logged days: the whole day.
+  const referencePoints = hasReference
+    ? hourlySamples((minute) => cumulativeAt(entriesByDay[referenceDate], minute, endMinute), endMinute)
     : [];
-  // Past days' untimed entries could have been eaten any time, so they only
-  // count at 24:00 (never pulled forward to "now" like today's are).
   const averageAt = (minute) => comparisonDates.reduce(
     (sum, key) => sum + cumulativeAt(entriesByDay[key], minute),
     0
   ) / comparisonCount;
-  const averagePoints = comparisonCount
-    ? stepPoints(
-        comparisonDates.flatMap((key) => entriesByDay[key].map((e) => e.minute)).filter((m) => m <= endMinute),
-        averageAt,
-        endMinute
-      )
-    : [];
-  const referenceTotal = referencePoints.length
-    ? referencePoints[referencePoints.length - 1].kcal
-    : 0;
-  const comparisonTotal = comparisonCount ? averageAt(endMinute) : 0;
-  const goal = Number(goalValue) > 0 ? Number(goalValue) : null;
-  const maxY = Math.max(
-    500,
-    Math.ceil((Math.max(referenceTotal, comparisonTotal, goal || 0) * 1.1) / 500) * 500
-  );
-  const ticks = [0, maxY / 2, maxY];
-  const hasReference = Boolean(referenceDate && entriesByDay[referenceDate]?.length);
+  const averagePoints = comparisonCount ? hourlySamples(averageAt, 1440) : [];
+  const referenceTotal = referencePoints.length ? referencePoints[referencePoints.length - 1].kcal : 0;
+  const averageDayTotal = comparisonCount ? averageAt(1440) : 0;
+
+  const maxY = Math.max(500, Math.max(referenceTotal, averageDayTotal) * 1.08);
   const plotWidth = Math.max(width - PAD.left - PAD.right, 1);
   const plotHeight = CHART_HEIGHT - PAD.top - PAD.bottom;
+  const baseY = PAD.top + plotHeight;
   const x = (minute) => PAD.left + (plotWidth * minute) / 1440;
-  const y = (value) => PAD.top + plotHeight - (Math.min(value, maxY) / maxY) * plotHeight;
-  // Every 6 hours; on today, skip a tick that would collide with the "now" label.
-  const timeTicks = TIME_TICKS.filter(
-    (minute) => !referenceIsToday || Math.abs(x(minute) - x(nowMinute)) > 34
-  );
-  const goalAbove = goal != null && y(goal) - PAD.top > 14;
+  const y = (value) => baseY - (Math.min(value, maxY) / maxY) * plotHeight;
+  const toXY = (points) => points.map((p) => ({ x: x(p.minute), y: y(p.kcal) }));
+  const todayLine = smoothPath(toXY(referencePoints));
+  const averageLine = smoothPath(toXY(averagePoints));
+  const nowX = x(endMinute);
+  const barY = baseY + 6;
+  // Keep the "now" label clear of the 00:00 labels at both ends.
+  const nowAnchor = nowX < PAD.left + 46 ? 'start' : nowX > width - PAD.right - 46 ? 'end' : 'middle';
 
   return (
     <View style={styles.wrap}>
       <Text style={styles.headline}>
         {referenceDate
-          ? `จังหวะการบันทึกพลังงาน · ${formatDate(referenceDate)}${referenceIsToday ? ' · วันนี้' : ''}`
+          ? `${formatDate(referenceDate)}${referenceIsToday ? ' · วันนี้' : ''}`
           : 'ยังไม่มีข้อมูลในช่วงวันที่เลือก'}
       </Text>
 
+      {/* Today (accent) vs the average day (grey), like the reference chart. */}
       <View style={styles.summaryRow}>
-        <View style={styles.summaryColumn}>
-          <Text style={[styles.summaryLabel, { color: colors.primary }]}>
-            {referenceIsToday ? 'วันนี้' : referenceDate ? `วันที่ ${formatDate(referenceDate)}` : 'วันที่อ้างอิง'}
-          </Text>
-          <Text style={[styles.summaryValue, { color: colors.primary }]}>
-            {formatNumber(referenceTotal)} <Text style={styles.summaryUnit}>kcal</Text>
-          </Text>
-        </View>
-        <View style={styles.summaryColumn}>
-          <Text style={styles.summaryLabel}>เฉลี่ยจากวันที่มีบันทึกในช่วงที่เลือก</Text>
-          <Text style={styles.summaryValue}>
-            {comparisonCount ? formatNumber(comparisonTotal) : '—'}{' '}
-            <Text style={styles.summaryUnit}>kcal</Text>
-          </Text>
-        </View>
+        <Text style={[styles.summaryValue, { color: colors.primary }]}>
+          {formatNumber(referenceTotal)}
+          <Text style={[styles.summaryUnit, { color: colors.primary }]}> kcal</Text>
+        </Text>
+        <Text style={[styles.summaryValue, styles.summaryValueMuted]}>
+          {comparisonCount ? formatNumber(averageDayTotal) : '—'}
+          <Text style={styles.summaryUnit}> kcal</Text>
+        </Text>
       </View>
 
       <View
@@ -164,169 +135,72 @@ export default function ProfileCalorieCumulativeChart({
         style={styles.canvas}
         accessible
         accessibilityRole="image"
-        accessibilityLabel={`กราฟพลังงานสะสมตามช่วงวันที่เลือก${referenceDate ? ` วันอ้างอิง ${referenceDate} ${formatNumber(referenceTotal)} kcal` : ''}`}
-        accessibilityHint={`เป้าหมายต่อวัน ${goal ? `${formatNumber(goal)} kcal` : 'ยังไม่ได้ตั้งค่า'}. ค่าเฉลี่ยคำนวณจาก ${comparisonCount} วันที่มีบันทึกอื่นในช่วงที่เลือก`}
+        accessibilityLabel={`กราฟพลังงานสะสม${referenceDate ? ` ${formatDate(referenceDate)} ${formatNumber(referenceTotal)} กิโลแคลอรี่` : ''}${comparisonCount ? ` ค่าเฉลี่ยทั้งวัน ${formatNumber(averageDayTotal)} กิโลแคลอรี่` : ''}`}
+        accessibilityHint={`เป้าหมายต่อวัน ${Number(goalValue) > 0 ? `${formatNumber(goalValue)} kcal` : 'ยังไม่ได้ตั้งค่า'}. ค่าเฉลี่ยคำนวณจาก ${comparisonCount} วันที่มีบันทึกอื่นในช่วงที่เลือก`}
       >
         {width > 0 && (
           <Svg width={width} height={CHART_HEIGHT}>
             <Defs>
               <LinearGradient id="cumulativeArea" x1="0" y1="0" x2="0" y2="1">
-                <Stop offset="0" stopColor={colors.primary} stopOpacity={0.2} />
-                <Stop offset="1" stopColor={colors.primary} stopOpacity={0.02} />
+                <Stop offset="0" stopColor={colors.primary} stopOpacity={0.16} />
+                <Stop offset="1" stopColor={colors.primary} stopOpacity={0} />
               </LinearGradient>
             </Defs>
 
-            {ticks.map((tick) => (
-              <React.Fragment key={`tick-${tick}`}>
-                <Line
-                  x1={PAD.left}
-                  x2={width - PAD.right}
-                  y1={y(tick)}
-                  y2={y(tick)}
-                  stroke={colors.border}
-                  strokeWidth={1}
-                  strokeDasharray={tick === 0 ? undefined : '3,4'}
-                />
-                <SvgText
-                  x={PAD.left - 8}
-                  y={y(tick) + 4}
-                  fontSize={TICK_FONT}
-                  fill={colors.inkFaint}
-                  textAnchor="end"
-                >
-                  {formatNumber(tick)}
-                </SvgText>
-              </React.Fragment>
-            ))}
-
-            {/* Faint 6-hour guides */}
-            {TIME_TICKS.slice(1, -1).map((minute) => (
+            {/* Dotted edges at 00:00 and 24:00 */}
+            {[0, 1440].map((minute) => (
               <Line
-                key={`v-${minute}`}
+                key={`edge-${minute}`}
                 x1={x(minute)}
                 x2={x(minute)}
                 y1={PAD.top}
-                y2={PAD.top + plotHeight}
-                stroke={colors.border}
+                y2={barY}
+                stroke={colors.inkFaint}
+                strokeOpacity={0.5}
                 strokeWidth={1}
-                strokeOpacity={0.6}
+                strokeDasharray="2,3"
               />
             ))}
 
-            {goal != null && (
+            {/* Average day, whole day, grey */}
+            {averagePoints.length > 1 && (
+              <Path d={averageLine} fill="none" stroke={colors.inkFaint} strokeOpacity={0.75} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" />
+            )}
+
+            {/* Today up to now */}
+            {referencePoints.length > 1 && (
               <>
-                <Line
-                  x1={PAD.left}
-                  x2={width - PAD.right}
-                  y1={y(goal)}
-                  y2={y(goal)}
-                  stroke={colors.turmericDark}
-                  strokeWidth={1.5}
-                  strokeDasharray="6,5"
-                />
-                <SvgText
-                  x={width - PAD.right}
-                  y={goalAbove ? y(goal) - 6 : y(goal) + 15}
-                  fontSize={TICK_FONT}
-                  fontWeight="600"
-                  fill={colors.turmericDark}
-                  textAnchor="end"
-                >
-                  {`เป้า ${formatNumber(goal)}`}
-                </SvgText>
+                <Path d={`${todayLine} L ${nowX} ${baseY} L ${x(0)} ${baseY} Z`} fill="url(#cumulativeArea)" />
+                <Path d={todayLine} fill="none" stroke={colors.primary} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" />
               </>
             )}
 
-            {averagePoints.length > 0 && (
-              <Path
-                d={makeStepPath(averagePoints, x, y)}
-                fill="none"
-                stroke={colors.inkFaint}
-                strokeWidth={2}
-                strokeDasharray="5,4"
-                strokeLinejoin="round"
-              />
-            )}
-
-            {hasReference && (
-              <>
-                <Path
-                  d={`${makeStepPath(referencePoints, x, y)} V ${y(0)} H ${x(0)} Z`}
-                  fill="url(#cumulativeArea)"
-                />
-                <Path
-                  d={makeStepPath(referencePoints, x, y)}
-                  fill="none"
-                  stroke={colors.primary}
-                  strokeWidth={3}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </>
-            )}
-
+            {/* "Now" marker, dot at the end of today's line, and the 00:00 → now bar */}
             {referenceIsToday && (
-              <>
-                <Line
-                  x1={x(endMinute)}
-                  x2={x(endMinute)}
-                  y1={PAD.top}
-                  y2={PAD.top + plotHeight}
-                  stroke={colors.primary}
-                  strokeOpacity={0.35}
-                  strokeWidth={1.5}
-                  strokeDasharray="3,3"
-                />
-                <SvgText
-                  x={x(endMinute)}
-                  y={CHART_HEIGHT - 9}
-                  fontSize={TICK_FONT}
-                  fontWeight="700"
-                  fill={colors.primary}
-                  textAnchor={x(endMinute) < PAD.left + 30 ? 'start' : x(endMinute) > width - PAD.right - 30 ? 'end' : 'middle'}
-                >
-                  {`ตอนนี้ ${timeLabel(nowMinute)}`}
-                </SvgText>
-              </>
+              <Line x1={nowX} x2={nowX} y1={PAD.top} y2={barY} stroke={colors.inkMuted} strokeWidth={1.5} />
             )}
-
-            {averagePoints.length > 0 && (
-              <Circle
-                cx={x(endMinute)}
-                cy={y(comparisonTotal)}
-                r={4}
-                fill={colors.surface}
-                stroke={colors.inkFaint}
-                strokeWidth={2}
-              />
+            {hasReference && (
+              <Circle cx={nowX} cy={y(referenceTotal)} r={5.5} fill={colors.primary} stroke={colors.surface} strokeWidth={2} />
             )}
-
             {hasReference && (
               <>
-                <Circle cx={x(endMinute)} cy={y(referenceTotal)} r={9} fill={colors.primary} fillOpacity={0.15} />
-                <Circle
-                  cx={x(endMinute)}
-                  cy={y(referenceTotal)}
-                  r={5}
-                  fill={colors.primary}
-                  stroke={colors.surface}
-                  strokeWidth={2}
-                />
+                <Line x1={x(0)} x2={nowX} y1={barY} y2={barY} stroke={colors.primary} strokeWidth={3} strokeLinecap="round" />
+                <Circle cx={nowX} cy={barY} r={4.5} fill={colors.primary} />
               </>
             )}
 
-            {timeTicks.map((minute) => (
-              <SvgText
-                key={`time-${minute}`}
-                x={x(minute)}
-                y={CHART_HEIGHT - 9}
-                fontSize={TICK_FONT}
-                fill={colors.inkMuted}
-                textAnchor={minute === 0 ? 'start' : minute === 1440 ? 'end' : 'middle'}
-              >
-                {timeLabel(minute)}
+            {/* Time axis: 00:00 · now · 00:00 only */}
+            <SvgText x={x(0)} y={CHART_HEIGHT - 6} fontSize={TICK_FONT} fill={colors.inkMuted} textAnchor="start">
+              00:00
+            </SvgText>
+            {referenceIsToday && (
+              <SvgText x={nowX} y={CHART_HEIGHT - 6} fontSize={TICK_FONT} fontWeight="700" fill={colors.ink} textAnchor={nowAnchor}>
+                {timeLabel(nowMinute)}
               </SvgText>
-            ))}
+            )}
+            <SvgText x={x(1440)} y={CHART_HEIGHT - 6} fontSize={TICK_FONT} fill={colors.inkMuted} textAnchor="end">
+              00:00
+            </SvgText>
           </Svg>
         )}
       </View>
@@ -335,19 +209,13 @@ export default function ProfileCalorieCumulativeChart({
         {hasReference && (
           <View style={styles.legendItem}>
             <View style={[styles.legendLine, { backgroundColor: colors.primary }]} />
-            <Text style={styles.legendText}>{referenceIsToday ? 'วันนี้' : `วันที่ ${formatDate(referenceDate)}`}</Text>
+            <Text style={styles.legendText}>{referenceIsToday ? 'วันนี้ถึงตอนนี้' : `วันที่ ${formatDate(referenceDate)}`}</Text>
           </View>
         )}
         {comparisonCount > 0 && (
           <View style={styles.legendItem}>
-            <View style={[styles.legendLine, styles.avgLegendLine]} />
-            <Text style={styles.legendText}>ค่าเฉลี่ย {comparisonCount} วันที่มีบันทึก</Text>
-          </View>
-        )}
-        {goal != null && (
-          <View style={styles.legendItem}>
-            <View style={[styles.legendLine, styles.goalLegendLine]} />
-            <Text style={styles.legendText}>เป้าหมาย {formatNumber(goal)} kcal</Text>
+            <View style={[styles.legendLine, { backgroundColor: colors.inkFaint }]} />
+            <Text style={styles.legendText}>ค่าเฉลี่ยทั้งวัน · {comparisonCount} วันที่มีบันทึก</Text>
           </View>
         )}
       </View>
