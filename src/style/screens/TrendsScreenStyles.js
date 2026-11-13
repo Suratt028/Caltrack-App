@@ -223,6 +223,50 @@ export default StyleSheet.create({
   weightCard: {
     marginBottom: spacing.md,
   },
+  // Desktop header: title on the left, today's date chip on the right.
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+  },
+  headerText: {
+    flex: 1,
+    minWidth: 0,
+  },
+  dateChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    marginTop: spacing.xs,
+  },
+  dateChipText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.ink,
+  },
+  // Card title with a small right-aligned meta (e.g. the goal).
+  cardHeadRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  cardMeta: {
+    fontSize: 13,
+    color: colors.inkMuted,
+  },
+  reminderHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
   // Desktop: weight and BMI cards side by side.
   twoCol: {
     flexDirection: 'row',

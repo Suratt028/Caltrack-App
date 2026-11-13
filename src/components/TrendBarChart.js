@@ -3,9 +3,9 @@ import { View } from 'react-native';
 import { Text } from './AppText';
 import Svg, { Rect, Line, Text as SvgText } from 'react-native-svg';
 import { colors } from '../theme/colors';
+import useDeviceLayout from '../utils/useDeviceLayout';
 import styles from '../style/components/TrendBarChartStyles';
 
-const CHART_HEIGHT = 176;
 const PAD = { top: 26, right: 12, bottom: 26, left: 48 };
 const MIN_CHART_WIDTH = 240;
 
@@ -34,6 +34,8 @@ export default function TrendBarChart({
   description = '',
 }) {
   const [width, setWidth] = useState(0);
+  // Fixed height per device class (mobile / tablet / desktop).
+  const CHART_HEIGHT = useDeviceLayout().chartHeight('daily');
 
   const values = data.map((datum) => Number(datum.value) || 0);
   const safeGoal = Number(goalValue) > 0 ? Number(goalValue) : null;
@@ -65,7 +67,7 @@ export default function TrendBarChart({
     <View style={styles.wrap}>
       <View
         onLayout={onLayout}
-        style={styles.canvas}
+        style={[styles.canvas, { minHeight: CHART_HEIGHT }]}
         accessible
         accessibilityRole="image"
         accessibilityLabel={`กราฟ ${title || 'แนวโน้มพลังงาน'}`}

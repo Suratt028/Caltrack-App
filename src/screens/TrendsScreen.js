@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, ScrollView, Pressable, useWindowDimensions } from 'react-native';
+import { View, ScrollView, Pressable, Platform, useWindowDimensions } from 'react-native';
 import { Text } from '../components/AppText';
 import { TextInput } from '../components/AppTextInput';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -19,6 +19,8 @@ import MacroGroupedChart from '../components/MacroGroupedChart';
 import WeightTrendChart from '../components/WeightTrendChart';
 import BmiTrendChart from '../components/BmiTrendChart';
 import WeightOutlookCard from '../components/WeightOutlookCard';
+import TrendBarChart from '../components/TrendBarChart';
+import TrendDataTable from '../components/TrendDataTable';
 import styles from '../style/screens/TrendsScreenStyles';
 
 const RANGE_OPTIONS = [
@@ -56,6 +58,8 @@ export default function TrendsScreen({ navigation }) {
   // stat cards form a row from lg (1024).
   const isSmUp = windowWidth >= 640;
   const isLgUp = windowWidth >= 1024;
+  // Desktop web follows the Figma "Desktop web trends" layout.
+  const isDesktop = Platform.OS === 'web' && isLgUp;
 
   const [range, setRange] = useState('7');
   const [rangeOffset, setRangeOffset] = useState(0);
@@ -193,6 +197,15 @@ export default function TrendsScreen({ navigation }) {
       })),
     [dayData, today]
   );
+  // Energy per logged day; today (still in progress) is drawn as a dashed bar.
+  const dailyBars = useMemo(
+    () => dayData.map((day) => ({ date: day.date, value: day.kcal, highlight: day.date === today })),
+    [dayData, today]
+  );
+  const tableRows = useMemo(
+    () => dayData.map((day) => ({ ...day, isToday: day.date === today })),
+    [dayData, today]
+  );
   const weightPoints = useMemo(
     () =>
       Object.entries(weightsByDay)
@@ -229,7 +242,17 @@ export default function TrendsScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
-        <ScreenHeader title="แนวโน้มของคุณ" subtitle="มองเห็นจังหวะการกิน ไม่ใช่คะแนนตัดสิน" />
+        <View style={isDesktop ? styles.headerRow : undefined}>
+          <View style={isDesktop ? styles.headerText : undefined}>
+            <ScreenHeader title="แนวโน้มของคุณ" subtitle="มองเห็นจังหวะการกิน ไม่ใช่คะแนนตัดสิน" />
+          </View>
+          {isDesktop && (
+            <View style={styles.dateChip}>
+              <Ionicons name="calendar-outline" size={16} color={colors.primary} />
+              <Text style={styles.dateChipText}>{shortDateFull(today)}</Text>
+            </View>
+          )}
+        </View>
 
         {/* Range picker + date navigator */}
         <View style={[styles.controlsRow, isSmUp && styles.controlsRowWide]}>
@@ -346,7 +369,8 @@ export default function TrendsScreen({ navigation }) {
           </>
         ) : (
           <>
-            {/* Mobile summary */}
+            {/* Phone/tablet summary (Figma iOS trends); desktop uses the stat row below. */}
+            {!isDesktop && (
             <Card style={styles.mintCard}>
               <View style={styles.summaryHeadRow}>
                 <Text style={styles.mintLabel}>พลังงานเฉลี่ยต่อวัน</Text>
@@ -360,8 +384,10 @@ export default function TrendsScreen({ navigation }) {
               </View>
               <Text style={styles.mintNote}>{headlineNote}</Text>
             </Card>
+            )}
 
-            {/* Stat cards */}
+            {/* Stat cards (desktop, Figma "Desktop web trends") */}
+            {isDesktop && (
             <View style={styles.statRow}>
               <TrendStatCard
                 title="พลังงานเฉลี่ยต่อวัน"
@@ -382,9 +408,30 @@ export default function TrendsScreen({ navigation }) {
                 style={isLgUp ? styles.statCardWide : styles.statCard}
               />
             </View>
+            )}
+
+            {/* Energy per day + macros: side by side on desktop, stacked on phones */}
+            <View style={isDesktop ? styles.twoCol : undefined}>
+            <Card style={[styles.chartCard, isDesktop && styles.twoColItem]}>
+              <View style={styles.cardHeadRow}>
+                <Text style={styles.cardTitle}>พลังงานในแต่ละวัน</Text>
+                {goal ? <Text style={styles.cardMeta}>{`เป้าหมาย ${formatNumber(goal)} kcal`}</Text> : null}
+              </View>
+              <TrendBarChart
+                data={dailyBars}
+                goalValue={goal}
+                goalLabel={goal ? `เป้า ${formatNumber(goal)}` : ''}
+                axisUnit="kcal"
+                title="พลังงานในแต่ละวัน"
+                description="แท่งเส้นประคือวันนี้ที่ยังบันทึกไม่ครบวัน"
+              />
+              <Text style={styles.cardNote}>
+                {`${rangeLabel} · แท่งเส้นประคือวันนี้ที่ยังไม่ครบวัน · นับเฉพาะวันที่มีบันทึก`}
+              </Text>
+            </Card>
 
             {/* One mini chart per macro, each against its own goal */}
-            <Card style={styles.chartCard}>
+            <Card style={[styles.chartCard, isDesktop && styles.twoColItem]}>
               <Text style={styles.cardTitle}>สารอาหารในแต่ละวัน</Text>
               <MacroGroupedChart
                 data={macroData}
@@ -402,17 +449,32 @@ export default function TrendsScreen({ navigation }) {
               )}
               <Text style={styles.cardNote}>
                 ปริมาณเป็นกรัม ไม่ได้สัดส่วนพลังงาน{'\n'}
-                ดูตัวเลขรายวันได้จากการกดที่แท่งกราฟ
+                {isDesktop ? 'ชี้ที่แท่งกราฟเพื่อดูตัวเลขของวันนั้น' : 'ดูตัวเลขรายวันได้จากการกดที่แท่งกราฟ'}
               </Text>
             </Card>
+            </View>
 
             {/* Reminder */}
             <Card style={styles.mintCard}>
-              <Text style={styles.reminderTitle}>แต่ละวันไม่จำเป็นต้องเหมือนกัน</Text>
+              <View style={styles.reminderHead}>
+                <Ionicons name="leaf-outline" size={20} color={colors.primary} />
+                <Text style={styles.reminderTitle}>แต่ละวันไม่จำเป็นต้องเหมือนกัน</Text>
+              </View>
               <Text style={styles.reminderBody}>
                 {`วันที่บันทึกก่อนหน้าเฉลี่ย ${formatNumber(prevAvgKcal)} kcal โดยนับเฉพาะวันที่มีข้อมูล วันที่ไม่มีรายการจะไม่ถูกนับ`}
               </Text>
             </Card>
+
+            {/* Daily numbers table (desktop, Figma "ตัวเลขรายวัน") */}
+            {isDesktop && (
+              <Card style={styles.chartCard}>
+                <View style={styles.cardHeadRow}>
+                  <Text style={styles.cardTitle}>ตัวเลขรายวัน</Text>
+                  {goal ? <Text style={styles.cardMeta}>{`เป้าหมายในโปรไฟล์ ${formatNumber(goal)} kcal`}</Text> : null}
+                </View>
+                <TrendDataTable rows={tableRows} />
+              </Card>
+            )}
 
           </>
         )}

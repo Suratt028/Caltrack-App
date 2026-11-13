@@ -8,6 +8,8 @@ export const BREAKPOINTS = { tablet: 640, desktop: 1024 };
 export const CHART_HEIGHTS = {
   cumulative: { mobile: 210, tablet: 250, desktop: 280 },
   macro: { mobile: 170, tablet: 210, desktop: 240 },
+  // Same height as `macro` on desktop, where the two sit side by side.
+  daily: { mobile: 190, tablet: 210, desktop: 240 },
   weight: { mobile: 200, tablet: 230, desktop: 250 },
   bmi: { mobile: 220, tablet: 240, desktop: 250 },
 };
