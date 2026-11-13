@@ -1,0 +1,159 @@
+﻿@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/noto-sans-thai";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+    /* Noto Sans Thai: Thai tone marks need the taller line box it ships with. */
+    --font-sans: 'Noto Sans Thai Variable', 'Noto Sans Thai', ui-sans-serif, system-ui, sans-serif;
+    --font-heading: var(--font-sans);
+    --color-sidebar-ring: var(--sidebar-ring);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar: var(--sidebar);
+    --color-chart-5: var(--chart-5);
+    --color-chart-4: var(--chart-4);
+    --color-chart-3: var(--chart-3);
+    --color-chart-2: var(--chart-2);
+    --color-chart-1: var(--chart-1);
+    --color-ring: var(--ring);
+    --color-input: var(--input);
+    --color-border: var(--border);
+    --color-destructive: var(--destructive);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-accent: var(--accent);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-muted: var(--muted);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-secondary: var(--secondary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-primary: var(--primary);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-popover: var(--popover);
+    --color-card-foreground: var(--card-foreground);
+    --color-card: var(--card);
+    --color-foreground: var(--foreground);
+    --color-background: var(--background);
+    /* CalTrack extras: macros (always paired with a text label) and the
+       supportive "over goal" gold — never red for eating over goal. */
+    --color-protein: var(--protein);
+    --color-carbs: var(--carbs);
+    --color-fat: var(--fat);
+    --color-over: var(--over);
+    --color-over-foreground: var(--over-foreground);
+    --color-over-soft: var(--over-soft);
+    --radius-sm: calc(var(--radius) * 0.6);
+    --radius-md: calc(var(--radius) * 0.8);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) * 1.4);
+    --radius-2xl: calc(var(--radius) * 1.8);
+    --radius-3xl: calc(var(--radius) * 2.2);
+    --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* Light: CalTrack "leaf" palette (src/theme/colors.js in the mobile app). */
+:root {
+    --background: #F7F5F0;
+    --foreground: #1F3A2F;
+    --card: #FFFFFF;
+    --card-foreground: #1F3A2F;
+    --popover: #FFFFFF;
+    --popover-foreground: #1F3A2F;
+    --primary: #21634C;
+    --primary-foreground: #FFFFFF;
+    --secondary: #F1EFE9;
+    --secondary-foreground: #1F3A2F;
+    --muted: #F1EFE9;
+    --muted-foreground: #5F6F67;
+    --accent: #E6F0E7;
+    --accent-foreground: #1B3D2F;
+    --destructive: #B23E28;
+    --border: #E4E8E2;
+    --input: #E4E8E2;
+    --ring: #21634C;
+    --chart-1: #21634C;
+    --chart-2: #9BBBA9;
+    --chart-3: #4A7BA7;
+    --chart-4: #B5832E;
+    --chart-5: #B26B5A;
+    --protein: #4A7BA7;
+    --carbs: #B5832E;
+    --fat: #B26B5A;
+    --over: #B5832E;
+    --over-foreground: #8A611F;
+    --over-soft: #F6EEDB;
+    --radius: 1rem;
+    --sidebar: #FFFFFF;
+    --sidebar-foreground: #1F3A2F;
+    --sidebar-primary: #21634C;
+    --sidebar-primary-foreground: #FFFFFF;
+    --sidebar-accent: #E6F0E7;
+    --sidebar-accent-foreground: #1B3D2F;
+    --sidebar-border: #E4E8E2;
+    --sidebar-ring: #21634C;
+}
+
+.dark {
+    --background: #12201A;
+    --foreground: #E8EFEA;
+    --card: #1A2B23;
+    --card-foreground: #E8EFEA;
+    --popover: #1A2B23;
+    --popover-foreground: #E8EFEA;
+    --primary: #5FB493;
+    --primary-foreground: #0E1A15;
+    --secondary: #22362C;
+    --secondary-foreground: #E8EFEA;
+    --muted: #22362C;
+    --muted-foreground: #A3B5AB;
+    --accent: #22362C;
+    --accent-foreground: #E8EFEA;
+    --destructive: #E07A63;
+    --border: #2C4237;
+    --input: #2C4237;
+    --ring: #5FB493;
+    --chart-1: #5FB493;
+    --chart-2: #3D5C4C;
+    --chart-3: #7FA8CF;
+    --chart-4: #D9A752;
+    --chart-5: #D2917F;
+    --protein: #7FA8CF;
+    --carbs: #D9A752;
+    --fat: #D2917F;
+    --over: #D9A752;
+    --over-foreground: #E9C47F;
+    --over-soft: #3A3222;
+    --sidebar: #16251E;
+    --sidebar-foreground: #E8EFEA;
+    --sidebar-primary: #5FB493;
+    --sidebar-primary-foreground: #0E1A15;
+    --sidebar-accent: #22362C;
+    --sidebar-accent-foreground: #E8EFEA;
+    --sidebar-border: #2C4237;
+    --sidebar-ring: #5FB493;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    line-height: 1.55;
+  }
+  html {
+    @apply font-sans;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
