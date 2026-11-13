@@ -20,8 +20,21 @@ const {
 } = require('./server/foodMatching');
 
 const { reserveScanSlot } = require('./server/scanQuota');
+const { createRateLimiter } = require('./server/rateLimit');
+const { createRedisClient } = require('./server/redisClient');
+
+// Optional. Shares rate-limit counters across server instances (see server/rateLimit.js).
+const redisClient = createRedisClient(process.env.REDIS_URL);
 
 const app = express();
+// Behind a load balancer or reverse proxy, req.ip is the proxy's address unless
+// Express is told to trust X-Forwarded-For; then every user would share one
+// rate-limit bucket. Set TRUST_PROXY to the number of proxy hops (e.g. 1).
+// Leave it unset when clients connect directly, or anyone could fake their IP.
+if (process.env.TRUST_PROXY) {
+  const hops = Number(process.env.TRUST_PROXY);
+  app.set('trust proxy', Number.isInteger(hops) ? hops : process.env.TRUST_PROXY);
+}
 app.use(cors());
 // Only the scan route takes photos, so only it gets the big body limit, and it
 // parses after requireUser so anonymous callers can't make us buffer 10 MB.
@@ -928,36 +941,12 @@ async function seedDemoData() {
   return { user, profile, logs };
 }
 
-// In-memory fixed-window rate limiter for sign-in/sign-up (per server process).
-// Counts every attempt; keyed by IP, plus the email for login so one account
-// can't be brute-forced from many addresses without hitting the IP limit too.
-function rateLimit({ name, windowMs, max, keyFn }) {
-  const hits = new Map();
-  setInterval(() => {
-    const now = Date.now();
-    for (const [key, entry] of hits) if (entry.resetAt <= now) hits.delete(key);
-  }, windowMs).unref();
-
-  return (req, res, next) => {
-    const key = `${name}:${keyFn(req)}`;
-    const now = Date.now();
-    const entry = hits.get(key);
-    if (!entry || entry.resetAt <= now) {
-      hits.set(key, { count: 1, resetAt: now + windowMs });
-      return next();
-    }
-    entry.count += 1;
-    if (entry.count > max) {
-      const retryAfterSec = Math.ceil((entry.resetAt - now) / 1000);
-      res.set('Retry-After', String(retryAfterSec));
-      return res.status(429).json({
-        error: `พยายามบ่อยเกินไป กรุณารอ ${Math.ceil(retryAfterSec / 60)} นาทีแล้วลองใหม่`,
-        code: 'RATE_LIMITED',
-      });
-    }
-    return next();
-  };
-}
+// Fixed-window rate limits for sign-in/sign-up and guest scans. Counts every
+// attempt; keyed by IP, plus the email for login so one account can't be
+// brute-forced from many addresses without hitting the IP limit too.
+// With REDIS_URL set the counters are shared by all server instances;
+// without it (or while Redis is down) each process counts on its own.
+const rateLimit = createRateLimiter({ redis: redisClient });
 
 const MINUTE_MS = 60 * 1000;
 const clientIp = (req) => req.ip || req.socket?.remoteAddress || 'unknown';
@@ -990,6 +979,8 @@ app.get('/api/diagnostics', (req, res) => {
   res.json({
     geminiApiKeyLoaded: !!geminiApiKey,
     geminiApiKey: geminiApiKey ? 'SET' : 'NOT_SET',
+    // 'memory' = per-process counters; 'redis:ready' = shared; any other redis:* = falling back to memory.
+    rateLimitStore: redisClient ? `redis:${redisClient.status}` : 'memory',
   });
 });
 

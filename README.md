@@ -80,6 +80,8 @@ REPORT_TIMEZONE="Asia/Bangkok"
 | `ADMIN_PASSWORD` | รหัสผ่านสำหรับเข้าสู่ระบบ Admin Web ควรเก็บใน backend เท่านั้น |
 | `ADMIN_DISPLAY_NAME` | ชื่อแสดงของ Admin ค่าเริ่มต้นคือ `CalTrack Administrator` |
 | `REPORT_TIMEZONE` | โซนเวลาที่ใช้แบ่งวันในรายงานแอดมินและโควตาสแกนรายวัน ค่าเริ่มต้นคือ `Asia/Bangkok` |
+| `REDIS_URL` | (ไม่บังคับ) Redis สำหรับนับ rate limit ของการล็อกอิน/สมัคร/ทดลองสแกนร่วมกันทุก instance ถ้าไม่ตั้งหรือ Redis ล่ม แต่ละ process จะนับเองในหน่วยความจำ ดูสถานะได้ที่ `/api/diagnostics` (`rateLimitStore`) |
+| `TRUST_PROXY` | จำนวน proxy/load balancer ที่อยู่หน้า server (เช่น `1`) เพื่อให้ rate limit เห็น IP จริงของผู้ใช้ ถ้าผู้ใช้ต่อตรงให้เว้นว่าง ไม่เช่นนั้นปลอม IP ผ่าน `X-Forwarded-For` ได้ |
 
 Backend ยังรองรับตัวแปรทางเลือก `MONGODB_USERNAME`, `MONGODB_PASSWORD` และ `MONGODB_HOST` (ใช้แทน `MONGODB_URI` ได้)
 

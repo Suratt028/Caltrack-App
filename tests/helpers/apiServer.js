@@ -12,6 +12,8 @@ const TEST_ENV = {
   MONGODB_DB_NAME: 'caltrack-test',
   // Empty so /api/ai/scan can never reach Gemini.
   GEMINI_API_KEY: '',
+  // Empty so tests use in-process rate-limit counters, never a Redis from a local .env.
+  REDIS_URL: '',
 };
 
 async function startApiServer() {
