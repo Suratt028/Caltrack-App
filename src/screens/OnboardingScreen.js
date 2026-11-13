@@ -258,6 +258,7 @@ export default function OnboardingScreen() {
                 <OptionRow
                   key={a.key}
                   label={a.sublabel.replace(/^เช่น\s*/, '')}
+                  sublabel={a.label}
                   selected={activityLevel === a.key}
                   onPress={() => setActivityLevel(a.key)}
                 />

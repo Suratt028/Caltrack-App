@@ -133,10 +133,10 @@ export default StyleSheet.create({
     color: colors.primaryDark,
   },
   optionSub: {
-    fontSize: 12,
+    fontSize: 13,
     color: colors.inkMuted,
     marginTop: spacing.xs,
-    lineHeight: 17,
+    lineHeight: 19,
   },
   radio: {
     width: 24,
