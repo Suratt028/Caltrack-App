@@ -15,6 +15,7 @@ import Banner from '../components/Banner';
 import MealEntryCard from '../components/MealEntryCard';
 import { MEALS, MEAL_LABEL, defaultMealForNow } from '../components/MealChips';
 import useDeviceLayout from '../utils/useDeviceLayout';
+import AnnouncementsBanner from '../components/AnnouncementsBanner';
 import { calculateAgeBasedMacroGoals, calculateBMI, getBMICategory, todayKey } from '../utils/calculations';
 import { confirmAction } from '../utils/confirm';
 import styles from '../style/screens/HomeScreenStyles';
@@ -173,9 +174,15 @@ export default function HomeScreen({ navigation }) {
     </Pressable>
   ) : null;
 
-  const noticeBanner = notice ? (
-    <Banner tone={notice.tone} message={notice.message} onDismiss={() => setNotice(null)} style={styles.banner} />
-  ) : null;
+  const noticeBanner = (
+    <>
+      {/* Scheduled notices from the admin (maintenance, updates…) */}
+      <AnnouncementsBanner />
+      {notice ? (
+        <Banner tone={notice.tone} message={notice.message} onDismiss={() => setNotice(null)} style={styles.banner} />
+      ) : null}
+    </>
+  );
 
   const energyBlock = hasGoal ? (
     /* Energy card — ring + consumed/goal stats + macro grid */

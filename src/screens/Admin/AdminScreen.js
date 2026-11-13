@@ -16,6 +16,7 @@ import { confirmAsync } from '../../utils/confirm';
 import AiScan from '../../components/admin/AiScan';
 import Reports from '../../components/admin/Reports';
 import Settings from '../../components/admin/Settings';
+import Announcements from '../../components/admin/Announcements';
 import Support from '../../components/admin/Support';
 
 const NAV = [
@@ -24,6 +25,7 @@ const NAV = [
   ['foods', 'Food database'],
   ['ai', 'AI Scan'],
   ['reports', 'Reports'],
+  ['announcements', 'Announcements'],
   ['settings', 'Settings'],
   ['support', 'Support'],
 ];
@@ -210,13 +212,13 @@ export default function AdminScreen() {
     <View style={styles.shell}>
       <View style={styles.sidebar}>
         <Text style={styles.brand}>CalTrack <Text style={styles.brandSub}>Admin</Text></Text>
-        {NAV.slice(0, 5).map(([key, label]) => (
+        {NAV.slice(0, 6).map(([key, label]) => (
           <Pressable key={key} onPress={() => setPage(key)} style={[styles.nav, page === key && styles.navActive]}>
             <Text style={[styles.navText, page === key && styles.navTextActive]}>{label}</Text>
           </Pressable>
         ))}
         <View style={styles.separator} />
-        {NAV.slice(5).map(([key, label]) => (
+        {NAV.slice(6).map(([key, label]) => (
           <Pressable key={key} onPress={() => setPage(key)} style={[styles.nav, page === key && styles.navActive]}>
             <Text style={[styles.navText, page === key && styles.navTextActive]}>{label}</Text>
           </Pressable>
@@ -272,6 +274,7 @@ export default function AdminScreen() {
 
           {page === 'ai' && <AiScan token={token} />}
           {page === 'reports' && <Reports token={token} />}
+          {page === 'announcements' && <Announcements token={token} />}
           {page === 'settings' && <Settings token={token} />}
           {page === 'support' && <Support token={token} />}
         </ScrollView>

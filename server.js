@@ -21,6 +21,12 @@ const {
 
 const { reserveScanSlot } = require('./server/scanQuota');
 const { FOCUS_MACROS, rankFoodsByFocus } = require('./server/foodFocus');
+const {
+  KINDS: ANNOUNCEMENT_KINDS,
+  announcementStatus,
+  validateAnnouncement,
+  visibleAnnouncements,
+} = require('./server/announcements');
 const { createRateLimiter } = require('./server/rateLimit');
 const { createRedisClient } = require('./server/redisClient');
 
@@ -53,7 +59,8 @@ app.use(express.urlencoded({ extended: false }));
 
 // Maintenance mode (Admin → Settings): block the app's API while keeping the
 // admin console, health checks and sign-in reachable.
-const MAINTENANCE_ALLOWED = ['/health', '/api/health', '/api/admin', '/api/auth/login', '/api/diagnostics'];
+// Announcements stay readable so the app can explain a planned maintenance window.
+const MAINTENANCE_ALLOWED = ['/health', '/api/health', '/api/admin', '/api/auth/login', '/api/diagnostics', '/api/announcements'];
 app.use(async (req, res, next) => {
   if (MAINTENANCE_ALLOWED.some((prefix) => req.path === prefix || req.path.startsWith(`${prefix}/`))) return next();
   try {
@@ -338,6 +345,20 @@ const WeightLog = mongoose.model('WeightLog', weightLogSchema, 'weightLogs');
 const ScanImage = mongoose.model('ScanImage', scanImageSchema, 'scanImages');
 const ScanLog = mongoose.model('ScanLog', scanLogSchema, 'scanLogs');
 const AppSetting = mongoose.model('AppSetting', appSettingSchema, 'appSettings');
+
+// Scheduled notices from the admin console (planned maintenance, app updates…).
+const announcementSchema = new mongoose.Schema({
+  kind: { type: String, enum: ANNOUNCEMENT_KINDS, default: 'info' },
+  title: { type: String, required: true },
+  message: { type: String, default: '' },
+  startsAt: { type: Date, required: true },
+  endsAt: { type: Date, required: true },
+  notifyFrom: { type: Date, required: true },
+  active: { type: Boolean, default: true },
+  createdBy: { type: String, default: null },
+}, { timestamps: true });
+announcementSchema.index({ active: 1, endsAt: 1 });
+const Announcement = mongoose.model('Announcement', announcementSchema, 'announcements');
 
 // Admin → Settings. maxFreeScansPerDay: 0 means unlimited.
 const DEFAULT_SYSTEM_SETTINGS = { maxFreeScansPerDay: 0, maintenanceMode: false };
@@ -2035,6 +2056,65 @@ async function getAiScanConfig() {
     prompt: typeof saved.prompt === 'string' && saved.prompt.trim() ? saved.prompt : DEFAULT_SCAN_PROMPT,
   };
 }
+
+// ---- Scheduled announcements ----------------------------------------------
+// Public: notices users should see right now (from notifyFrom until endsAt).
+app.get('/api/announcements', async (req, res) => {
+  try {
+    if (!isMongoReady) return res.json({ announcements: [] });
+    const items = await Announcement.find({ active: true, endsAt: { $gte: new Date() } }).lean();
+    return res.json({ announcements: visibleAnnouncements(items) });
+  } catch (error) {
+    return sendServerError(req, res, error);
+  }
+});
+
+app.get('/api/admin/announcements', requireAdmin, async (req, res) => {
+  try {
+    const items = await Announcement.find().sort({ startsAt: -1 }).limit(200).lean();
+    const now = new Date();
+    return res.json({
+      announcements: items.map((item) => ({ ...item, id: String(item._id), status: announcementStatus(item, now) })),
+    });
+  } catch (error) {
+    return sendServerError(req, res, error);
+  }
+});
+
+app.post('/api/admin/announcements', requireAdmin, async (req, res) => {
+  try {
+    const { value, error } = validateAnnouncement(req.body);
+    if (error) return res.status(400).json({ error });
+    const item = await Announcement.create({ ...value, createdBy: req.admin?.email || null });
+    return res.status(201).json({ announcement: { ...item.toObject(), id: String(item._id), status: announcementStatus(item) } });
+  } catch (error) {
+    return sendServerError(req, res, error);
+  }
+});
+
+app.put('/api/admin/announcements/:id', requireAdmin, async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ error: 'announcement not found' });
+    const { value, error } = validateAnnouncement(req.body);
+    if (error) return res.status(400).json({ error });
+    const item = await Announcement.findByIdAndUpdate(req.params.id, value, { returnDocument: 'after' }).lean();
+    if (!item) return res.status(404).json({ error: 'announcement not found' });
+    return res.json({ announcement: { ...item, id: String(item._id), status: announcementStatus(item) } });
+  } catch (error) {
+    return sendServerError(req, res, error);
+  }
+});
+
+app.delete('/api/admin/announcements/:id', requireAdmin, async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ error: 'announcement not found' });
+    const item = await Announcement.findByIdAndDelete(req.params.id).lean();
+    if (!item) return res.status(404).json({ error: 'announcement not found' });
+    return res.json({ deleted: String(item._id) });
+  } catch (error) {
+    return sendServerError(req, res, error);
+  }
+});
 
 app.get('/api/admin/system-settings', requireAdmin, async (req, res) => {
   try {
