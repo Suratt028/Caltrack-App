@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, ScrollView, Pressable } from 'react-native';
+import { View, ScrollView, Pressable, Platform } from 'react-native';
 import { Text } from '../components/AppText';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,7 +13,8 @@ import PrimaryButton from '../components/PrimaryButton';
 import EmptyState from '../components/EmptyState';
 import Banner from '../components/Banner';
 import MealEntryCard from '../components/MealEntryCard';
-import { MEALS, MEAL_LABEL } from '../components/MealChips';
+import { MEALS, MEAL_LABEL, defaultMealForNow } from '../components/MealChips';
+import useDeviceLayout from '../utils/useDeviceLayout';
 import { calculateAgeBasedMacroGoals, calculateBMI, getBMICategory, todayKey } from '../utils/calculations';
 import { confirmAction } from '../utils/confirm';
 import styles from '../style/screens/HomeScreenStyles';
@@ -28,8 +29,32 @@ function dateForOffset(offset) {
   return date;
 }
 
+// Entry times are ISO timestamps; older ones may be "HH:mm".
+function timeValue(time) {
+  if (!time) return -1;
+  const hhmm = /^(\d{1,2}):(\d{2})$/.exec(String(time));
+  if (hhmm) return Number(hhmm[1]) * 60 + Number(hhmm[2]);
+  const date = new Date(time);
+  return Number.isNaN(date.getTime()) ? -1 : date.getHours() * 60 + date.getMinutes();
+}
+function clockOf(time) {
+  const minutes = timeValue(time);
+  if (minutes < 0) return '';
+  return `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+}
+function servingText(entry) {
+  const count = Number(entry.servings) || 0;
+  const grams = Number(entry.grams) || 0;
+  if (entry.unit === 'กรัม' && grams > 0) return `${formatNumber(grams)} กรัม`;
+  if (entry.unit && count > 0) return `${count} ${entry.unit}`;
+  return count > 0 ? `${count} ที่` : '';
+}
+
 export default function HomeScreen({ navigation }) {
   const { user } = useApp();
+  // Desktop web gets the two-column layout from the Figma desktop home.
+  const { isDesktop: wide } = useDeviceLayout();
+  const isDesktop = Platform.OS === 'web' && wide;
   const { profile } = useProfile();
   const { getDayTotals, logsByDay, removeFoodLog } = useFoodLogs();
   const [notice, setNotice] = useState(null);
@@ -108,266 +133,361 @@ export default function HomeScreen({ navigation }) {
   const dinnerEmpty = !todayEntries.some((entry) => entry.meal === 'dinner');
   // Today shows every meal so each has its own "+"; past days only what was logged.
   const visibleGroups = mealGroups.filter((group) => isToday || group.entries.length > 0);
+  // Most recently eaten entry of the selected day (for the desktop "latest" card).
+  const latestEntry = [...todayEntries].sort((a, b) => (timeValue(b.time) - timeValue(a.time)))[0] || null;
+
+  // ----- Blocks (shared by the phone and desktop layouts) ----------------------
+
+  const dayNav = (
+    <View style={[styles.dateSwitcher, isDesktop && styles.dateSwitcherDesktop]}>
+      <Pressable
+        onPress={() => setDayOffset((offset) => offset - 1)}
+        accessibilityRole="button"
+        accessibilityLabel="ดูวันก่อนหน้า"
+        hitSlop={4}
+        style={({ pressed }) => [styles.dateArrow, pressed && styles.leafBtnPressed]}
+      >
+        <Ionicons name="chevron-back" size={22} color={colors.primary} />
+      </Pressable>
+      <View style={styles.dateCenter} accessibilityRole="header">
+        <Text style={styles.dateTitle}>{dayTitle}</Text>
+        {dayTitle !== dateLabel ? <Text style={styles.dateText}>{dateLabel}</Text> : null}
+      </View>
+      <Pressable
+        onPress={() => setDayOffset((offset) => Math.min(0, offset + 1))}
+        disabled={isToday}
+        accessibilityRole="button"
+        accessibilityLabel="ดูวันถัดไป"
+        accessibilityState={{ disabled: isToday }}
+        hitSlop={4}
+        style={({ pressed }) => [styles.dateArrow, pressed && styles.leafBtnPressed]}
+      >
+        <Ionicons name="chevron-forward" size={22} color={isToday ? colors.border : colors.primary} />
+      </Pressable>
+    </View>
+  );
+
+  const backToToday = !isToday ? (
+    <Pressable onPress={() => setDayOffset(0)} accessibilityRole="button" hitSlop={8} style={styles.backToToday}>
+      <Text style={styles.linkText}>กลับไปวันนี้</Text>
+    </Pressable>
+  ) : null;
+
+  const noticeBanner = notice ? (
+    <Banner tone={notice.tone} message={notice.message} onDismiss={() => setNotice(null)} style={styles.banner} />
+  ) : null;
+
+  const energyBlock = hasGoal ? (
+    /* Energy card — ring + consumed/goal stats + macro grid */
+    <Card style={styles.block}>
+      <View style={styles.energyHeader}>
+        <Text style={styles.sectionTitle}>พลังงาน{isToday ? 'วันนี้' : 'ของวันนั้น'}</Text>
+        <Pressable
+          onPress={() => navigation.navigate('Profile')}
+          accessibilityRole="link"
+          accessibilityLabel="ดูโปรไฟล์"
+          accessibilityHint="เปิดหน้าโปรไฟล์เพื่อดูหรือแก้ไขเป้าหมายของคุณ"
+          hitSlop={8}
+        >
+          <Text style={styles.linkText}>ดูโปรไฟล์</Text>
+        </Pressable>
+      </View>
+
+      <View style={styles.energyRow}>
+        <CalorieRing consumed={totals.kcal} goal={calorieGoal} size={168} strokeWidth={14} />
+        <View style={styles.energyStats}>
+          <View>
+            <Text style={styles.statLabel}>กินแล้ว</Text>
+            <Text style={styles.statValue}>
+              {formatNumber(totals.kcal)}
+              <Text style={styles.statUnit}> kcal</Text>
+            </Text>
+          </View>
+          <View>
+            <Text style={styles.statLabel}>เป้าหมาย</Text>
+            <Text style={styles.statValueSm}>
+              {formatNumber(calorieGoal)}
+              <Text style={styles.statUnit}> kcal</Text>
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      {over ? (
+        <Text style={styles.overText}>มากกว่าเป้าหมายที่ตั้งไว้ {formatNumber(overBy)} kcal</Text>
+      ) : null}
+
+      <View style={styles.divider} />
+
+      <View style={[styles.macroGrid, isDesktop && styles.macroGridStacked]}>
+        <View style={styles.macroCell}>
+          <MacroBar label="โปรตีน" consumed={totals.protein} goal={macroGoals.protein} color={colors.protein} />
+        </View>
+        <View style={styles.macroCell}>
+          <MacroBar label="คาร์บ" consumed={totals.carbs} goal={macroGoals.carbs} color={colors.carbs} />
+        </View>
+        <View style={styles.macroCell}>
+          <MacroBar label="ไขมัน" consumed={totals.fat} goal={macroGoals.fat} color={colors.fat} />
+        </View>
+      </View>
+    </Card>
+  ) : (
+    /* No goal yet — gentle onboarding cards (web NoGoalCards) */
+    <>
+      <Card style={[styles.block, styles.mintCard]}>
+        <View style={styles.sproutTile}>
+          <Ionicons name="flower-outline" size={26} color={colors.primary} />
+        </View>
+        <Text style={styles.noGoalTitle}>ค่อย ๆ รู้จักการกินในแบบของคุณ</Text>
+        <Text style={styles.noGoalDesc}>
+          ยังไม่ได้ตั้งเป้าหมายในโปรไฟล์ บันทึกอาหารก่อนได้ แล้วค่อยตั้งค่าเมื่อพร้อม
+        </Text>
+        <PrimaryButton
+          title="ตั้งเป้าหมายในโปรไฟล์"
+          icon="person-outline"
+          onPress={() => navigation.navigate('Profile')}
+          accessibilityHint="เปิดหน้าโปรไฟล์เพื่อตั้งเป้าหมายโภชนาการ"
+          style={styles.noGoalCta}
+        />
+      </Card>
+      <Card style={styles.block}>
+        <Text style={styles.sectionTitle}>พลังงานที่บันทึก{isToday ? 'วันนี้' : ''}</Text>
+        <Text style={styles.bigKcal}>
+          {formatNumber(totals.kcal)}
+          <Text style={styles.bigKcalUnit}> kcal</Text>
+        </Text>
+        <Text style={styles.explainText}>ยังไม่แสดงเป้าหมายหรือพลังงานที่เหลือจนกว่าจะตั้งค่าโปรไฟล์</Text>
+      </Card>
+    </>
+  );
+
+  const healthBlock = profile ? (
+    <Card style={styles.block}>
+      <Text style={styles.sectionTitle}>ข้อเสนอแนะสุขภาพ</Text>
+      {bmiCategory ? (
+        <Text style={styles.explainText}>
+          BMI ประมาณ {bmi.toFixed(1)} · {bmiCategory.label} (เกณฑ์คัดกรองผู้ใหญ่เอเชีย)
+        </Text>
+      ) : (
+        <Text style={styles.explainText}>BMI สำหรับผู้มีอายุต่ำกว่า 18 ปีต้องแปลผลด้วยเกณฑ์เฉพาะอายุและเพศ</Text>
+      )}
+      {bmiCategory?.key === 'low' ? (
+        <Text style={styles.explainText}>BMI ต่ำกว่าช่วงอ้างอิง ไม่ควรตั้งเป้าลดน้ำหนักจากตัวเลขนี้เพียงอย่างเดียว</Text>
+      ) : null}
+      {bmiCategory?.key === 'at_risk' ? (
+        <Text style={styles.explainText}>เริ่มมีความเสี่ยงตามเกณฑ์คัดกรอง ลองปรับพฤติกรรมอย่างค่อยเป็นค่อยไป โดย BMI ไม่ใช่การวินิจฉัยโรค</Text>
+      ) : null}
+      {bmiCategory?.key === 'obesity_1' || bmiCategory?.key === 'obesity_2' ? (
+        <Text style={styles.explainText}>BMI สูงกว่าช่วงอ้างอิง ไม่จำเป็นต้องลดน้ำหนักอย่างเร่งด่วนจากตัวเลข BMI เพียงค่าเดียว</Text>
+      ) : null}
+      {bmiCategory?.key === 'normal' && profile.goal === 'gain' ? (
+        <Text style={styles.explainText}>หากต้องการเพิ่มมวลกล้ามเนื้อ การฝึกแรงต้านและโภชนาการที่เหมาะสมเป็นทางเลือกได้ ไม่จำเป็นต้องลดน้ำหนักเพียงเพราะ BMI</Text>
+      ) : null}
+      <Text style={styles.explainText}>
+        โปรตีนคำนวณจากน้ำหนักและค่าอ้างอิงตามวัย (ผู้ใหญ่ 19 ปีขึ้นไปใช้ 0.8 กรัม/กก./วัน) แล้วแบ่งพลังงานที่เหลือเป็นคาร์บ 60% และไขมัน 40% เป็นค่าอ้างอิงทั่วไป ไม่ใช่เป้าหมายรักษาโรคหรือเพิ่มกล้ามเนื้อโดยเฉพาะ
+      </Text>
+      <Text style={styles.explainText}>
+        หากมีโรคไตหรือการทำงานของไตลดลง หรือมีโรคประจำตัวอื่น เป้าหมายโปรตีนและพลังงานอาจต้องปรับเฉพาะบุคคล ควรปรึกษาแพทย์หรือนักกำหนดอาหารก่อนเปลี่ยนเป้าหมาย
+      </Text>
+      {Number(profile.age) < 18 ? (
+        <Text style={styles.explainText}>ผู้มีอายุต่ำกว่า 18 ปีควรปรึกษาแพทย์หรือนักกำหนดอาหารก่อนใช้เป้าหมายพลังงานหรือสารอาหารในแอป</Text>
+      ) : null}
+    </Card>
+  ) : null;
+
+  const foodBlock = (
+    <>
+      <View style={styles.foodHeader}>
+        <Text style={styles.sectionTitle}>อาหาร{isToday ? 'วันนี้' : 'ของวันนั้น'}</Text>
+        <Text style={styles.countText}>{todayEntries.length} รายการ</Text>
+      </View>
+
+      {!isToday && todayEntries.length === 0 ? (
+        <Card style={styles.block}>
+          <EmptyState icon="calendar-outline" title="ไม่มีบันทึกในวันนี้" message="วันที่ไม่ได้บันทึกจะไม่ถูกนับในแนวโน้ม" />
+        </Card>
+      ) : (
+        <View style={styles.block}>
+          {visibleGroups.map((group) => {
+            const groupKcal = group.entries.reduce((sum, entry) => sum + (Number(entry.kcal) || 0), 0);
+            return (
+              <View key={group.key} style={styles.mealGroup}>
+                <View style={styles.mealGroupHeader}>
+                  <Text style={styles.mealGroupTitle}>
+                    {group.label}
+                    {group.entries.length === 0 ? <Text style={styles.mealGroupEmpty}>  ยังไม่มีรายการ</Text> : null}
+                  </Text>
+                  {group.entries.length > 0 ? (
+                    <Text style={styles.mealGroupKcal}>{formatNumber(groupKcal)} kcal</Text>
+                  ) : null}
+                  {isToday && group.key !== 'other' ? (
+                    <Pressable
+                      onPress={() => navigation.navigate('Log', { meal: group.key, requestedAt: Date.now() })}
+                      accessibilityRole="button"
+                      accessibilityLabel={`เพิ่มอาหาร${group.label}`}
+                      style={({ pressed }) => [styles.mealAddBtn, pressed && styles.leafBtnPressed]}
+                    >
+                      <Ionicons name="add" size={20} color={colors.primary} />
+                    </Pressable>
+                  ) : null}
+                </View>
+                {group.entries.map((entry) => (
+                  <MealEntryCard
+                    key={entry.id}
+                    meal={entry.meal}
+                    mealLabel={group.key === 'other' ? group.label : undefined}
+                    name={entry.name}
+                    time={entry.time}
+                    servings={entry.servings}
+                    unit={entry.unit}
+                    grams={entry.grams}
+                    kcal={entry.kcal}
+                    onRemove={() => askRemove(entry)}
+                  />
+                ))}
+              </View>
+            );
+          })}
+        </View>
+      )}
+    </>
+  );
+
+  const reflectBlock = isToday && todayEntries.length > 0 ? (
+    <Card style={[styles.block, styles.mintCard]}>
+      <View style={styles.reflectHead}>
+        <Ionicons name="leaf-outline" size={20} color={colors.primary} />
+        <Text style={styles.sectionTitle}>วันนี้ในแบบของคุณ</Text>
+      </View>
+      <Text style={styles.reflectBody}>บันทึกแล้ว {todayEntries.length} รายการ จาก {mealsWithEntries} มื้อ</Text>
+      {dinnerEmpty ? (
+        <Text style={styles.reflectBody}>มื้อเย็นยังว่างอยู่ เพิ่มเมื่อคุณพร้อมได้เลย</Text>
+      ) : null}
+    </Card>
+  ) : null;
+
+  // ----- Desktop-only cards (Figma "CalTrack · Desktop web home") --------------
+
+  const nextMealKey = defaultMealForNow();
+  const nextMealCard = isToday ? (
+    <Card style={[styles.block, styles.nextCard]}>
+      <Text style={styles.nextTitle}>มื้อต่อไป บันทึกได้ง่าย ๆ</Text>
+      <Text style={styles.nextBody}>
+        ค้นหาเมนูที่ทาน หรือถ่ายรูปจานอาหาร ตรวจสอบปริมาณก่อนบันทึกได้เสมอ
+      </Text>
+      <PrimaryButton
+        title="บันทึกอาหาร"
+        icon="add"
+        onPress={() => navigation.navigate('Log', { meal: nextMealKey, requestedAt: Date.now() })}
+        accessibilityHint={`เปิดหน้าบันทึกอาหาร ${MEAL_LABEL[nextMealKey]}`}
+        style={styles.nextPrimary}
+      />
+      <PrimaryButton
+        title="สแกนอาหารด้วย AI"
+        icon="scan-outline"
+        variant="outline"
+        onPress={() => navigation.navigate('Scan')}
+        style={styles.nextSecondary}
+      />
+      {latestEntry ? (
+        <View style={styles.nextLatest}>
+          <Ionicons name="time-outline" size={16} color={colors.inkMuted} />
+          <Text style={styles.nextLatestText} numberOfLines={1}>
+            {`เมนูล่าสุด: ${latestEntry.name} · ${formatNumber(latestEntry.kcal)} kcal`}
+          </Text>
+        </View>
+      ) : null}
+    </Card>
+  ) : null;
+
+  const latestMealCard = latestEntry ? (
+    <Card style={[styles.block, styles.latestCard]}>
+      <Text style={styles.latestMeta}>
+        {[MEAL_LABEL[latestEntry.meal] || 'รายการล่าสุด', clockOf(latestEntry.time)].filter(Boolean).join(' · ')}
+      </Text>
+      <Text style={styles.latestName} numberOfLines={2}>{latestEntry.name}</Text>
+      <Text style={styles.latestDetail}>
+        {[servingText(latestEntry), `${formatNumber(latestEntry.kcal)} kcal`].filter(Boolean).join(' · ')}
+      </Text>
+      <Text style={styles.latestNote}>บันทึกอยู่ในยอด{isToday ? 'วันนี้' : 'ของวันนั้น'}แล้ว</Text>
+    </Card>
+  ) : null;
+
+  const goalCard = hasGoal ? (
+    <Card style={styles.block}>
+      <Text style={styles.sectionTitle}>เป้าหมายในโปรไฟล์</Text>
+      <Text style={styles.goalLine}>{`พลังงาน ${formatNumber(calorieGoal)} kcal ต่อวัน`}</Text>
+      <Text style={styles.goalSub}>
+        {`โปรตีน ${formatNumber(macroGoals.protein)} · คาร์บ ${formatNumber(macroGoals.carbs)} · ไขมัน ${formatNumber(macroGoals.fat)} กรัม`}
+      </Text>
+      <Text style={styles.goalSub}>คำนวณจากข้อมูลของคุณ ไม่ใช่เป้าหมายเดียวสำหรับทุกคน</Text>
+      <Pressable
+        onPress={() => navigation.navigate('Profile')}
+        accessibilityRole="link"
+        hitSlop={8}
+        style={styles.goalLink}
+      >
+        <Text style={styles.linkText}>ดูและแก้ไขโปรไฟล์ →</Text>
+      </Pressable>
+    </Card>
+  ) : null;
+
+  // ----- Layouts ------------------------------------------------------------------
+
+  if (isDesktop) {
+    return (
+      <SafeAreaView style={styles.safe} edges={['top']}>
+        <ScrollView contentContainerStyle={[styles.content, styles.contentDesktop]}>
+          <View style={styles.desktopHeader}>
+            <View style={styles.desktopHeaderText}>
+              <Text style={styles.desktopGreeting} numberOfLines={1}>สวัสดี {greetingName}</Text>
+              <Text style={styles.desktopSubtitle}>
+                {`${selectedDate.toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} · วันนี้ดูแลตัวเองแค่ไหนก็พอ`}
+              </Text>
+            </View>
+            <View style={styles.desktopDayNav}>
+              {dayNav}
+              {backToToday}
+            </View>
+          </View>
+          {noticeBanner}
+
+          <View style={styles.desktopGrid}>
+            <View style={styles.desktopLeft}>
+              {energyBlock}
+              {reflectBlock}
+              {goalCard}
+              {healthBlock}
+            </View>
+            <View style={styles.desktopRight}>
+              {(nextMealCard || latestMealCard) && (
+                <View style={styles.desktopTopRow}>
+                  {nextMealCard ? <View style={styles.desktopNextCol}>{nextMealCard}</View> : null}
+                  {latestMealCard ? <View style={styles.desktopLatestCol}>{latestMealCard}</View> : null}
+                </View>
+              )}
+              {foodBlock}
+            </View>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
         {/* Header */}
         <Text style={styles.greetingSmall} numberOfLines={1}>สวัสดี {greetingName}</Text>
-        <View style={styles.dateSwitcher}>
-          <Pressable
-            onPress={() => setDayOffset((offset) => offset - 1)}
-            accessibilityRole="button"
-            accessibilityLabel="ดูวันก่อนหน้า"
-            hitSlop={4}
-            style={({ pressed }) => [styles.dateArrow, pressed && styles.leafBtnPressed]}
-          >
-            <Ionicons name="chevron-back" size={22} color={colors.primary} />
-          </Pressable>
-          <View style={styles.dateCenter} accessibilityRole="header">
-            <Text style={styles.dateTitle}>{dayTitle}</Text>
-            {dayTitle !== dateLabel ? <Text style={styles.dateText}>{dateLabel}</Text> : null}
-          </View>
-          <Pressable
-            onPress={() => setDayOffset((offset) => Math.min(0, offset + 1))}
-            disabled={isToday}
-            accessibilityRole="button"
-            accessibilityLabel="ดูวันถัดไป"
-            accessibilityState={{ disabled: isToday }}
-            hitSlop={4}
-            style={({ pressed }) => [styles.dateArrow, pressed && styles.leafBtnPressed]}
-          >
-            <Ionicons name="chevron-forward" size={22} color={isToday ? colors.border : colors.primary} />
-          </Pressable>
-        </View>
-        {!isToday ? (
-          <Pressable
-            onPress={() => setDayOffset(0)}
-            accessibilityRole="button"
-            hitSlop={8}
-            style={styles.backToToday}
-          >
-            <Text style={styles.linkText}>กลับไปวันนี้</Text>
-          </Pressable>
-        ) : null}
-
-        {!!notice && (
-          <Banner
-            tone={notice.tone}
-            message={notice.message}
-            onDismiss={() => setNotice(null)}
-            style={styles.banner}
-          />
-        )}
-
-        {hasGoal ? (
-          /* Energy card — ring + consumed/goal stats + macro grid */
-          <Card style={styles.block}>
-            <View style={styles.energyHeader}>
-              <Text style={styles.sectionTitle}>พลังงาน{isToday ? 'วันนี้' : 'ของวันนั้น'}</Text>
-              <Pressable
-                onPress={() => navigation.navigate('Profile')}
-                accessibilityRole="link"
-                accessibilityLabel="ดูโปรไฟล์"
-                accessibilityHint="เปิดหน้าโปรไฟล์เพื่อดูหรือแก้ไขเป้าหมายของคุณ"
-                hitSlop={8}
-              >
-                <Text style={styles.linkText}>ดูโปรไฟล์</Text>
-              </Pressable>
-            </View>
-
-            <View style={styles.energyRow}>
-              <CalorieRing consumed={totals.kcal} goal={calorieGoal} size={168} strokeWidth={14} />
-              <View style={styles.energyStats}>
-                <View>
-                  <Text style={styles.statLabel}>กินแล้ว</Text>
-                  <Text style={styles.statValue}>
-                    {formatNumber(totals.kcal)}
-                    <Text style={styles.statUnit}> kcal</Text>
-                  </Text>
-                </View>
-                <View>
-                  <Text style={styles.statLabel}>เป้าหมาย</Text>
-                  <Text style={styles.statValueSm}>
-                    {formatNumber(calorieGoal)}
-                    <Text style={styles.statUnit}> kcal</Text>
-                  </Text>
-                </View>
-              </View>
-            </View>
-
-            {over ? (
-              <Text style={styles.overText}>
-                มากกว่าเป้าหมายที่ตั้งไว้ {formatNumber(overBy)} kcal
-              </Text>
-            ) : null}
-
-            <View style={styles.divider} />
-
-            <View style={styles.macroGrid}>
-              <View style={styles.macroCell}>
-                <MacroBar
-                  label="โปรตีน"
-                  consumed={totals.protein}
-                  goal={macroGoals.protein}
-                  color={colors.protein}
-                />
-              </View>
-              <View style={styles.macroCell}>
-                <MacroBar
-                  label="คาร์บ"
-                  consumed={totals.carbs}
-                  goal={macroGoals.carbs}
-                  color={colors.carbs}
-                />
-              </View>
-              <View style={styles.macroCell}>
-                <MacroBar
-                  label="ไขมัน"
-                  consumed={totals.fat}
-                  goal={macroGoals.fat}
-                  color={colors.fat}
-                />
-              </View>
-            </View>
-          </Card>
-        ) : (
-          /* No goal yet — gentle onboarding cards (web NoGoalCards) */
-          <>
-            <Card style={[styles.block, styles.mintCard]}>
-              <View style={styles.sproutTile}>
-                <Ionicons name="flower-outline" size={26} color={colors.primary} />
-              </View>
-              <Text style={styles.noGoalTitle}>ค่อย ๆ รู้จักการกินในแบบของคุณ</Text>
-              <Text style={styles.noGoalDesc}>
-                ยังไม่ได้ตั้งเป้าหมายในโปรไฟล์ บันทึกอาหารก่อนได้ แล้วค่อยตั้งค่าเมื่อพร้อม
-              </Text>
-              <PrimaryButton
-                title="ตั้งเป้าหมายในโปรไฟล์"
-                icon="person-outline"
-                onPress={() => navigation.navigate('Profile')}
-                accessibilityHint="เปิดหน้าโปรไฟล์เพื่อตั้งเป้าหมายโภชนาการ"
-                style={styles.noGoalCta}
-              />
-            </Card>
-            <Card style={styles.block}>
-              <Text style={styles.sectionTitle}>พลังงานที่บันทึก{isToday ? 'วันนี้' : ''}</Text>
-              <Text style={styles.bigKcal}>
-                {formatNumber(totals.kcal)}
-                <Text style={styles.bigKcalUnit}> kcal</Text>
-              </Text>
-              <Text style={styles.explainText}>
-                ยังไม่แสดงเป้าหมายหรือพลังงานที่เหลือจนกว่าจะตั้งค่าโปรไฟล์
-              </Text>
-            </Card>
-          </>
-        )}
-
-        {profile ? (
-          <Card style={styles.block}>
-            <Text style={styles.sectionTitle}>ข้อเสนอแนะสุขภาพ</Text>
-            {bmiCategory ? (
-              <Text style={styles.explainText}>
-                BMI ประมาณ {bmi.toFixed(1)} · {bmiCategory.label} (เกณฑ์คัดกรองผู้ใหญ่เอเชีย)
-              </Text>
-            ) : (
-              <Text style={styles.explainText}>BMI สำหรับผู้มีอายุต่ำกว่า 18 ปีต้องแปลผลด้วยเกณฑ์เฉพาะอายุและเพศ</Text>
-            )}
-            {bmiCategory?.key === 'low' ? (
-              <Text style={styles.explainText}>BMI ต่ำกว่าช่วงอ้างอิง ไม่ควรตั้งเป้าลดน้ำหนักจากตัวเลขนี้เพียงอย่างเดียว</Text>
-            ) : null}
-            {bmiCategory?.key === 'at_risk' ? (
-              <Text style={styles.explainText}>เริ่มมีความเสี่ยงตามเกณฑ์คัดกรอง ลองปรับพฤติกรรมอย่างค่อยเป็นค่อยไป โดย BMI ไม่ใช่การวินิจฉัยโรค</Text>
-            ) : null}
-            {bmiCategory?.key === 'obesity_1' || bmiCategory?.key === 'obesity_2' ? (
-              <Text style={styles.explainText}>BMI สูงกว่าช่วงอ้างอิง ไม่จำเป็นต้องลดน้ำหนักอย่างเร่งด่วนจากตัวเลข BMI เพียงค่าเดียว</Text>
-            ) : null}
-            {bmiCategory?.key === 'normal' && profile.goal === 'gain' ? (
-              <Text style={styles.explainText}>หากต้องการเพิ่มมวลกล้ามเนื้อ การฝึกแรงต้านและโภชนาการที่เหมาะสมเป็นทางเลือกได้ ไม่จำเป็นต้องลดน้ำหนักเพียงเพราะ BMI</Text>
-            ) : null}
-            <Text style={styles.explainText}>
-              โปรตีนคำนวณจากน้ำหนักและค่าอ้างอิงตามวัย (ผู้ใหญ่ 19 ปีขึ้นไปใช้ 0.8 กรัม/กก./วัน) แล้วแบ่งพลังงานที่เหลือเป็นคาร์บ 60% และไขมัน 40% เป็นค่าอ้างอิงทั่วไป ไม่ใช่เป้าหมายรักษาโรคหรือเพิ่มกล้ามเนื้อโดยเฉพาะ
-            </Text>
-            <Text style={styles.explainText}>
-              หากมีโรคไตหรือการทำงานของไตลดลง หรือมีโรคประจำตัวอื่น เป้าหมายโปรตีนและพลังงานอาจต้องปรับเฉพาะบุคคล ควรปรึกษาแพทย์หรือนักกำหนดอาหารก่อนเปลี่ยนเป้าหมาย
-            </Text>
-            {Number(profile.age) < 18 ? (
-              <Text style={styles.explainText}>ผู้มีอายุต่ำกว่า 18 ปีควรปรึกษาแพทย์หรือนักกำหนดอาหารก่อนใช้เป้าหมายพลังงานหรือสารอาหารในแอป</Text>
-            ) : null}
-          </Card>
-        ) : null}
-
+        {dayNav}
+        {backToToday}
+        {noticeBanner}
+        {energyBlock}
+        {healthBlock}
         {/* Food for the selected day, grouped by meal */}
-        <View style={styles.foodHeader}>
-          <Text style={styles.sectionTitle}>อาหาร{isToday ? 'วันนี้' : 'ของวันนั้น'}</Text>
-          <Text style={styles.countText}>{todayEntries.length} รายการ</Text>
-        </View>
-
-        {!isToday && todayEntries.length === 0 ? (
-          <Card style={styles.block}>
-            <EmptyState
-              icon="calendar-outline"
-              title="ไม่มีบันทึกในวันนี้"
-              message="วันที่ไม่ได้บันทึกจะไม่ถูกนับในแนวโน้ม"
-            />
-          </Card>
-        ) : (
-          <View style={styles.block}>
-            {visibleGroups.map((group) => {
-              const groupKcal = group.entries.reduce((sum, entry) => sum + (Number(entry.kcal) || 0), 0);
-              return (
-                <View key={group.key} style={styles.mealGroup}>
-                  <View style={styles.mealGroupHeader}>
-                    <Text style={styles.mealGroupTitle}>
-                      {group.label}
-                      {group.entries.length === 0 ? <Text style={styles.mealGroupEmpty}>  ยังไม่มีรายการ</Text> : null}
-                    </Text>
-                    {group.entries.length > 0 ? (
-                      <Text style={styles.mealGroupKcal}>{formatNumber(groupKcal)} kcal</Text>
-                    ) : null}
-                    {isToday && group.key !== 'other' ? (
-                      <Pressable
-                        onPress={() => navigation.navigate('Log', { meal: group.key, requestedAt: Date.now() })}
-                        accessibilityRole="button"
-                        accessibilityLabel={`เพิ่มอาหาร${group.label}`}
-                        style={({ pressed }) => [styles.mealAddBtn, pressed && styles.leafBtnPressed]}
-                      >
-                        <Ionicons name="add" size={20} color={colors.primary} />
-                      </Pressable>
-                    ) : null}
-                  </View>
-                  {group.entries.map((entry) => (
-                    <MealEntryCard
-                      key={entry.id}
-                      meal={entry.meal}
-                      mealLabel={group.key === 'other' ? group.label : undefined}
-                      name={entry.name}
-                      time={entry.time}
-                      servings={entry.servings}
-                      unit={entry.unit}
-                      grams={entry.grams}
-                      kcal={entry.kcal}
-                      onRemove={() => askRemove(entry)}
-                    />
-                  ))}
-                </View>
-              );
-            })}
-          </View>
-        )}
-
+        {foodBlock}
         {/* Reflective card — today only. Logging lives in the tab bar (Log / Scan). */}
-        {isToday && todayEntries.length > 0 ? (
-          <Card style={[styles.block, styles.mintCard]}>
-            <Text style={styles.sectionTitle}>วันนี้ในแบบของคุณ</Text>
-            <Text style={styles.reflectBody}>
-              บันทึกแล้ว {todayEntries.length} รายการ จาก {mealsWithEntries} มื้อ
-            </Text>
-            {dinnerEmpty ? (
-              <Text style={styles.reflectBody}>มื้อเย็นยังว่างอยู่ เพิ่มเมื่อคุณพร้อมได้เลย</Text>
-            ) : null}
-          </Card>
-        ) : null}
+        {reflectBlock}
       </ScrollView>
     </SafeAreaView>
   );

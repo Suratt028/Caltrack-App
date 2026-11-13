@@ -138,6 +138,11 @@ export default StyleSheet.create({
     flex: 1,
     minWidth: 0,
   },
+  // Desktop left column is narrow: one macro per row reads better.
+  macroGridStacked: {
+    flexDirection: 'column',
+    gap: spacing.md,
+  },
 
   /* ----------------------------- no-goal cards --------------------------- */
   sproutTile: {
@@ -236,5 +241,150 @@ export default StyleSheet.create({
     color: colors.primaryDark,
     lineHeight: 20,
     marginTop: spacing.sm,
+  },
+  reflectHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+
+  /* ------------------------- desktop two-column ------------------------- */
+  // Figma "CalTrack · Desktop web home": header, then energy/pattern/goal on
+  // the left and "มื้อต่อไป" + latest meal + today's food on the right.
+  contentDesktop: {
+    paddingHorizontal: 32,
+    paddingTop: 28,
+  },
+  desktopHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: spacing.lg,
+    marginBottom: spacing.lg,
+  },
+  desktopHeaderText: {
+    flex: 1,
+    minWidth: 0,
+  },
+  desktopGreeting: {
+    ...typography.h1,
+    color: colors.ink,
+  },
+  desktopSubtitle: {
+    fontSize: 14,
+    color: colors.inkMuted,
+    marginTop: 4,
+  },
+  desktopDayNav: {
+    alignItems: 'flex-end',
+  },
+  dateSwitcherDesktop: {
+    minWidth: 280,
+    marginBottom: 0,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  desktopGrid: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.lg,
+  },
+  desktopLeft: {
+    flex: 5,
+    minWidth: 0,
+  },
+  desktopRight: {
+    flex: 7,
+    minWidth: 0,
+  },
+  desktopTopRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: spacing.md,
+  },
+  desktopNextCol: {
+    flex: 3,
+    minWidth: 0,
+  },
+  desktopLatestCol: {
+    flex: 2,
+    minWidth: 0,
+  },
+
+  // "มื้อต่อไป บันทึกได้ง่าย ๆ"
+  nextCard: {
+    flex: 1,
+  },
+  nextTitle: {
+    ...typography.h2,
+    color: colors.ink,
+  },
+  nextBody: {
+    fontSize: 14,
+    lineHeight: 21,
+    color: colors.inkMuted,
+    marginTop: 6,
+    marginBottom: spacing.md,
+  },
+  nextPrimary: {
+    marginBottom: spacing.sm,
+  },
+  nextSecondary: {
+    marginBottom: spacing.sm,
+  },
+  nextLatest: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: spacing.xs,
+  },
+  nextLatestText: {
+    flex: 1,
+    fontSize: 13,
+    color: colors.inkMuted,
+  },
+
+  // Latest meal
+  latestCard: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  latestMeta: {
+    fontSize: 13,
+    color: colors.inkMuted,
+  },
+  latestName: {
+    ...typography.h3,
+    color: colors.ink,
+    marginTop: 4,
+  },
+  latestDetail: {
+    fontSize: 14,
+    color: colors.ink,
+    marginTop: spacing.sm,
+    fontVariant: ['tabular-nums'],
+  },
+  latestNote: {
+    fontSize: 13,
+    color: colors.primary,
+    marginTop: 4,
+  },
+
+  // Profile goal
+  goalLine: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.ink,
+    marginTop: spacing.sm,
+  },
+  goalSub: {
+    fontSize: 13,
+    lineHeight: 20,
+    color: colors.inkMuted,
+    marginTop: 4,
+  },
+  goalLink: {
+    marginTop: spacing.sm,
+    alignSelf: 'flex-start',
   },
 });
