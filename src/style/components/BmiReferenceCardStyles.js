@@ -8,23 +8,40 @@ export default StyleSheet.create({
     marginBottom: spacing.sm,
   },
 
-  // Value + category
-  summary: {
+  // Figure + value
+  hero: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
     marginBottom: spacing.md,
   },
+  figureStage: {
+    width: 128,
+    height: 220,
+    borderRadius: radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroText: {
+    flex: 1,
+    minWidth: 0,
+  },
+  valueLabel: {
+    fontSize: 13,
+    color: colors.inkMuted,
+  },
   value: {
-    fontSize: 40,
-    lineHeight: 52,
+    fontSize: 48,
+    lineHeight: 60,
     fontWeight: '800',
     color: colors.ink,
     fontVariant: ['tabular-nums'],
   },
-  summaryText: {
-    flexShrink: 1,
-    gap: 4,
+  unit: {
+    fontSize: 13,
+    color: colors.inkFaint,
+    marginTop: -4,
+    marginBottom: spacing.sm,
   },
   pill: {
     alignSelf: 'flex-start',
@@ -36,71 +53,39 @@ export default StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
   },
-  unit: {
-    fontSize: 13,
-    color: colors.inkFaint,
-  },
-
-  // Body shapes
-  figureRow: {
-    flexDirection: 'row',
-    gap: 4,
-    marginBottom: spacing.md,
-  },
-  figureItem: {
-    flex: 1,
-    minWidth: 0,
-    alignItems: 'center',
-    paddingTop: 6,
-    paddingBottom: 10,
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: 'transparent',
-  },
-  figureBadgeSlot: {
-    height: 26,
-    justifyContent: 'center',
-  },
-  figureBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: radius.pill,
-  },
-  figureBadgeText: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: colors.white,
-    fontVariant: ['tabular-nums'],
-  },
-  figureRange: {
-    marginTop: 6,
-    fontSize: 13,
-    color: colors.inkMuted,
-    textAlign: 'center',
-    fontVariant: ['tabular-nums'],
-  },
-
-  // Healthy weight for height
   healthyRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: 12,
-    borderRadius: radius.md,
-    backgroundColor: colors.mint,
-    marginBottom: spacing.sm,
+    alignItems: 'flex-start',
+    gap: 6,
+    marginTop: spacing.md,
   },
   healthyText: {
     flex: 1,
-    fontSize: 14,
-    lineHeight: 21,
-    color: colors.primaryDark,
+    fontSize: 13,
+    lineHeight: 19,
+    color: colors.inkMuted,
   },
   healthyStrong: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
+    color: colors.primaryDark,
     fontVariant: ['tabular-nums'],
+  },
+
+  // Zone band
+  band: {
+    marginBottom: spacing.md,
+  },
+  bandNames: {
+    flexDirection: 'row',
+    marginTop: 6,
+  },
+  bandName: {
+    flex: 1,
+    fontSize: 12,
+    lineHeight: 17,
+    textAlign: 'center',
+    color: colors.inkMuted,
   },
 
   // Advice
@@ -111,7 +96,6 @@ export default StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: radius.md,
     backgroundColor: colors.surfaceMuted,
-    marginBottom: spacing.md,
   },
   hintIcon: {
     marginTop: 1,
@@ -121,53 +105,6 @@ export default StyleSheet.create({
     fontSize: 14,
     lineHeight: 21,
     color: colors.inkMuted,
-  },
-
-  // Reference table
-  table: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    overflow: 'hidden',
-  },
-  tableRow: {
-    minHeight: 46,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  tableRowLast: {
-    borderBottomWidth: 0,
-  },
-  swatch: {
-    width: 12,
-    height: 12,
-    borderRadius: 3,
-  },
-  tableName: {
-    flex: 1,
-    fontSize: 14,
-    color: colors.ink,
-  },
-  youChip: {
-    borderWidth: 1,
-    borderRadius: radius.pill,
-    paddingHorizontal: 8,
-    paddingVertical: 1,
-  },
-  youChipText: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  tableRange: {
-    fontSize: 14,
-    color: colors.inkMuted,
-    fontVariant: ['tabular-nums'],
-    minWidth: 84,
-    textAlign: 'right',
   },
   note: {
     fontSize: 13,

@@ -1,113 +1,110 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Svg, { Circle, Path } from 'react-native-svg';
+import Svg, { Path, Polygon, Text as SvgText } from 'react-native-svg';
 import { Text } from './AppText';
 import Card from './Card';
-import { BMI_CATEGORIES } from '../utils/calculations';
+import BmiBodyFigure from './BmiBodyFigure';
 import { colors } from '../theme/colors';
 import styles from '../style/components/BmiReferenceCardStyles';
 
-// One soft palette for BMI zones (same family as the Trends BMI chart).
-// Warmer for higher zones, never alarm-red: BMI is a screening number, not a verdict.
+// Zone colours in the style of the classic BMI chart (blue → green → yellow →
+// orange → red). `ink` is a darker shade of the same hue for readable text.
 export const BMI_ZONE_STYLE = {
-  low: { fill: '#C9DCEC', soft: colors.skySoft, ink: colors.skyDark },
-  normal: { fill: '#BFD9C6', soft: colors.mint, ink: colors.primary },
-  at_risk: { fill: '#EAD7AA', soft: colors.turmericSoft, ink: colors.turmericDark },
-  obesity_1: { fill: '#E5C4B8', soft: colors.chiliSoft, ink: '#8E4A3B' },
-  obesity_2: { fill: '#D9B1A4', soft: '#EFDCD5', ink: '#7A3E31' },
+  low: { fill: '#8FB3DE', soft: '#E3EDF8', ink: '#2F5D8C', bandText: '#1F3F66' },
+  normal: { fill: '#79C99E', soft: '#E1F3E9', ink: '#2E7D57', bandText: '#174D33' },
+  at_risk: { fill: '#F2C94C', soft: '#FBF1D2', ink: '#7A5B00', bandText: '#5B4300' },
+  obesity_1: { fill: '#F0A04B', soft: '#FCE9D6', ink: '#8A4B12', bandText: '#4A2604' },
+  obesity_2: { fill: '#E05A4F', soft: '#F9DEDB', ink: '#9B2C23', bandText: '#FFFFFF' },
 };
 
-// Body silhouettes, one per zone, getting wider zone by zone (shoulder half-width, waist half-width).
-const FIGURE_SHAPES = {
-  low: { sh: 9, w: 8.5 },
-  normal: { sh: 10, w: 10.5 },
-  at_risk: { sh: 11.5, w: 13 },
-  obesity_1: { sh: 13, w: 15.5 },
-  obesity_2: { sh: 14.5, w: 18.5 },
-};
-// Short labels fit a fifth of a phone screen; exact ranges are in the table below.
-const FIGURE_RANGES = {
-  low: '<18.5',
-  normal: '18.5+',
-  at_risk: '23+',
-  obesity_1: '25+',
-  obesity_2: '30+',
-};
+// Asian adult cut-offs (the app's own), with the outer zones capped for drawing.
+const BAND = [
+  { key: 'low', from: 15, to: 18.5, range: '<18.5', name: 'ต่ำกว่าเกณฑ์' },
+  { key: 'normal', from: 18.5, to: 23, range: '18.5–22.9', name: 'ตามเกณฑ์' },
+  { key: 'at_risk', from: 23, to: 25, range: '23–24.9', name: 'เริ่มเสี่ยง' },
+  { key: 'obesity_1', from: 25, to: 30, range: '25–29.9', name: 'อ้วนระดับ 1' },
+  { key: 'obesity_2', from: 30, to: 40, range: '30+', name: 'อ้วนระดับ 2' },
+];
+const BAND_H = 34;
+const NOTCH = 10;
 
-function BodyFigure({ sh, w, color, size = 1 }) {
-  const c = 30;
-  const legX = Math.max(5, w * 0.5);
-  const torso =
-    `M ${c - sh} 25 Q ${c} 21 ${c + sh} 25 ` +
-    `C ${c + w + 2} 34 ${c + w + 2} 50 ${c + w - 1} 60 ` +
-    `L ${c - w + 1} 60 ` +
-    `C ${c - w - 2} 50 ${c - w - 2} 34 ${c - sh} 25 Z`;
-  return (
-    <Svg width={48 * size} height={88 * size} viewBox="0 0 60 96">
-      <Circle cx={c} cy={12} r={8} fill={color} />
-      <Path d={torso} fill={color} />
-      <Path
-        d={`M ${c - sh} 27 L ${c - w - 5} 50 M ${c + sh} 27 L ${c + w + 5} 50`}
-        stroke={color}
-        strokeWidth={5}
-        strokeLinecap="round"
-        fill="none"
-      />
-      <Path
-        d={`M ${c - legX} 58 L ${c - legX} 92 M ${c + legX} 58 L ${c + legX} 92`}
-        stroke={color}
-        strokeWidth={6}
-        strokeLinecap="round"
-        fill="none"
-      />
-    </Svg>
-  );
-}
-
-/** Row of body shapes, small to large, each in its zone colour; the user's zone stands out. */
-function BodyScale({ bmi, category }) {
+/** Arrow band like the reference chart, with a pointer at the user's exact BMI. */
+function BmiZoneBand({ bmi, categoryKey }) {
+  const [width, setWidth] = useState(0);
+  const seg = width / BAND.length;
   const hasValue = Number.isFinite(bmi);
+
+  // Pointer position: the active segment, placed proportionally inside its range.
+  let markerX = null;
+  if (hasValue && width > 0) {
+    const index = Math.max(0, BAND.findIndex((z) => z.key === categoryKey));
+    const zone = BAND[index];
+    const within = Math.min(Math.max((bmi - zone.from) / (zone.to - zone.from), 0.08), 0.92);
+    markerX = seg * index + seg * within;
+  }
+  const markerColor = BMI_ZONE_STYLE[categoryKey]?.ink || colors.ink;
+
   return (
-    <View
-      style={styles.figureRow}
-      accessible
-      accessibilityRole="image"
-      accessibilityLabel={hasValue
-        ? `BMI ${bmi.toFixed(1)} อยู่ในช่วง${category?.label || ''} รูปร่างแสดงช่วง BMI ตั้งแต่ต่ำกว่าเกณฑ์ถึงอ้วนระดับ 2`
-        : 'รูปร่างแสดงช่วง BMI ตั้งแต่ต่ำกว่าเกณฑ์ถึงอ้วนระดับ 2'}
-    >
-      {BMI_CATEGORIES.map((zone) => {
-        const zs = BMI_ZONE_STYLE[zone.key];
-        const active = category?.key === zone.key;
-        return (
-          <View
-            key={zone.key}
-            style={[
-              styles.figureItem,
-              active && { backgroundColor: zs.soft, borderColor: zs.ink },
-            ]}
-          >
-            <View style={styles.figureBadgeSlot}>
-              {active && hasValue && (
-                <View style={[styles.figureBadge, { backgroundColor: zs.ink }]}>
-                  <Text style={styles.figureBadgeText}>{bmi.toFixed(1)}</Text>
-                </View>
-              )}
-            </View>
-            <View style={{ opacity: category && !active ? 0.4 : 1 }}>
-              <BodyFigure {...FIGURE_SHAPES[zone.key]} color={zs.ink} />
-            </View>
+    <View style={styles.band} onLayout={(e) => setWidth(Math.round(e.nativeEvent.layout.width))}>
+      {width > 0 && (
+        <Svg width={width} height={BAND_H + 14}>
+          {markerX != null && (
+            <Path
+              d={`M ${markerX - 7} 0 L ${markerX + 7} 0 L ${markerX} 10 Z`}
+              fill={markerColor}
+            />
+          )}
+          {BAND.map((zone, i) => {
+            const x0 = seg * i;
+            const x1 = seg * (i + 1);
+            const top = 14;
+            const mid = top + BAND_H / 2;
+            const bottom = top + BAND_H;
+            const last = i === BAND.length - 1;
+            const points = [
+              [x0, top],
+              [last ? x1 : x1 - NOTCH, top],
+              [x1, last ? top : mid],
+              ...(last ? [[x1, bottom]] : []),
+              [last ? x1 : x1 - NOTCH, bottom],
+              [x0, bottom],
+              ...(i === 0 ? [] : [[x0 + NOTCH, mid]]),
+            ].map(([px, py]) => `${px.toFixed(1)},${py}`).join(' ');
+            const zs = BMI_ZONE_STYLE[zone.key];
+            const active = zone.key === categoryKey;
+            return (
+              <React.Fragment key={zone.key}>
+                <Polygon points={points} fill={zs.fill} opacity={categoryKey && !active ? 0.85 : 1} />
+                <SvgText
+                  x={x0 + (seg + (i === 0 ? -NOTCH : 0)) / 2 + (i === 0 ? 0 : NOTCH / 2)}
+                  y={mid + 4.5}
+                  fontSize={12}
+                  fontWeight="700"
+                  fill={zs.bandText}
+                  textAnchor="middle"
+                >
+                  {zone.range}
+                </SvgText>
+              </React.Fragment>
+            );
+          })}
+        </Svg>
+      )}
+      <View style={styles.bandNames}>
+        {BAND.map((zone) => {
+          const active = zone.key === categoryKey;
+          return (
             <Text
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              style={[styles.figureRange, active && { color: zs.ink, fontWeight: '800' }]}
+              key={zone.key}
+              numberOfLines={2}
+              style={[styles.bandName, active && { color: BMI_ZONE_STYLE[zone.key].ink, fontWeight: '800' }]}
             >
-              {FIGURE_RANGES[zone.key]}
+              {zone.name}
             </Text>
-          </View>
-        );
-      })}
+          );
+        })}
+      </View>
     </View>
   );
 }
@@ -122,15 +119,16 @@ const HINTS = {
 const kg = (value) => value.toLocaleString('th-TH', { maximumFractionDigits: 1 });
 
 /**
- * "BMI และช่วงอ้างอิง" card on the Profile screen: value + category pill,
- * body shapes per zone with the person's zone highlighted, the healthy weight range for
- * their height, and the Asian adult reference table.
+ * "BMI และช่วงอ้างอิง" card on the Profile screen: one body figure shaped by
+ * the user's BMI (it reshapes as the weight changes), the value and category,
+ * the healthy weight for their height, and the colour band of BMI zones.
  */
 export default function BmiReferenceCard({ bmi, category, age, heightCm, style }) {
   const isMinor = Number(age) < 18;
   const zoneStyle = category ? BMI_ZONE_STYLE[category.key] : null;
   const heightM = Number(heightCm) / 100;
   const healthyRange = heightM > 0 ? [18.5 * heightM * heightM, 22.9 * heightM * heightM] : null;
+  const hasValue = Number.isFinite(bmi);
   const hint = isMinor
     ? 'BMI ของผู้มีอายุต่ำกว่า 18 ปีต้องแปลผลเทียบกับอายุและเพศ ไม่ใช้เกณฑ์ผู้ใหญ่'
     : HINTS[category?.key] || (category ? HINTS.high : 'กรอกส่วนสูงและน้ำหนักเพื่อดู BMI');
@@ -139,60 +137,43 @@ export default function BmiReferenceCard({ bmi, category, age, heightCm, style }
     <Card style={style}>
       <Text style={styles.title}>BMI และช่วงอ้างอิง</Text>
 
-      <View style={styles.summary}>
-        <Text style={styles.value}>{Number.isFinite(bmi) ? bmi.toFixed(1) : '—'}</Text>
-        <View style={styles.summaryText}>
-          <View style={[styles.pill, { backgroundColor: zoneStyle?.soft || colors.surfaceMuted }]}>
-            <Text style={[styles.pillText, { color: zoneStyle?.ink || colors.inkMuted }]}>
+      <View style={styles.hero}>
+        {!isMinor && (
+          <View
+            style={[styles.figureStage, { backgroundColor: zoneStyle?.soft || colors.surfaceMuted }]}
+            accessible
+            accessibilityRole="image"
+            accessibilityLabel={hasValue ? `รูปร่างตามค่า BMI ${bmi.toFixed(1)} ${category?.label || ''}` : 'รูปร่างตามค่า BMI'}
+          >
+            <BmiBodyFigure bmi={bmi} color={zoneStyle?.fill || colors.inkFaint} height={200} />
+          </View>
+        )}
+        <View style={styles.heroText}>
+          <Text style={styles.valueLabel}>BMI ของคุณ</Text>
+          <Text style={[styles.value, zoneStyle && { color: zoneStyle.ink }]}>{hasValue ? bmi.toFixed(1) : '—'}</Text>
+          <Text style={styles.unit}>กก./ม.²</Text>
+          <View style={[styles.pill, { backgroundColor: zoneStyle?.fill || colors.surfaceMuted }]}>
+            <Text style={[styles.pillText, { color: zoneStyle?.bandText || colors.inkMuted }]}>
               {isMinor ? 'ต้องใช้เกณฑ์เฉพาะอายุ' : category?.label || 'ยังประเมินไม่ได้'}
             </Text>
           </View>
-          <Text style={styles.unit}>กก./ม.²</Text>
+          {!isMinor && healthyRange && (
+            <View style={styles.healthyRow}>
+              <Ionicons name="body-outline" size={18} color={colors.primary} />
+              <Text style={styles.healthyText}>
+                {`น้ำหนักตามเกณฑ์ (${heightCm} ซม.)\n`}
+                <Text style={styles.healthyStrong}>{`${kg(healthyRange[0])}–${kg(healthyRange[1])} กก.`}</Text>
+              </Text>
+            </View>
+          )}
         </View>
       </View>
 
-      {!isMinor && <BodyScale bmi={bmi} category={category} />}
-
-      {!isMinor && healthyRange && (
-        <View style={styles.healthyRow}>
-          <Ionicons name="body-outline" size={20} color={colors.primary} />
-          <Text style={styles.healthyText}>
-            {`น้ำหนักตามเกณฑ์สำหรับส่วนสูง ${heightCm} ซม.\n`}
-            <Text style={styles.healthyStrong}>{`${kg(healthyRange[0])}–${kg(healthyRange[1])} กก.`}</Text>
-          </Text>
-        </View>
-      )}
+      {!isMinor && <BmiZoneBand bmi={bmi} categoryKey={category?.key} />}
 
       <View style={styles.hintBox}>
         <Ionicons name="information-circle-outline" size={20} color={colors.inkMuted} style={styles.hintIcon} />
         <Text style={styles.hintText}>{hint}</Text>
-      </View>
-
-      <View style={styles.table}>
-        {BMI_CATEGORIES.map((zone, index) => {
-          const active = !isMinor && category?.key === zone.key;
-          const zs = BMI_ZONE_STYLE[zone.key];
-          return (
-            <View
-              key={zone.key}
-              style={[
-                styles.tableRow,
-                index === BMI_CATEGORIES.length - 1 && styles.tableRowLast,
-                active && { backgroundColor: zs.soft },
-              ]}
-              accessibilityState={{ selected: active }}
-            >
-              <View style={[styles.swatch, { backgroundColor: zs.fill }]} />
-              <Text style={[styles.tableName, active && { color: zs.ink, fontWeight: '700' }]}>{zone.label}</Text>
-              {active && (
-                <View style={[styles.youChip, { borderColor: zs.ink }]}>
-                  <Text style={[styles.youChipText, { color: zs.ink }]}>คุณ</Text>
-                </View>
-              )}
-              <Text style={[styles.tableRange, active && { color: zs.ink, fontWeight: '700' }]}>{zone.range}</Text>
-            </View>
-          );
-        })}
       </View>
 
       <Text style={styles.note}>เกณฑ์คัดกรองสำหรับผู้ใหญ่เอเชียเท่านั้น · BMI ไม่ใช่การวินิจฉัยโรค</Text>
