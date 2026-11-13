@@ -51,6 +51,36 @@ export async function searchNutritionFoods(query, limit = 5) {
   return (Array.isArray(payload.results) ? payload.results : []).map(normalizeNutritionFood);
 }
 
+/**
+ * Foods whose energy leans on one macro ("โปรตีนเด่น" / "คาร์บพลังดี" / "ไขมันเข้มข้น").
+ * Each result also has `focus: { macro, share, shares }` (energy shares, 0–1).
+ * @param {'protein'|'carbs'|'fat'} macro
+ */
+export async function fetchFocusFoods(macro, limit = 20) {
+  const response = await fetchWithTimeout(
+    `${API_BASE_URL}/foods/focus?macro=${encodeURIComponent(macro)}&limit=${Math.max(1, Math.min(50, limit))}`
+  );
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(payload.error || `โหลดเมนูแนะนำไม่สำเร็จ (${response.status})`);
+  }
+  return (Array.isArray(payload.results) ? payload.results : []).map((food) => ({
+    ...normalizeNutritionFood(food),
+    focus: food.focus || null,
+  }));
+}
+
+/** Share of energy from protein/carbs/fat for a normalized food (per100g), or null. */
+export function macroEnergyShares(per100g = {}) {
+  const protein = Number(per100g.protein);
+  const carbs = Number(per100g.carbs);
+  const fat = Number(per100g.fat);
+  if (![protein, carbs, fat].every(Number.isFinite)) return null;
+  const total = protein * 4 + carbs * 4 + fat * 9;
+  if (total <= 0) return null;
+  return { protein: (protein * 4) / total, carbs: (carbs * 4) / total, fat: (fat * 9) / total };
+}
+
 export async function getNutritionFoodById(foodId) {
   const response = await fetchWithTimeout(`${API_BASE_URL}/foods/${encodeURIComponent(foodId)}`);
   const payload = await response.json().catch(() => ({}));

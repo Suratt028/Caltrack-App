@@ -5,7 +5,8 @@ import { TextInput } from '../components/AppTextInput';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
-import { searchNutritionFoods } from '../services/foodService';
+import { fetchFocusFoods, macroEnergyShares, searchNutritionFoods } from '../services/foodService';
+import FoodFocusPicker, { focusByKey } from '../components/FoodFocusPicker';
 import { isOfflineError } from '../services/atlasService';
 import { useFoodLogs } from '../data/useUserData';
 import FoodSearchRow from '../components/FoodSearchRow';
@@ -92,6 +93,67 @@ export default function LogScreen({ navigation, route }) {
     };
   }, [query, searchAttempt]);
 
+  // "เลือกตามสไตล์มื้อนี้": foods whose energy leans on protein / carbs / fat.
+  const [focus, setFocus] = useState(null);
+  const [focusFoods, setFocusFoods] = useState([]);
+  const [focusLoading, setFocusLoading] = useState(false);
+  const [focusError, setFocusError] = useState('');
+  const [focusAttempt, setFocusAttempt] = useState(0);
+  const focusInfo = focusByKey(focus);
+
+  useEffect(() => {
+    if (!focus) {
+      setFocusFoods([]);
+      setFocusError('');
+      return undefined;
+    }
+    let cancelled = false;
+    setFocusLoading(true);
+    setFocusError('');
+    fetchFocusFoods(focus, SEARCH_LIMIT)
+      .then((foods) => {
+        if (!cancelled) setFocusFoods(foods);
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setFocusFoods([]);
+          setFocusError(error?.message || 'โหลดเมนูแนะนำไม่สำเร็จ');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setFocusLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [focus, focusAttempt]);
+
+  const badgeFor = (food) => {
+    if (!focusInfo) return null;
+    const share = food.focus?.share ?? macroEnergyShares(food.per100g)?.[focusInfo.key];
+    if (!Number.isFinite(share)) return null;
+    return { label: focusInfo.badge, share, color: focusInfo.color, ink: focusInfo.ink, soft: focusInfo.soft };
+  };
+
+  const renderFoodRow = (food) => (
+    <FoodSearchRow
+      key={String(food.id)}
+      name={food.name}
+      subtitle={[
+        food.nameEn,
+        food.servingUnit
+          ? `1 ${food.servingUnit.unit} ≈ ${food.servingUnit.grams} กรัม`
+          : 'ต่อ 100 กรัม',
+      ].filter(Boolean).join(' · ')}
+      kcal={food.servingUnit && food.per100g?.kcal != null
+        ? Number(food.per100g.kcal) * food.servingUnit.grams / 100
+        : food.per100g?.kcal}
+      kcalEstimated={food.estimated?.includes('kcal')}
+      badge={badgeFor(food)}
+      onPress={() => goToPortion(food)}
+    />
+  );
+
   const goToPortion = (food) => {
     navigation.navigate('Portion', {
       food,
@@ -167,15 +229,49 @@ export default function LogScreen({ navigation, route }) {
           )}
         </View>
 
+        {/* Meal style: protein / carbs / fat */}
+        <View style={styles.focusWrap}>
+          <FoodFocusPicker value={focus} onChange={setFocus} />
+        </View>
+
         {/* Results */}
         <View style={styles.resultsHeader}>
-          <Text style={styles.resultsTitle}>อาหารที่พบ</Text>
+          <Text style={styles.resultsTitle}>
+            {!query.trim() && focusInfo ? focusInfo.listTitle : 'อาหารที่พบ'}
+          </Text>
           {!!query.trim() && !searching && !searchError && (
             <Text style={styles.resultsCount}>{results.length} รายการ</Text>
           )}
+          {!query.trim() && focusInfo && !focusLoading && !focusError && (
+            <Text style={styles.resultsCount}>{focusFoods.length} รายการ</Text>
+          )}
         </View>
 
-        {!query.trim() ? (
+        {!query.trim() && focusInfo ? (
+          focusLoading ? (
+            <View style={styles.loadingRow}>
+              <ActivityIndicator size="small" color={focusInfo.color} />
+              <Text style={styles.loadingText}>{`กำลังเลือก${focusInfo.listTitle}…`}</Text>
+            </View>
+          ) : focusError ? (
+            <Banner
+              tone="error"
+              message={focusError}
+              onDismiss={() => setFocusAttempt((attempt) => attempt + 1)}
+            />
+          ) : focusFoods.length === 0 ? (
+            <Card style={styles.emptyCard}>
+              <EmptyState icon="restaurant-outline" title="ยังไม่มีเมนูในหมวดนี้" message="ลองค้นหาชื่ออาหารที่ต้องการได้เลย" />
+            </Card>
+          ) : (
+            <View>
+              <Text style={styles.focusHint}>
+                {`เรียงจากเมนูที่พลังงานส่วนใหญ่มาจาก${focusInfo.badge}มากที่สุด · ค่าต่อ 100 กรัม`}
+              </Text>
+              {focusFoods.map(renderFoodRow)}
+            </View>
+          )
+        ) : !query.trim() ? (
           <View>
             <Text style={styles.quickPickTitle}>{recentNames.length ? 'ทานล่าสุด' : 'เมนูยอดนิยม'}</Text>
             <View style={styles.chipRow}>
@@ -218,25 +314,7 @@ export default function LogScreen({ navigation, route }) {
             />
           </Card>
         ) : (
-          <View>
-            {results.map((food) => (
-              <FoodSearchRow
-                key={String(food.id)}
-                name={food.name}
-                subtitle={[
-                  food.nameEn,
-                  food.servingUnit
-                    ? `1 ${food.servingUnit.unit} ≈ ${food.servingUnit.grams} กรัม`
-                    : 'ต่อ 100 กรัม',
-                ].filter(Boolean).join(' · ')}
-                kcal={food.servingUnit && food.per100g?.kcal != null
-                  ? Number(food.per100g.kcal) * food.servingUnit.grams / 100
-                  : food.per100g?.kcal}
-                kcalEstimated={food.estimated?.includes('kcal')}
-                onPress={() => goToPortion(food)}
-              />
-            ))}
-          </View>
+          <View>{results.map(renderFoodRow)}</View>
         )}
 
         {/* Add manually */}

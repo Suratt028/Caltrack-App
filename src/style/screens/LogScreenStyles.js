@@ -60,6 +60,17 @@ export default StyleSheet.create({
     backgroundColor: colors.mint,
   },
 
+  focusWrap: {
+    marginBottom: spacing.lg,
+  },
+  focusHint: {
+    fontSize: 13,
+    lineHeight: 19,
+    color: colors.inkMuted,
+    paddingHorizontal: spacing.xs,
+    marginBottom: spacing.sm,
+  },
+
   // Results
   resultsHeader: {
     flexDirection: 'row',

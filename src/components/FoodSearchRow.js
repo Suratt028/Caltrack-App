@@ -10,7 +10,7 @@ import styles from '../style/components/FoodSearchRowStyles';
  * name + serving label on the left, kcal on the right, and a mint 44dp round
  * "+" button that opens the portion screen before saving.
  */
-export default function FoodSearchRow({ name, subtitle, kcal, kcalEstimated = false, onPress }) {
+export default function FoodSearchRow({ name, subtitle, kcal, kcalEstimated = false, onPress, badge = null }) {
   // Missing energy shows "—", not 0; calculated (not measured) energy gets "≈".
   const hasKcal = kcal != null && Number.isFinite(Number(kcal));
   const calories = hasKcal ? `${kcalEstimated ? '≈' : ''}${Math.round(Number(kcal))}` : '—';
@@ -25,6 +25,17 @@ export default function FoodSearchRow({ name, subtitle, kcal, kcalEstimated = fa
           <Text style={styles.subtitle} numberOfLines={1}>
             {subtitle}
           </Text>
+        )}
+        {/* Macro-focus badge: share of energy from the chosen macro, with a mini bar. */}
+        {badge && (
+          <View style={[styles.badge, { backgroundColor: badge.soft }]}>
+            <View style={styles.badgeTrack}>
+              <View style={[styles.badgeFill, { width: `${Math.round(badge.share * 100)}%`, backgroundColor: badge.color }]} />
+            </View>
+            <Text style={[styles.badgeText, { color: badge.ink }]}>
+              {`${badge.label} ${Math.round(badge.share * 100)}% ของพลังงาน`}
+            </Text>
+          </View>
         )}
       </View>
 

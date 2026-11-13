@@ -20,6 +20,7 @@ const {
 } = require('./server/foodMatching');
 
 const { reserveScanSlot } = require('./server/scanQuota');
+const { FOCUS_MACROS, rankFoodsByFocus } = require('./server/foodFocus');
 const { createRateLimiter } = require('./server/rateLimit');
 const { createRedisClient } = require('./server/redisClient');
 
@@ -1867,6 +1868,33 @@ app.get('/api/foods/search', async (req, res) => {
     res.json({ results, count: results.length });
   } catch (error) {
     sendServerError(req, res, error);
+  }
+});
+
+// GET /api/foods/focus?macro=protein|carbs|fat&limit=20 — foods whose energy
+// leans on one macro (Log screen "อาหารตามสไตล์มื้อนี้"). Declared before
+// /api/foods/:foodId so "focus" isn't read as a food id.
+const FOCUS_CACHE_MS = 10 * MINUTE_MS;
+let focusFoodsCache = { foods: null, loadedAt: 0 };
+app.get('/api/foods/focus', async (req, res) => {
+  try {
+    const macro = String(req.query.macro || '');
+    if (!FOCUS_MACROS[macro]) {
+      return res.status(400).json({ error: 'macro must be protein, carbs or fat' });
+    }
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 20, 1), 50);
+    // The food table changes rarely (admin edits); a short cache avoids a full scan per tap.
+    if (!focusFoodsCache.foods || Date.now() - focusFoodsCache.loadedAt > FOCUS_CACHE_MS) {
+      const foods = await Food.find(
+        {},
+        { foodId: 1, nameTh: 1, nameEn: 1, kcal: 1, protein_g: 1, fat_g: 1, carbAvailable_g: 1, fiber_g: 1, sugar_g: 1, sodium_mg: 1, calcium_mg: 1, iron_mg: 1, vitaminC_mg: 1, foodGroupTh: 1, servingSize: 1, estimated: 1 }
+      ).lean();
+      focusFoodsCache = { foods, loadedAt: Date.now() };
+    }
+    const results = rankFoodsByFocus(focusFoodsCache.foods, macro, limit);
+    return res.json({ results, count: results.length });
+  } catch (error) {
+    return sendServerError(req, res, error);
   }
 });
 
