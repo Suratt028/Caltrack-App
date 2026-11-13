@@ -16,6 +16,8 @@ import ProfileScreen from '../screens/ProfileScreen';
 // Flow screen pushed above the tabs (reached from Log search results).
 import PortionScreen from '../screens/PortionScreen';
 import NoLogReminderScheduler from '../components/NoLogReminderScheduler';
+import { DesktopSideBar, DesktopTopBar } from '../components/DesktopNav';
+import useDeviceLayout from '../utils/useDeviceLayout';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -51,17 +53,22 @@ const TAB_ICONS = {
 };
 
 // The five primary tabs. Flow screens (Portion) sit above these in the stack.
-function Tabs() {
+function Tabs({ navigation }) {
   const insets = useSafeAreaInsets();
   const bottomPadding = Math.max(insets.bottom, 8);
+  // Desktop web: side navigation + top bar (Figma "Desktop web home").
+  const { isDesktop } = useDeviceLayout();
+  const desktop = Platform.OS === 'web' && isDesktop;
 
-  return (
+  const tabs = (
     <>
     {/* Evening "nothing logged yet" push reminders (phones only). */}
     <NoLogReminderScheduler />
     <Tab.Navigator
+      tabBar={desktop ? (props) => <DesktopSideBar {...props} /> : undefined}
       screenOptions={({ route }) => ({
         headerShown: false,
+        tabBarPosition: desktop ? 'left' : 'bottom',
         sceneStyle: WEB_APP_FRAME,
         tabBarHideOnKeyboard: true,
         tabBarActiveTintColor: colors.primaryDark,
@@ -138,6 +145,14 @@ function Tabs() {
       <Tab.Screen name="Profile" component={ProfileScreen} options={{ tabBarLabel: 'โปรไฟล์' }} />
     </Tab.Navigator>
     </>
+  );
+
+  if (!desktop) return tabs;
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+      <DesktopTopBar onOpenProfile={() => navigation.navigate('Tabs', { screen: 'Profile' })} />
+      <View style={{ flex: 1 }}>{tabs}</View>
+    </View>
   );
 }
 

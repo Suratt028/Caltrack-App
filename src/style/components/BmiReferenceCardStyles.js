@@ -2,10 +2,23 @@ import { StyleSheet } from 'react-native';
 import { colors, radius, spacing, typography } from '../../theme/colors';
 
 export default StyleSheet.create({
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.sm,
+  },
   title: {
     ...typography.h3,
     color: colors.ink,
-    marginBottom: spacing.sm,
+  },
+  infoBtn: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: -10,
+    marginVertical: -10,
   },
 
   // Figure + value

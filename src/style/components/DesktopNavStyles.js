@@ -1,0 +1,103 @@
+import { StyleSheet } from 'react-native';
+import { colors, radius, spacing, typography } from '../../theme/colors';
+
+export default StyleSheet.create({
+  pressed: { opacity: 0.75 },
+
+  // Brand
+  brand: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  brandMark: {
+    width: 36,
+    height: 36,
+    borderRadius: 11,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  brandText: { ...typography.h2, color: colors.primary },
+
+  // Top bar
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+    minHeight: 72,
+    paddingHorizontal: spacing.lg,
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    zIndex: 10,
+  },
+  tagline: { fontSize: 13, color: colors.inkMuted, flexShrink: 1, textAlign: 'center' },
+  menuAnchor: { position: 'relative', zIndex: 20 },
+  profileChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    minHeight: 44,
+    paddingLeft: 4,
+    paddingRight: 12,
+    borderRadius: radius.pill,
+    maxWidth: 220,
+  },
+  profileChipActive: { backgroundColor: colors.mint },
+  avatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.mint,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  profileName: { ...typography.label, color: colors.ink, flexShrink: 1 },
+  menu: {
+    position: 'absolute',
+    top: 52,
+    right: 0,
+    minWidth: 220,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingVertical: spacing.xs,
+    boxShadow: '0px 10px 24px rgba(27, 61, 47, 0.14)',
+    elevation: 8,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    minHeight: 44,
+    paddingHorizontal: spacing.md,
+  },
+  menuItemPressed: { backgroundColor: colors.mint },
+  menuText: { fontSize: 14, color: colors.ink },
+
+  // Side nav
+  sideBar: {
+    width: 232,
+    backgroundColor: colors.surface,
+    borderRightWidth: 1,
+    borderRightColor: colors.border,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.lg,
+  },
+  sideItems: { gap: spacing.xs },
+  sideItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    minHeight: 48,
+    paddingHorizontal: 12,
+    borderRadius: radius.sm,
+  },
+  sideItemHover: { backgroundColor: colors.surfaceMuted },
+  sideItemActive: { backgroundColor: colors.mint },
+  sideLabel: { ...typography.body, color: colors.inkMuted },
+  sideLabelActive: { fontWeight: '700', color: colors.primaryDark },
+  sideNote: { marginTop: spacing.xxl, paddingHorizontal: 12, gap: spacing.sm },
+  sideNoteTitle: { ...typography.label, color: colors.ink, lineHeight: 20 },
+  sideNoteBody: { fontSize: 13, lineHeight: 19, color: colors.inkMuted },
+});

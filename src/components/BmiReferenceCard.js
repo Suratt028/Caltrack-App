@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Path, Polygon, Text as SvgText } from 'react-native-svg';
 import { Text } from './AppText';
 import Card from './Card';
 import BmiBodyFigure from './BmiBodyFigure';
+import BmiInfoSheet from './BmiInfoSheet';
 import { colors } from '../theme/colors';
 import styles from '../style/components/BmiReferenceCardStyles';
 
@@ -124,6 +125,7 @@ const kg = (value) => value.toLocaleString('th-TH', { maximumFractionDigits: 1 }
  * the healthy weight for their height, and the colour band of BMI zones.
  */
 export default function BmiReferenceCard({ bmi, category, age, heightCm, style }) {
+  const [infoOpen, setInfoOpen] = useState(false);
   const isMinor = Number(age) < 18;
   const zoneStyle = category ? BMI_ZONE_STYLE[category.key] : null;
   const heightM = Number(heightCm) / 100;
@@ -135,7 +137,26 @@ export default function BmiReferenceCard({ bmi, category, age, heightCm, style }
 
   return (
     <Card style={style}>
-      <Text style={styles.title}>BMI และช่วงอ้างอิง</Text>
+      <View style={styles.titleRow}>
+        <Text style={styles.title}>BMI และช่วงอ้างอิง</Text>
+        <Pressable
+          onPress={() => setInfoOpen(true)}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="BMI คืออะไร และคำนวณอย่างไร"
+          style={({ pressed }) => [styles.infoBtn, pressed && { opacity: 0.6 }]}
+        >
+          <Ionicons name="information-circle-outline" size={24} color={colors.inkMuted} />
+        </Pressable>
+      </View>
+      <BmiInfoSheet
+        visible={infoOpen}
+        onClose={() => setInfoOpen(false)}
+        bmi={bmi}
+        heightCm={heightCm}
+        categoryKey={isMinor ? null : category?.key}
+        zoneStyles={BMI_ZONE_STYLE}
+      />
 
       <View style={styles.hero}>
         {!isMinor && (
