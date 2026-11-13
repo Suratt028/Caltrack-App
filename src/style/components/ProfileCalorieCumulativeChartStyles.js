@@ -64,8 +64,14 @@ export default StyleSheet.create({
     borderTopColor: colors.turmericDark,
     borderStyle: 'dashed',
   },
+  avgLegendLine: {
+    height: 0,
+    borderTopWidth: 2,
+    borderTopColor: colors.inkFaint,
+    borderStyle: 'dashed',
+  },
   legendText: {
-    fontSize: 11,
+    fontSize: 13,
     color: colors.inkMuted,
   },
   hint: {

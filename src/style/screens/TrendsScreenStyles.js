@@ -223,6 +223,16 @@ export default StyleSheet.create({
   weightCard: {
     marginBottom: spacing.md,
   },
+  // Desktop: weight and BMI cards side by side.
+  twoCol: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.md,
+  },
+  twoColItem: {
+    flex: 1,
+    minWidth: 0,
+  },
   chartWrap: {
     width: '100%',
     marginTop: spacing.sm,

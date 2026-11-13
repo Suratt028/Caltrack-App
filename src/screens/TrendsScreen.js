@@ -4,7 +4,6 @@ import { Text } from '../components/AppText';
 import { TextInput } from '../components/AppTextInput';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import Svg, { Circle, Line, Path, Polyline, Text as SvgText } from 'react-native-svg';
 import { colors, spacing } from '../theme/colors';
 import { useFoodLogs, useProfile, useWeights } from '../data/useUserData';
 import { calculateAgeBasedMacroGoals, calculateBMI, lastNDays, todayKey } from '../utils/calculations';
@@ -17,9 +16,9 @@ import SegmentedControl from '../components/SegmentedControl';
 import TrendStatCard from '../components/TrendStatCard';
 import ProfileCalorieCumulativeChart from '../components/ProfileCalorieCumulativeChart';
 import MacroGroupedChart from '../components/MacroGroupedChart';
+import WeightTrendChart from '../components/WeightTrendChart';
+import BmiTrendChart from '../components/BmiTrendChart';
 import styles from '../style/screens/TrendsScreenStyles';
-
-const WEIGHT_CHART_HEIGHT = 160;
 
 const RANGE_OPTIONS = [
   { value: '7', label: '7 วัน' },
@@ -47,128 +46,6 @@ const shortDateFull = (key) => {
   return `${date.getUTCDate()} ${THAI_MONTHS_SHORT[date.getUTCMonth()]} ${date.getUTCFullYear() + 543}`;
 };
 
-function WeightTrendChart({ points, width }) {
-  if (points.length < 2) return null;
-  const values = points.map((p) => p.weight);
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const range = max - min || 1;
-  const stepX = width / (points.length - 1);
-
-  const coords = points.map((p, i) => {
-    const x = i * stepX;
-    const y = WEIGHT_CHART_HEIGHT - ((p.weight - min) / range) * (WEIGHT_CHART_HEIGHT - 20) - 10;
-    return `${x},${y}`;
-  });
-
-  return (
-    <View
-      accessible
-      accessibilityRole="image"
-      accessibilityLabel={`กราฟแนวโน้มน้ำหนัก สูงสุด ${max.toFixed(1)} กิโลกรัม ต่ำสุด ${min.toFixed(1)} กิโลกรัม`}
-    >
-      <Svg width={width} height={WEIGHT_CHART_HEIGHT}>
-        <SvgText x={0} y={12} fontSize="9" fill={colors.inkFaint}>
-          {`สูงสุด ${max.toFixed(1)} กก.`}
-        </SvgText>
-        <SvgText x={0} y={WEIGHT_CHART_HEIGHT - 4} fontSize="9" fill={colors.inkFaint}>
-          {`ต่ำสุด ${min.toFixed(1)} กก.`}
-        </SvgText>
-        <Polyline points={coords.join(' ')} fill="none" stroke={colors.turmeric} strokeWidth={3} strokeLinejoin="round" />
-        {points.map((p, i) => {
-          const [x, y] = coords[i].split(',').map(Number);
-          return <Circle key={p.date} cx={x} cy={y} r={4} fill={colors.turmeric} />;
-        })}
-      </Svg>
-    </View>
-  );
-}
-
-function BmiTrendChart({ points, width }) {
-  if (points.length < 2) return null;
-  const values = points.map((point) => point.bmi);
-  const padding = { left: 34, right: 8, top: 16, bottom: 24 };
-  const plotWidth = width - padding.left - padding.right;
-  const plotHeight = WEIGHT_CHART_HEIGHT - padding.top - padding.bottom;
-  const min = Math.min(16, ...values);
-  const max = Math.max(32, ...values);
-  const range = max - min;
-  const firstTime = parseKey(points[0].date).getTime();
-  const lastTime = parseKey(points[points.length - 1].date).getTime();
-  const x = (point) => padding.left + (
-    lastTime === firstTime
-      ? plotWidth / 2
-      : ((parseKey(point.date).getTime() - firstTime) / (lastTime - firstTime)) * plotWidth
-  );
-  const y = (value) => padding.top + plotHeight - ((value - min) / range) * plotHeight;
-  const coords = points.map((point) => ({ x: x(point), y: y(point.bmi), point }));
-  const linePath = coords.reduce(
-    (path, coord, index) => `${path}${index === 0 ? `M ${coord.x} ${coord.y}` : ` L ${coord.x} ${coord.y}`}`,
-    ''
-  );
-  const dateLabels = [...new Set([0, Math.floor((points.length - 1) / 2), points.length - 1])]
-    .map((index) => coords[index]);
-
-  return (
-    <View
-      accessible
-      accessibilityRole="image"
-      accessibilityLabel={`กราฟเส้น BMI ตั้งแต่ ${points[0].date} ถึง ${points[points.length - 1].date} ค่าสูงสุด ${Math.max(...values).toFixed(1)} ต่ำสุด ${Math.min(...values).toFixed(1)}`}
-    >
-      <Svg width={width} height={WEIGHT_CHART_HEIGHT}>
-        {[18.5, 23, 25, 30].map((threshold) => (
-          <Line
-            key={threshold}
-            x1={padding.left}
-            x2={width - padding.right}
-            y1={y(threshold)}
-            y2={y(threshold)}
-            stroke={threshold === 23 ? colors.turmeric : threshold >= 25 ? colors.danger : colors.border}
-            strokeWidth={1.2}
-            strokeDasharray="4,4"
-          />
-        ))}
-        {[18.5, 23, 25, 30].map((threshold) => (
-          <SvgText
-            key={`label-${threshold}`}
-            x={padding.left - 5}
-            y={y(threshold) - 3}
-            fontSize="9"
-            fill={threshold === 23 ? colors.turmericDark : threshold >= 25 ? colors.danger : colors.inkFaint}
-            textAnchor="end"
-          >
-            {threshold}
-          </SvgText>
-        ))}
-        <Path d={linePath} fill="none" stroke={colors.primary} strokeWidth={3} strokeLinejoin="round" strokeLinecap="round" />
-        {coords.map(({ point, x: pointX, y: pointY }, index) => (
-          <Circle
-            key={point.date}
-            cx={pointX}
-            cy={pointY}
-            r={index === coords.length - 1 ? 5 : 3.5}
-            fill={index === coords.length - 1 ? colors.primary : colors.barPast}
-            stroke={colors.surface}
-            strokeWidth={2}
-          />
-        ))}
-        {dateLabels.map(({ point, x: pointX }, index) => (
-          <SvgText
-            key={`date-${point.date}`}
-            x={pointX}
-            y={WEIGHT_CHART_HEIGHT - 5}
-            fontSize="10"
-            fill={colors.inkMuted}
-            textAnchor={index === 0 ? 'start' : index === dateLabels.length - 1 ? 'end' : 'middle'}
-          >
-            {`${parseKey(point.date).getUTCDate()}/${parseKey(point.date).getUTCMonth() + 1}`}
-          </SvgText>
-        ))}
-      </Svg>
-    </View>
-  );
-}
-
 export default function TrendsScreen({ navigation }) {
   const { profile } = useProfile();
   const { logsByDay, getDayTotals } = useFoodLogs();
@@ -183,7 +60,6 @@ export default function TrendsScreen({ navigation }) {
   const [rangeOffset, setRangeOffset] = useState(0);
   const [customFrom, setCustomFrom] = useState(() => lastNDays(7)[0]);
   const [customTo, setCustomTo] = useState(() => lastNDays(7)[6]);
-  const [chartWidth, setChartWidth] = useState(320);
   const [weightInput, setWeightInput] = useState('');
   const [weightNotice, setWeightNotice] = useState('');
   const [weightError, setWeightError] = useState('');
@@ -311,6 +187,7 @@ export default function TrendsScreen({ navigation }) {
       dayData.map((day) => ({
         date: day.date,
         partial: day.date === today,
+        kcal: day.kcal,
         macros: { protein: day.protein, carbs: day.carbs, fat: day.fat },
       })),
     [dayData, today]
@@ -329,13 +206,6 @@ export default function TrendsScreen({ navigation }) {
       .filter((point) => Number.isFinite(point.bmi)),
     [weightPoints, profile?.heightCm]
   );
-
-  const onWeightChartLayout = (event) => {
-    const layoutWidth = event?.nativeEvent?.layout?.width;
-    if (!layoutWidth) return;
-    const next = Math.round(Math.min(Math.max(layoutWidth, 240), 560));
-    if (next !== chartWidth) setChartWidth(next);
-  };
 
   const saveWeight = async () => {
     const val = Number(weightInput);
@@ -517,6 +387,8 @@ export default function TrendsScreen({ navigation }) {
               <Text style={styles.cardTitle}>สารอาหารในแต่ละวัน</Text>
               <MacroGroupedChart
                 data={macroData}
+                goalKcal={goal}
+                macroGoals={macroGoals}
                 selectedDate={selectedDay?.date}
                 onSelectDay={setSelectedMacroDate}
               />
@@ -544,13 +416,14 @@ export default function TrendsScreen({ navigation }) {
           </>
         )}
 
-        {/* Weight trend — extra feature kept from the original screen */}
-        <Card style={styles.weightCard}>
+        {/* Weight + BMI: stacked on mobile/tablet, side by side on desktop */}
+        <View style={isLgUp ? styles.twoCol : undefined}>
+        <Card style={[styles.weightCard, isLgUp && styles.twoColItem]}>
           <Text style={styles.cardTitle}>แนวโน้มน้ำหนัก</Text>
           <Text style={styles.cardSubtitle}>หน่วยเป็นกิโลกรัม (กก.) แสดงสูงสุด 14 ครั้งล่าสุด</Text>
           {weightPoints.length >= 2 ? (
-            <View style={styles.chartWrap} onLayout={onWeightChartLayout}>
-              <WeightTrendChart points={weightPoints} width={chartWidth} />
+            <View style={styles.chartWrap}>
+              <WeightTrendChart points={weightPoints} />
             </View>
           ) : (
             <Text style={styles.cardNote}>บันทึกน้ำหนักอย่างน้อย 2 ครั้งเพื่อดูกราฟแนวโน้ม</Text>
@@ -582,16 +455,16 @@ export default function TrendsScreen({ navigation }) {
             />
           )}
         </Card>
-        <Card style={styles.weightCard}>
+        <Card style={[styles.weightCard, isLgUp && styles.twoColItem]}>
           <Text style={styles.cardTitle}>แนวโน้ม BMI</Text>
           <Text style={styles.cardSubtitle}>
-            คำนวณจากน้ำหนักที่บันทึกและส่วนสูงในโปรไฟล์ · เส้นอ้างอิงผู้ใหญ่เอเชีย 18.5, 23, 25 และ 30
+            คำนวณจากน้ำหนักที่บันทึกและส่วนสูงในโปรไฟล์ · แถบสีตามเกณฑ์ผู้ใหญ่เอเชีย (18.5, 23, 25, 30)
           </Text>
           {Number(profile?.age) < 18 ? (
             <Text style={styles.cardNote}>ผู้มีอายุต่ำกว่า 18 ปีต้องแปลผล BMI ด้วยเกณฑ์เฉพาะอายุและเพศ</Text>
           ) : bmiPoints.length >= 2 ? (
-            <View style={styles.chartWrap} onLayout={onWeightChartLayout}>
-              <BmiTrendChart points={bmiPoints} width={chartWidth} />
+            <View style={styles.chartWrap}>
+              <BmiTrendChart points={bmiPoints} />
             </View>
           ) : (
             <Text style={styles.cardNote}>บันทึกน้ำหนักอย่างน้อย 2 ครั้งเพื่อดูกราฟ BMI</Text>
@@ -602,6 +475,7 @@ export default function TrendsScreen({ navigation }) {
             </Text>
           ) : null}
         </Card>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );

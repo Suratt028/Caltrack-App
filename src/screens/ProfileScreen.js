@@ -4,13 +4,11 @@ import { Text } from '../components/AppText';
 import { TextInput } from '../components/AppTextInput';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import Svg, { Circle, Path } from 'react-native-svg';
 import { colors, spacing } from '../theme/colors';
 import { useApp } from '../context/AppContext';
 import { useProfile, useWeights } from '../data/useUserData';
 import {
   EXERCISE_INTENSITIES,
-  BMI_CATEGORIES,
   GOALS,
   WORK_ACTIVITY_LEVELS,
   buildProfileGoals,
@@ -26,90 +24,13 @@ import PrimaryButton from '../components/PrimaryButton';
 import Banner from '../components/Banner';
 import ScreenHeader from '../components/ScreenHeader';
 import GoalPresetButton from '../components/GoalPresetButton';
+import BmiReferenceCard from '../components/BmiReferenceCard';
 import styles from '../style/screens/ProfileScreenStyles';
 import ReportScreen from './ReportScreen';
 
 const formatSigned = (value) => `${value > 0 ? '+' : ''}${value}`;
-
-const BMI_FIGURE_COLORS = {
-  low: '#55B8D5',
-  normal: '#83A92B',
-  at_risk: '#F08A24',
-  obesity_1: '#DB4B3F',
-  obesity_2: '#AA418D',
-};
-
-const BMI_FIGURE_SHAPES = [
-  { sh: 9, w: 8.5 },
-  { sh: 10, w: 10.5 },
-  { sh: 11.5, w: 13 },
-  { sh: 13, w: 15.5 },
-  { sh: 14.5, w: 18.5 },
-];
-const BMI_FIGURE_RANGES = ['<18.5', '18.5–22.9', '23–24.9', '25–29.9', '≥30'];
-
-function BmiFigure({ sh, w, color }) {
-  const center = 30;
-  const legX = Math.max(5, w * 0.5);
-  const torso =
-    `M ${center - sh} 25 Q ${center} 21 ${center + sh} 25 ` +
-    `C ${center + w + 2} 34 ${center + w + 2} 50 ${center + w - 1} 60 ` +
-    `L ${center - w + 1} 60 ` +
-    `C ${center - w - 2} 50 ${center - w - 2} 34 ${center - sh} 25 Z`;
-
-  return (
-    <Svg width={52} height={96} viewBox="0 0 60 96" accessible={false}>
-      <Circle cx={center} cy={12} r={8} fill={color} />
-      <Path d={torso} fill={color} />
-      <Path
-        d={`M ${center - sh} 27 L ${center - w - 5} 50 M ${center + sh} 27 L ${center + w + 5} 50`}
-        stroke={color}
-        strokeWidth={5}
-        strokeLinecap="round"
-        fill="none"
-      />
-      <Path
-        d={`M ${center - legX} 58 L ${center - legX} 92 M ${center + legX} 58 L ${center + legX} 92`}
-        stroke={color}
-        strokeWidth={6}
-        fill="none"
-      />
-    </Svg>
-  );
-}
-
-function BmiFigureScale({ activeCategory }) {
-  return (
-    <View
-      style={styles.bmiFigureScale}
-      accessibilityRole="image"
-      accessibilityLabel={`BMI ${activeCategory?.label || ''}. รูปประกอบแสดงช่วง BMI ตั้งแต่ต่ำกว่าเกณฑ์ถึงอ้วนระดับ 2`}
-    >
-      {BMI_CATEGORIES.map((category, index) => {
-        const color = BMI_FIGURE_COLORS[category.key];
-        const active = activeCategory?.key === category.key;
-        return (
-          <View
-            key={category.key}
-            style={[
-              styles.bmiFigureItem,
-              active && { backgroundColor: `${color}1F` },
-            ]}
-          >
-            <BmiFigure {...BMI_FIGURE_SHAPES[index]} color={color} />
-            <Text
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              style={[styles.bmiFigureRange, active && { color, fontWeight: '800' }]}
-            >
-              {BMI_FIGURE_RANGES[index]}
-            </Text>
-          </View>
-        );
-      })}
-    </View>
-  );
-}
+// "เช่น งานออฟฟิศ/ขับรถ" -> "งานออฟฟิศ/ขับรถ"
+const activityExample = (sublabel) => String(sublabel || '').replace(/^เช่น\s*/, '');
 
 export default function ProfileScreen() {
   const { resetAllData, logout, user } = useApp();
@@ -319,63 +240,13 @@ export default function ProfileScreen() {
         </Card>
 
         {/* BMI screening */}
-        <Card style={styles.cardSpacing}>
-          <Text style={styles.sectionTitle}>BMI และช่วงอ้างอิง</Text>
-          <View style={styles.bmiSummary}>
-            <Text style={styles.bmiValue}>{bmi?.toFixed(1) || '—'}</Text>
-            <Text
-              style={[
-                styles.bmiCategory,
-                { color: bmiCategory?.key === 'obesity_1' || bmiCategory?.key === 'obesity_2'
-                  ? colors.danger
-                  : bmiCategory?.key === 'at_risk'
-                    ? colors.turmericDark
-                    : bmiCategory?.key === 'low'
-                      ? colors.skyDark
-                      : colors.primary },
-              ]}
-            >
-              {profile.age < 18 ? 'ต้องใช้เกณฑ์เฉพาะอายุ' : bmiCategory?.label || 'ยังประเมินไม่ได้'}
-            </Text>
-          </View>
-          <Text style={styles.sectionHint}>
-            {profile.age < 18
-              ? 'BMI ของผู้มีอายุต่ำกว่า 18 ปีต้องแปลผลเทียบกับอายุและเพศ ไม่ใช้เกณฑ์ผู้ใหญ่'
-              : bmiCategory?.key === 'low'
-                ? 'BMI ต่ำกว่าช่วงอ้างอิง ไม่แนะนำให้ตั้งเป้าลดน้ำหนักจากตัวเลขนี้ ควรปรึกษาบุคลากรสุขภาพหากกังวล'
-                : bmiCategory?.key === 'normal'
-                  ? 'อยู่ในช่วงอ้างอิงตามเกณฑ์เอเชีย หากต้องการเพิ่มกล้ามเนื้อ เลือกเป้าหมายเพิ่มมวลกล้ามเนื้อและฝึกแรงต้านได้ ไม่จำเป็นต้องลดน้ำหนักเพียงเพราะ BMI'
-                  : bmiCategory?.key === 'at_risk'
-                    ? 'เริ่มมีความเสี่ยงตามเกณฑ์คัดกรองเอเชีย ลองปรับพฤติกรรมอย่างค่อยเป็นค่อยไป BMI ไม่ใช่การวินิจฉัยโรค'
-                    : 'BMI สูงกว่าช่วงอ้างอิงตามเกณฑ์คัดกรองเอเชีย ไม่จำเป็นต้องลดน้ำหนักอย่างเร่งด่วนจาก BMI เพียงค่าเดียว หากกังวลควรปรึกษาผู้เชี่ยวชาญ'}
-          </Text>
-          <BmiFigureScale activeCategory={bmiCategory} />
-          <View style={styles.bmiRanges}>
-            {BMI_CATEGORIES.map((category) => (
-              <View
-                    key={category.key}
-                    style={[
-                      styles.bmiRangeRow,
-                      bmiCategory?.key === category.key && styles.bmiRangeRowActive,
-                    ]}
-              >
-                    <Text style={[
-                      styles.bmiRangeName,
-                      bmiCategory?.key === category.key && styles.bmiRangeNameActive,
-                    ]}>
-                      {category.label}
-                    </Text>
-                    <Text style={[
-                      styles.bmiRangeValue,
-                      bmiCategory?.key === category.key && styles.bmiRangeNameActive,
-                    ]}>
-                      {category.range}
-                    </Text>
-              </View>
-            ))}
-          </View>
-          <Text style={styles.bmiNote}>เกณฑ์คัดกรองสำหรับผู้ใหญ่เอเชียเท่านั้น · BMI ไม่ใช่การวินิจฉัยโรค</Text>
-        </Card>
+        <BmiReferenceCard
+          bmi={bmi}
+          category={bmiCategory}
+          age={profile.age}
+          heightCm={profile.heightCm}
+          style={styles.cardSpacing}
+        />
 
         {/* Work and daily activity */}
         <Card style={styles.cardSpacing}>
@@ -402,9 +273,11 @@ export default function ProfileScreen() {
                 accessibilityLabel={`${activity.label} ${activity.sublabel}`}
                 style={[styles.optionRow, index === WORK_ACTIVITY_LEVELS.length - 1 && styles.optionRowLast]}
               >
+                {/* The concrete example ("งานออฟฟิศ/ขับรถ") is easier to recognise
+                    than the abstract level, so it leads; the level becomes the subtitle. */}
                 <View style={styles.optionTextWrap}>
-                  <Text style={styles.optionText}>{activity.label}</Text>
-                  <Text style={styles.optionSub}>{activity.sublabel}</Text>
+                  <Text style={styles.optionText}>{activityExample(activity.sublabel)}</Text>
+                  <Text style={styles.optionSub}>{activity.label}</Text>
                 </View>
                 <View style={[styles.radio, active && styles.radioActive]}>
                   {active && <Ionicons name="checkmark" size={15} color={colors.white} />}
