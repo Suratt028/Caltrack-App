@@ -14,6 +14,25 @@ export default StyleSheet.create({
     width: '100%',
     alignSelf: 'center',
   },
+  // Desktop: use the screen width, two columns side by side.
+  contentDesktop: {
+    maxWidth: 1240,
+    paddingHorizontal: 32,
+    paddingTop: 28,
+  },
+  columns: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.lg,
+  },
+  column: {
+    flex: 1,
+    minWidth: 0,
+  },
+  // The right column's first card carries cardSpacing; line its top up with the left one.
+  columnRight: {
+    marginTop: -spacing.md,
+  },
   // ----- Name card -----
   identityRow: {
     flexDirection: 'row',
