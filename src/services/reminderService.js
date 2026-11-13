@@ -93,4 +93,47 @@ export async function rescheduleNoLogReminders(logsByDay, { ask = true } = {}) {
 
 export async function clearNoLogReminders() {
   if (remindersSupported) await cancelOurReminders();
+  if (remindersSupported) await cancelNoticeReminders();
+}
+
+// ---- Admin notices (planned maintenance, app updates) -----------------------
+const NOTICE_TAG = 'admin-notice';
+
+async function cancelNoticeReminders() {
+  const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+  await Promise.all(
+    scheduled
+      .filter((item) => item.content?.data?.tag === NOTICE_TAG)
+      .map((item) => Notifications.cancelScheduledNotificationAsync(item.identifier))
+  );
+}
+
+/**
+ * Replace scheduled notice reminders with one per upcoming notice
+ * (see noticeReminderPlan). Never asks for permission itself: it rides on the
+ * permission the user gave for food-log reminders.
+ */
+export async function rescheduleNoticeReminders(plan) {
+  if (!remindersSupported) return { scheduled: 0, reason: 'web' };
+  await cancelNoticeReminders();
+  if (!(await ensureReminderPermission({ ask: false }))) return { scheduled: 0, reason: 'denied' };
+  if (Platform.OS === 'android') {
+    await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
+      name: 'แจ้งเตือนบันทึกอาหาร',
+      importance: Notifications.AndroidImportance.DEFAULT,
+    });
+  }
+  await Promise.all(
+    plan.map((item) =>
+      Notifications.scheduleNotificationAsync({
+        content: { title: item.title, body: item.body, data: { tag: NOTICE_TAG, noticeId: item.id, screen: 'Home' } },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DATE,
+          date: item.date,
+          ...(Platform.OS === 'android' ? { channelId: CHANNEL_ID } : {}),
+        },
+      })
+    )
+  );
+  return { scheduled: plan.length, reason: 'ok' };
 }

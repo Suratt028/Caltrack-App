@@ -2,7 +2,11 @@ import { useEffect, useRef } from 'react';
 import * as Notifications from 'expo-notifications';
 import { useNavigation } from '@react-navigation/native';
 import { useFoodLogs } from '../data/useUserData';
-import { remindersSupported, rescheduleNoLogReminders } from '../services/reminderService';
+import { remindersSupported, rescheduleNoLogReminders, rescheduleNoticeReminders } from '../services/reminderService';
+import { fetchActiveAnnouncements } from './AnnouncementsBanner';
+import { noticeReminderPlan } from '../utils/noticeReminders';
+
+const NOTICE_SYNC_MS = 30 * 60 * 1000;
 
 /**
  * Renders nothing. While signed in, keeps the week's "nothing logged yet"
@@ -29,11 +33,24 @@ export default function NoLogReminderScheduler() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loggedDays]);
 
+  // Admin notices: a local reminder 30 minutes before each upcoming one.
+  useEffect(() => {
+    if (!remindersSupported) return undefined;
+    const sync = () =>
+      fetchActiveAnnouncements()
+        .then((notices) => rescheduleNoticeReminders(noticeReminderPlan(notices)))
+        .catch(() => {}); // Optional; never disturb the app over it.
+    sync();
+    const timer = setInterval(sync, NOTICE_SYNC_MS);
+    return () => clearInterval(timer);
+  }, []);
+
   useEffect(() => {
     if (!remindersSupported) return undefined;
     const sub = Notifications.addNotificationResponseReceivedListener((response) => {
-      if (response?.notification?.request?.content?.data?.screen === 'Log') {
-        navigation.navigate('Tabs', { screen: 'Log' });
+      const screen = response?.notification?.request?.content?.data?.screen;
+      if (screen === 'Log' || screen === 'Home') {
+        navigation.navigate('Tabs', { screen });
       }
     });
     return () => sub.remove();
